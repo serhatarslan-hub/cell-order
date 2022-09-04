@@ -957,5 +957,41 @@ def set_power(ue_imsi: str, scaling_factor: int) -> None:
     write_config_param_single(ue_rnti, scaling_factor, path)
 
 
+# average specified user metric
+def average_metric(metrics_dict: collections.OrderedDict(), metric_name: 'str') -> dict:
+
+    out_dict = dict()
+
+    # extract passed metric {imsi->ts->metric_name->metric_val}
+    metrics = get_metric_value(metrics_dict, metric_name)
+
+    for imsi_key, metrics_val in metrics.items():
+        tmp_list = list()
+
+        for _, val in metrics_val.items():
+            tmp_list.append(float(val[metric_name]))
+
+        mean = sum(tmp_list) / len(tmp_list)
+
+        out_dict[imsi_key] = mean
+
+    return out_dict
+
+
+# average metrics over slice
+# this function modifies the passed slice_metrics
+def avg_slice_metrics(slice_metrics: dict, slice_users: dict, metric_dict: dict, metric_name: str) -> None:
+
+    for s_key, s_val in slice_users.items():
+        tmp_metrics = list()
+        for imsi in s_val:
+            tmp_metrics.append(metric_dict[imsi])
+
+        mean = sum(tmp_metrics) / len(tmp_metrics)
+
+        # insert in passed dictionary
+        slice_metrics[s_key][metric_name] = mean
+
+
 if __name__ == '__main__':
     set_power('1010123456002', 0.5)
