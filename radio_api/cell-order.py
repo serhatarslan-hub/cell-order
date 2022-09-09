@@ -6,9 +6,10 @@ import logging
 import os
 import time
 
+import constants
 from scope_start import read_metrics, get_metric_value, get_slice_users,\
     read_slice_scheduling, read_slice_mask, write_tenant_slicing_mask,\
-    write_slice_scheduling, average_metric, avg_slice_metrics, MAX_RBG
+    write_slice_scheduling, average_metric, avg_slice_metrics
 
 NUM_SLICE_USERS_KEYWORD = 'num_slice_users'
 DL_BUFFER_KEYWORD = 'dl_buffer [bytes]'
@@ -21,14 +22,44 @@ def calculate_dl_latency_metric(metrics_db: dict) -> None:
     # {imsi->{ts->{metric_name->val}}}
     for imsi, ts_val in metrics_db.items():
         for ts, metrics in ts_val.items():
-            queue_size_bits = metrics[DL_BUFFER_KEYWORD] * 8.
-            tx_rate_kbps = metrics[DL_THP_KEYWORD] * 1e3
-            metrics_db[imsi][ts][DL_LAT_KEYWORD] = (queue_size_bits / tx_rate_kbps) # in msec
+            queue_size_bits = float(metrics[DL_BUFFER_KEYWORD]) * 8.
+            tx_rate_kbps = float(metrics[DL_THP_KEYWORD]) * 1e3
+            if (tx_rate_kbps > 0):
+                metrics_db[imsi][ts][DL_LAT_KEYWORD] = (queue_size_bits / tx_rate_kbps) # in msec
+            else:
+                metrics_db[imsi][ts][DL_LAT_KEYWORD] = 0.
+
+def readjust_rbgs_to_capacity(slice_metrics: dict, tot_num_rbg_rqstd: int) -> None:
+    logging.info('requested_rbg:{}'.format(tot_num_rbg_rqstd))
+
+    # # Decrease the number of requested RBGs one by one starting with the last slice (largest budget)
+    # cur_s_idx_to_readjust = len(list(slice_metrics)) -1
+    # while tot_num_rbg_rqstd > constants.MAX_RBG:
+    #     cur_s_key = list(slice_metrics)[cur_s_idx_to_readjust]
+
+    #     tot_num_rbg_rqstd -= slice_metrics[cur_s_key]['new_num_rbgs']
+    #     slice_metrics[cur_s_key]['new_num_rbgs'] = max(slice_metrics[cur_s_key]['new_num_rbgs'] - 1, 1)
+    #     tot_num_rbg_rqstd += slice_metrics[cur_s_key]['new_num_rbgs']
+
+    #     cur_s_idx_to_readjust = (cur_s_idx_to_readjust - 1) % len(list(slice_metrics))
+
+    # Decrease the number of requested RBGs one by one starting with the slice that has the most RBGs
+    while tot_num_rbg_rqstd > constants.MAX_RBG:
+        cur_s_key = 0
+        cur_max_num_rbgs = 0
+        for s_key, s_val in slice_metrics.items():
+            if s_val['new_num_rbgs'] > cur_max_num_rbgs:
+                cur_max_num_rbgs = s_val['new_num_rbgs']
+                cur_s_key = s_key
+
+        tot_num_rbg_rqstd -= slice_metrics[cur_s_key]['new_num_rbgs']
+        slice_metrics[cur_s_key]['new_num_rbgs'] = max(slice_metrics[cur_s_key]['new_num_rbgs'] - 1, 1)
+        tot_num_rbg_rqstd += slice_metrics[cur_s_key]['new_num_rbgs']
 
 # Implement Delay Target aware resource allocation policy
 # in this case, assign more resources to slices/users if dl_buffer is above threshold 
 # if the current latency is below some lower bound, deallocate resources to reduce resource consumption
-def cell_order_for_delay_target(cell_order_config: dict, metrics_db: dict, slice_users: dict) -> None:
+def cell_order_for_delay_target(cell_order_config: dict, metrics_db: dict, slice_users: dict, iter_cnt: int) -> None:
 
     # Add the latency in milliseconds into the metrics_db
     calculate_dl_latency_metric(metrics_db)
@@ -55,14 +86,20 @@ def cell_order_for_delay_target(cell_order_config: dict, metrics_db: dict, slice
         slice_metrics[s_key]['cur_slice_mask'] = read_slice_mask(s_key) # string
         slice_metrics[s_key]['new_num_rbgs'] = slice_metrics[s_key]['cur_slice_mask'].count('1')
 
-        if cell_order_config['delay-budget-enabled']:
+        if (iter_cnt < 1):
+            # Make sure to start with a fair allocation
+            slice_metrics[s_key]['new_num_rbgs'] = int(constants.MAX_RBG / len(list(slice_metrics)))
+            mask_to_write = True
+
+        elif cell_order_config['delay-budget-enabled']:
 
             curr_lo_delay_budget = cell_order_config['slice-delay-budget-msec'][s_key][0]
             curr_hi_delay_budget = cell_order_config['slice-delay-budget-msec'][s_key][1]
+            curr_tx_rate_budget = cell_order_config['slice-min-tx-rate-Mbps'][s_key]
 
-            if s_val[DL_LAT_KEYWORD] > curr_hi_delay_budget:
+            if s_val[DL_LAT_KEYWORD] > curr_hi_delay_budget or s_val[DL_THP_KEYWORD] < curr_tx_rate_budget:
                 # Allocate more resources to this slice
-                slice_metrics[s_key]['new_num_rbgs'] = min(slice_metrics[s_key]['new_num_rbgs'] + 1, MAX_RBG)
+                slice_metrics[s_key]['new_num_rbgs'] = min(slice_metrics[s_key]['new_num_rbgs'] + 1, constants.MAX_RBG)
                 mask_to_write = True
             elif s_val[DL_LAT_KEYWORD] < curr_lo_delay_budget:
                 # Allocate less resources to this slice
@@ -78,19 +115,8 @@ def cell_order_for_delay_target(cell_order_config: dict, metrics_db: dict, slice
     if mask_to_write:
 
         # Readjust number of RBGs if the total number exceeds the availability
-        if tot_num_rbg_rqstd > MAX_RBG:
-            logging.info('ts_ms:{} requested_rbg:{}'.format(timestamp_ms, tot_num_rbg_rqstd))
-
-            # Decrease the number of requested RBGs one by one starting with the last slice (largest budget)
-            cur_s_idx_to_readjust = len(slice_metrics.keys()) -1
-            while tot_num_rbg_rqstd > MAX_RBG:
-                cur_s_key = slice_metrics.keys()[cur_s_idx_to_readjust]
-
-                tot_num_rbg_rqstd -= slice_metrics[cur_s_key]['new_num_rbgs']
-                slice_metrics[cur_s_key]['new_num_rbgs'] = max(slice_metrics[cur_s_key]['new_num_rbgs'] - 1, 1)
-                tot_num_rbg_rqstd += slice_metrics[cur_s_key]['new_num_rbgs']
-
-                cur_s_idx_to_readjust = (cur_s_idx_to_readjust - 1) % len(slice_metrics.keys())
+        if tot_num_rbg_rqstd > constants.MAX_RBG:
+            readjust_rbgs_to_capacity(slice_metrics, tot_num_rbg_rqstd)
 
         # Write slice masks for each slice on file
         rbg_idx_to_start = 0
@@ -98,7 +124,7 @@ def cell_order_for_delay_target(cell_order_config: dict, metrics_db: dict, slice
             new_mask = '0' * rbg_idx_to_start
             new_mask += '1' * s_val['new_num_rbgs']
             rbg_idx_to_start = len(new_mask)
-            new_mask += '0' * (MAX_RBG - rbg_idx_to_start)
+            new_mask += '0' * (constants.MAX_RBG - rbg_idx_to_start)
 
             # assemble config parameters dictionary and write mask
             # tenant_number needs to be there but is not used in this case
@@ -118,7 +144,7 @@ def parse_cell_order_config_file(filename: str) -> dict:
         # convert to right types
         if param_val.lower() in ['true', 'false']:
             config[param_key] = bool(param_val == 'True')
-        elif param_key in ['slice-delay-budget-msec']:
+        elif param_key in ['slice-delay-budget-msec', 'slice-min-tx-rate-Mbps']:
             # Convert some config to python dictionary
             config[param_key] = ast.literal_eval(param_val)
         elif param_key in ['reallocation-period-sec']:
@@ -155,7 +181,6 @@ if __name__ == '__main__':
 
     round = -1
     while True:
-        time.sleep(cell_order_config['reallocation-period-sec'])
 
         round += 1
         logging.info('Starting round ' + str(round))
@@ -166,4 +191,6 @@ if __name__ == '__main__':
         # get slicing associations {slice_id->(imsi)}
         slice_users = get_slice_users(metrics_db)
 
-        cell_order_for_delay_target(cell_order_config, metrics_db, slice_users)
+        cell_order_for_delay_target(cell_order_config, metrics_db, slice_users, round)
+
+        time.sleep(cell_order_config['reallocation-period-sec'])
