@@ -61,3 +61,7 @@ radio_code/scope_config/metrics/csv/
 
 .gitconfig
 
+*.pyc
+*.pyo
+.ipynb_checkpoints
+*/.ipynb_checkpoints/*
