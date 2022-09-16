@@ -1,0 +1,679 @@
+2022-09-16 15:45:53,924 INFO     Parsing /root/radio_api/cell-order.conf configuration file
+2022-09-16 15:45:53,925 INFO     Cell-Order configuration: {'delay-budget-enabled': False, 'slice-min-tx-rate-Mbps': {0: 1.5, 1: 1.5, 2: 1.5}, 'reallocation-period-sec': 30.0, 'slice-delay-budget-msec': {0: [50, 75], 1: [15, 30], 2: [5, 10]}}
+2022-09-16 15:45:53,925 INFO     Starting round 0
+2022-09-16 15:45:53,925 INFO     ts_ms:1663343153925 slice_metrics:{}
+2022-09-16 15:46:23,955 INFO     Starting round 1
+2022-09-16 15:46:23,955 INFO     ts_ms:1663343183955 slice_metrics:{}
+2022-09-16 15:46:53,986 INFO     Starting round 2
+2022-09-16 15:46:53,988 INFO     ts_ms:1663343213988 slice_metrics:{0: {'dl_latency [msec]': 0.0, 'tx_brate downlink [Mbps]': 0.002928, 'new_num_rbgs': 6, 'num_slice_users': 1, 'dl_buffer [bytes]': 0.0, 'cur_slice_mask': '1111110000000000000000000'}, 2: {'dl_latency [msec]': 111.05841525026064, 'tx_brate downlink [Mbps]': 2.4145071034482757, 'new_num_rbgs': 5, 'num_slice_users': 1, 'dl_buffer [bytes]': 42081.620689655174, 'cur_slice_mask': '0000000000001111100000000'}}
+2022-09-16 15:47:24,018 INFO     Starting round 3
+2022-09-16 15:47:24,027 INFO     ts_ms:1663343244027 slice_metrics:{0: {'dl_latency [msec]': 44.04613674197901, 'tx_brate downlink [Mbps]': 0.9382994500000003, 'new_num_rbgs': 6, 'num_slice_users': 1, 'dl_buffer [bytes]': 3355.233333333333, 'cur_slice_mask': '1111110000000000000000000'}, 1: {'dl_latency [msec]': 18.914461770730533, 'tx_brate downlink [Mbps]': 1.4255033235294123, 'new_num_rbgs': 6, 'num_slice_users': 1, 'dl_buffer [bytes]': 2890.0588235294117, 'cur_slice_mask': '0000001111110000000000000'}, 2: {'dl_latency [msec]': 95.69718261446727, 'tx_brate downlink [Mbps]': 2.5578874833333347, 'new_num_rbgs': 5, 'num_slice_users': 1, 'dl_buffer [bytes]': 35284.083333333336, 'cur_slice_mask': '0000000000001111100000000'}}
+2022-09-16 15:47:54,057 INFO     Starting round 4
+2022-09-16 15:47:54,101 INFO     ts_ms:1663343274101 slice_metrics:{0: {'dl_latency [msec]': 42.32303213068196, 'tx_brate downlink [Mbps]': 0.78833576, 'new_num_rbgs': 6, 'num_slice_users': 1, 'dl_buffer [bytes]': 2081.0, 'cur_slice_mask': '1111110000000000000000000'}, 1: {'dl_latency [msec]': 10.284530279142254, 'tx_brate downlink [Mbps]': 1.291636016666666, 'new_num_rbgs': 6, 'num_slice_users': 1, 'dl_buffer [bytes]': 1249.0833333333333, 'cur_slice_mask': '0000001111110000000000000'}, 2: {'dl_latency [msec]': 26.184659795920926, 'tx_brate downlink [Mbps]': 2.284145316666666, 'new_num_rbgs': 5, 'num_slice_users': 1, 'dl_buffer [bytes]': 7255.875, 'cur_slice_mask': '0000000000001111100000000'}}
+2022-09-16 15:48:24,105 INFO     Starting round 5
+2022-09-16 15:48:24,117 INFO     ts_ms:1663343304117 slice_metrics:{0: {'dl_latency [msec]': 23.31709757996025, 'tx_brate downlink [Mbps]': 0.6158998416666667, 'new_num_rbgs': 6, 'num_slice_users': 1, 'dl_buffer [bytes]': 1400.15, 'cur_slice_mask': '1111110000000000000000000'}, 1: {'dl_latency [msec]': 12.756531087807483, 'tx_brate downlink [Mbps]': 1.565669491666667, 'new_num_rbgs': 6, 'num_slice_users': 1, 'dl_buffer [bytes]': 2119.758333333333, 'cur_slice_mask': '0000001111110000000000000'}, 2: {'dl_latency [msec]': 24.78721537081722, 'tx_brate downlink [Mbps]': 2.1890814666666665, 'new_num_rbgs': 5, 'num_slice_users': 1, 'dl_buffer [bytes]': 6560.966666666666, 'cur_slice_mask': '0000000000001111100000000'}}
+2022-09-16 15:48:54,129 INFO     Starting round 6
+2022-09-16 15:48:54,142 INFO     ts_ms:1663343334142 slice_metrics:{0: {'dl_latency [msec]': 22.83863184596943, 'tx_brate downlink [Mbps]': 0.44023816416666667, 'new_num_rbgs': 6, 'num_slice_users': 1, 'dl_buffer [bytes]': 658.8333333333334, 'cur_slice_mask': '1111110000000000000000000'}, 1: {'dl_latency [msec]': 21.29108265083687, 'tx_brate downlink [Mbps]': 1.5453256833333333, 'new_num_rbgs': 6, 'num_slice_users': 1, 'dl_buffer [bytes]': 2170.0583333333334, 'cur_slice_mask': '0000001111110000000000000'}, 2: {'dl_latency [msec]': 32.55316480169319, 'tx_brate downlink [Mbps]': 2.215615505833333, 'new_num_rbgs': 5, 'num_slice_users': 1, 'dl_buffer [bytes]': 8309.216666666667, 'cur_slice_mask': '0000000000001111100000000'}}
+2022-09-16 15:49:24,172 INFO     Starting round 7
+2022-09-16 15:49:24,187 INFO     ts_ms:1663343364187 slice_metrics:{0: {'dl_latency [msec]': 35.937601036172005, 'tx_brate downlink [Mbps]': 0.48325691666666676, 'new_num_rbgs': 6, 'num_slice_users': 1, 'dl_buffer [bytes]': 805.1916666666667, 'cur_slice_mask': '1111110000000000000000000'}, 1: {'dl_latency [msec]': 16.919510377530408, 'tx_brate downlink [Mbps]': 1.5777373333333324, 'new_num_rbgs': 6, 'num_slice_users': 1, 'dl_buffer [bytes]': 2436.8333333333335, 'cur_slice_mask': '0000001111110000000000000'}, 2: {'dl_latency [msec]': 32.535586971737935, 'tx_brate downlink [Mbps]': 2.31815805, 'new_num_rbgs': 5, 'num_slice_users': 1, 'dl_buffer [bytes]': 8291.875, 'cur_slice_mask': '0000000000001111100000000'}}
+2022-09-16 15:49:54,229 INFO     Starting round 8
+2022-09-16 15:49:54,245 INFO     ts_ms:1663343394245 slice_metrics:{0: {'dl_latency [msec]': 12.839584106245818, 'tx_brate downlink [Mbps]': 0.6468032049999999, 'new_num_rbgs': 6, 'num_slice_users': 1, 'dl_buffer [bytes]': 2149.258333333333, 'cur_slice_mask': '1111110000000000000000000'}, 1: {'dl_latency [msec]': 10.565790239956588, 'tx_brate downlink [Mbps]': 1.6835791258333328, 'new_num_rbgs': 6, 'num_slice_users': 1, 'dl_buffer [bytes]': 2179.358333333333, 'cur_slice_mask': '0000001111110000000000000'}, 2: {'dl_latency [msec]': 25.027162689580802, 'tx_brate downlink [Mbps]': 2.1937654333333336, 'new_num_rbgs': 5, 'num_slice_users': 1, 'dl_buffer [bytes]': 6656.791666666667, 'cur_slice_mask': '0000000000001111100000000'}}
+2022-09-16 15:50:24,273 INFO     Starting round 9
+2022-09-16 15:50:24,291 INFO     ts_ms:1663343424291 slice_metrics:{0: {'dl_latency [msec]': 58.549685247534704, 'tx_brate downlink [Mbps]': 0.651560015, 'new_num_rbgs': 6, 'num_slice_users': 1, 'dl_buffer [bytes]': 1595.4, 'cur_slice_mask': '1111110000000000000000000'}, 1: {'dl_latency [msec]': 12.27359780609795, 'tx_brate downlink [Mbps]': 1.6366426833333334, 'new_num_rbgs': 6, 'num_slice_users': 1, 'dl_buffer [bytes]': 2496.425, 'cur_slice_mask': '0000001111110000000000000'}, 2: {'dl_latency [msec]': 25.47606210806767, 'tx_brate downlink [Mbps]': 2.1833474166666664, 'new_num_rbgs': 5, 'num_slice_users': 1, 'dl_buffer [bytes]': 6822.4, 'cur_slice_mask': '0000000000001111100000000'}}
+2022-09-16 15:50:54,321 INFO     Starting round 10
+2022-09-16 15:50:54,341 INFO     ts_ms:1663343454341 slice_metrics:{0: {'dl_latency [msec]': 47.398413748166675, 'tx_brate downlink [Mbps]': 0.6902345716666669, 'new_num_rbgs': 6, 'num_slice_users': 1, 'dl_buffer [bytes]': 1872.6333333333334, 'cur_slice_mask': '1111110000000000000000000'}, 1: {'dl_latency [msec]': 5.503177650764209, 'tx_brate downlink [Mbps]': 1.270177425, 'new_num_rbgs': 6, 'num_slice_users': 1, 'dl_buffer [bytes]': 935.825, 'cur_slice_mask': '0000001111110000000000000'}, 2: {'dl_latency [msec]': 26.939938392423237, 'tx_brate downlink [Mbps]': 2.2631410500000007, 'new_num_rbgs': 5, 'num_slice_users': 1, 'dl_buffer [bytes]': 7544.525, 'cur_slice_mask': '0000000000001111100000000'}}
+2022-09-16 15:51:24,361 INFO     Starting round 11
+2022-09-16 15:51:24,382 INFO     ts_ms:1663343484382 slice_metrics:{0: {'dl_latency [msec]': 13.571924651156495, 'tx_brate downlink [Mbps]': 0.7132590876666666, 'new_num_rbgs': 6, 'num_slice_users': 1, 'dl_buffer [bytes]': 1811.2583333333334, 'cur_slice_mask': '1111110000000000000000000'}, 1: {'dl_latency [msec]': 21.24205662292011, 'tx_brate downlink [Mbps]': 1.3856033699999997, 'new_num_rbgs': 6, 'num_slice_users': 1, 'dl_buffer [bytes]': 1978.7, 'cur_slice_mask': '0000001111110000000000000'}, 2: {'dl_latency [msec]': 24.325935842356337, 'tx_brate downlink [Mbps]': 2.277849133333334, 'new_num_rbgs': 5, 'num_slice_users': 1, 'dl_buffer [bytes]': 6887.558333333333, 'cur_slice_mask': '0000000000001111100000000'}}
+2022-09-16 15:51:54,401 INFO     Starting round 12
+2022-09-16 15:51:54,423 INFO     ts_ms:1663343514423 slice_metrics:{0: {'dl_latency [msec]': 10.506178548753967, 'tx_brate downlink [Mbps]': 0.37935560500000015, 'new_num_rbgs': 6, 'num_slice_users': 1, 'dl_buffer [bytes]': 753.9833333333333, 'cur_slice_mask': '1111110000000000000000000'}, 1: {'dl_latency [msec]': 9.022042747302397, 'tx_brate downlink [Mbps]': 1.6976674333333337, 'new_num_rbgs': 6, 'num_slice_users': 1, 'dl_buffer [bytes]': 1711.95, 'cur_slice_mask': '0000001111110000000000000'}, 2: {'dl_latency [msec]': 29.559013711402258, 'tx_brate downlink [Mbps]': 2.334841216666666, 'new_num_rbgs': 5, 'num_slice_users': 1, 'dl_buffer [bytes]': 7828.633333333333, 'cur_slice_mask': '0000000000001111100000000'}}
+2022-09-16 15:52:24,437 INFO     Starting round 13
+2022-09-16 15:52:24,462 INFO     ts_ms:1663343544462 slice_metrics:{0: {'dl_latency [msec]': 82.1464542524264, 'tx_brate downlink [Mbps]': 0.5006154316666667, 'new_num_rbgs': 6, 'num_slice_users': 1, 'dl_buffer [bytes]': 1208.8, 'cur_slice_mask': '1111110000000000000000000'}, 1: {'dl_latency [msec]': 12.685705500923076, 'tx_brate downlink [Mbps]': 1.6028547783333331, 'new_num_rbgs': 6, 'num_slice_users': 1, 'dl_buffer [bytes]': 2097.508333333333, 'cur_slice_mask': '0000001111110000000000000'}, 2: {'dl_latency [msec]': 40.3812628585034, 'tx_brate downlink [Mbps]': 2.2184295166666663, 'new_num_rbgs': 5, 'num_slice_users': 1, 'dl_buffer [bytes]': 7719.241666666667, 'cur_slice_mask': '0000000000001111100000000'}}
+2022-09-16 15:52:54,477 INFO     Starting round 14
+2022-09-16 15:52:54,503 INFO     ts_ms:1663343574503 slice_metrics:{0: {'dl_latency [msec]': 96.29207671874272, 'tx_brate downlink [Mbps]': 0.8102903349999999, 'new_num_rbgs': 6, 'num_slice_users': 1, 'dl_buffer [bytes]': 2902.3166666666666, 'cur_slice_mask': '1111110000000000000000000'}, 1: {'dl_latency [msec]': 28.748204178042116, 'tx_brate downlink [Mbps]': 1.517332135833333, 'new_num_rbgs': 6, 'num_slice_users': 1, 'dl_buffer [bytes]': 2286.6916666666666, 'cur_slice_mask': '0000001111110000000000000'}, 2: {'dl_latency [msec]': 22.327472200323005, 'tx_brate downlink [Mbps]': 2.0361881499999996, 'new_num_rbgs': 5, 'num_slice_users': 1, 'dl_buffer [bytes]': 5397.308333333333, 'cur_slice_mask': '0000000000001111100000000'}}
+2022-09-16 15:53:24,533 INFO     Starting round 15
+2022-09-16 15:53:24,561 INFO     ts_ms:1663343604561 slice_metrics:{0: {'dl_latency [msec]': 33.03406492041773, 'tx_brate downlink [Mbps]': 0.5666096566666666, 'new_num_rbgs': 6, 'num_slice_users': 1, 'dl_buffer [bytes]': 1075.6916666666666, 'cur_slice_mask': '1111110000000000000000000'}, 1: {'dl_latency [msec]': 31.4261898792886, 'tx_brate downlink [Mbps]': 1.5232123083333335, 'new_num_rbgs': 6, 'num_slice_users': 1, 'dl_buffer [bytes]': 2177.9666666666667, 'cur_slice_mask': '0000001111110000000000000'}, 2: {'dl_latency [msec]': 26.055353476971415, 'tx_brate downlink [Mbps]': 2.207244500000001, 'new_num_rbgs': 5, 'num_slice_users': 1, 'dl_buffer [bytes]': 6694.616666666667, 'cur_slice_mask': '0000000000001111100000000'}}
+2022-09-16 15:53:54,591 INFO     Starting round 16
+2022-09-16 15:53:54,621 INFO     ts_ms:1663343634621 slice_metrics:{0: {'dl_latency [msec]': 35.76937109608504, 'tx_brate downlink [Mbps]': 0.4570940333333333, 'new_num_rbgs': 6, 'num_slice_users': 1, 'dl_buffer [bytes]': 1241.0416666666667, 'cur_slice_mask': '1111110000000000000000000'}, 1: {'dl_latency [msec]': 10.156805003844825, 'tx_brate downlink [Mbps]': 1.5257260791666667, 'new_num_rbgs': 6, 'num_slice_users': 1, 'dl_buffer [bytes]': 1657.8166666666666, 'cur_slice_mask': '0000001111110000000000000'}, 2: {'dl_latency [msec]': 40.13782067417909, 'tx_brate downlink [Mbps]': 2.2115650416666672, 'new_num_rbgs': 5, 'num_slice_users': 1, 'dl_buffer [bytes]': 6618.433333333333, 'cur_slice_mask': '0000000000001111100000000'}}
+2022-09-16 15:54:24,645 INFO     Starting round 17
+2022-09-16 15:54:24,677 INFO     ts_ms:1663343664677 slice_metrics:{0: {'dl_latency [msec]': 16.949476461368377, 'tx_brate downlink [Mbps]': 0.5537686116666668, 'new_num_rbgs': 6, 'num_slice_users': 1, 'dl_buffer [bytes]': 1147.15, 'cur_slice_mask': '1111110000000000000000000'}, 1: {'dl_latency [msec]': 19.892450653016205, 'tx_brate downlink [Mbps]': 1.5075716666666668, 'new_num_rbgs': 6, 'num_slice_users': 1, 'dl_buffer [bytes]': 2275.6916666666666, 'cur_slice_mask': '0000001111110000000000000'}, 2: {'dl_latency [msec]': 30.22765276155809, 'tx_brate downlink [Mbps]': 2.2316178499999983, 'new_num_rbgs': 5, 'num_slice_users': 1, 'dl_buffer [bytes]': 8223.408333333333, 'cur_slice_mask': '0000000000001111100000000'}}
+2022-09-16 15:54:54,685 INFO     Starting round 18
+2022-09-16 15:54:54,717 INFO     ts_ms:1663343694717 slice_metrics:{0: {'dl_latency [msec]': 22.03117124825307, 'tx_brate downlink [Mbps]': 0.7592815750000003, 'new_num_rbgs': 6, 'num_slice_users': 1, 'dl_buffer [bytes]': 2131.5666666666666, 'cur_slice_mask': '1111110000000000000000000'}, 1: {'dl_latency [msec]': 17.5676506829946, 'tx_brate downlink [Mbps]': 1.2518659016666664, 'new_num_rbgs': 6, 'num_slice_users': 1, 'dl_buffer [bytes]': 1269.1666666666667, 'cur_slice_mask': '0000001111110000000000000'}, 2: {'dl_latency [msec]': 26.009740016328397, 'tx_brate downlink [Mbps]': 2.202703916666666, 'new_num_rbgs': 5, 'num_slice_users': 1, 'dl_buffer [bytes]': 7211.741666666667, 'cur_slice_mask': '0000000000001111100000000'}}
+2022-09-16 15:55:24,747 INFO     Starting round 19
+2022-09-16 15:55:24,789 INFO     ts_ms:1663343724789 slice_metrics:{0: {'dl_latency [msec]': 21.821093241288164, 'tx_brate downlink [Mbps]': 0.5268466333333334, 'new_num_rbgs': 6, 'num_slice_users': 1, 'dl_buffer [bytes]': 957.0916666666667, 'cur_slice_mask': '1111110000000000000000000'}, 1: {'dl_latency [msec]': 27.998727848404677, 'tx_brate downlink [Mbps]': 1.5663578166666658, 'new_num_rbgs': 6, 'num_slice_users': 1, 'dl_buffer [bytes]': 2309.6, 'cur_slice_mask': '0000001111110000000000000'}, 2: {'dl_latency [msec]': 24.94506289799324, 'tx_brate downlink [Mbps]': 2.167590400000001, 'new_num_rbgs': 5, 'num_slice_users': 1, 'dl_buffer [bytes]': 6374.2, 'cur_slice_mask': '0000000000001111100000000'}}
+2022-09-16 15:55:54,819 INFO     Starting round 20
+2022-09-16 15:55:54,855 INFO     ts_ms:1663343754855 slice_metrics:{0: {'dl_latency [msec]': 36.55878331173168, 'tx_brate downlink [Mbps]': 0.6185273250000001, 'new_num_rbgs': 6, 'num_slice_users': 1, 'dl_buffer [bytes]': 1829.5083333333334, 'cur_slice_mask': '1111110000000000000000000'}, 1: {'dl_latency [msec]': 14.060332464793285, 'tx_brate downlink [Mbps]': 1.4500533749999995, 'new_num_rbgs': 6, 'num_slice_users': 1, 'dl_buffer [bytes]': 1785.7, 'cur_slice_mask': '0000001111110000000000000'}, 2: {'dl_latency [msec]': 30.723310478377208, 'tx_brate downlink [Mbps]': 2.3861587333333345, 'new_num_rbgs': 5, 'num_slice_users': 1, 'dl_buffer [bytes]': 8788.025, 'cur_slice_mask': '0000000000001111100000000'}}
+2022-09-16 15:56:24,886 INFO     Starting round 21
+2022-09-16 15:56:24,924 INFO     ts_ms:1663343784923 slice_metrics:{0: {'dl_latency [msec]': 7.677168996937792, 'tx_brate downlink [Mbps]': 0.3142849000000002, 'new_num_rbgs': 6, 'num_slice_users': 1, 'dl_buffer [bytes]': 601.1083333333333, 'cur_slice_mask': '1111110000000000000000000'}, 1: {'dl_latency [msec]': 11.152823337488766, 'tx_brate downlink [Mbps]': 1.6015313333333339, 'new_num_rbgs': 6, 'num_slice_users': 1, 'dl_buffer [bytes]': 2345.891666666667, 'cur_slice_mask': '0000001111110000000000000'}, 2: {'dl_latency [msec]': 26.8971439719442, 'tx_brate downlink [Mbps]': 2.3626200166666664, 'new_num_rbgs': 5, 'num_slice_users': 1, 'dl_buffer [bytes]': 7155.375, 'cur_slice_mask': '0000000000001111100000000'}}
+2022-09-16 15:56:54,954 INFO     Starting round 22
+2022-09-16 15:56:54,994 INFO     ts_ms:1663343814994 slice_metrics:{0: {'dl_latency [msec]': 44.32769069385933, 'tx_brate downlink [Mbps]': 0.6664135849999998, 'new_num_rbgs': 6, 'num_slice_users': 1, 'dl_buffer [bytes]': 1630.5166666666667, 'cur_slice_mask': '1111110000000000000000000'}, 1: {'dl_latency [msec]': 22.90506320137324, 'tx_brate downlink [Mbps]': 2.083641716666666, 'new_num_rbgs': 6, 'num_slice_users': 1, 'dl_buffer [bytes]': 4042.15, 'cur_slice_mask': '0000001111110000000000000'}, 2: {'dl_latency [msec]': 18.3622883234297, 'tx_brate downlink [Mbps]': 1.2997076, 'new_num_rbgs': 5, 'num_slice_users': 1, 'dl_buffer [bytes]': 4110.766666666666, 'cur_slice_mask': '0000000000001111100000000'}}
+2022-09-16 15:57:24,997 INFO     Starting round 23
+2022-09-16 15:57:25,039 INFO     ts_ms:1663343845039 slice_metrics:{0: {'dl_latency [msec]': 4.20756043681669, 'tx_brate downlink [Mbps]': 0.2552646500000001, 'new_num_rbgs': 6, 'num_slice_users': 1, 'dl_buffer [bytes]': 610.9083333333333, 'cur_slice_mask': '1111110000000000000000000'}, 1: {'dl_latency [msec]': 68.31625806428764, 'tx_brate downlink [Mbps]': 2.0944452499999993, 'new_num_rbgs': 6, 'num_slice_users': 1, 'dl_buffer [bytes]': 34153.125, 'cur_slice_mask': '0000001111110000000000000'}, 2: {'dl_latency [msec]': 0.0, 'tx_brate downlink [Mbps]': 0.0, 'new_num_rbgs': 5, 'num_slice_users': 1, 'dl_buffer [bytes]': 0.0, 'cur_slice_mask': '0000000000001111100000000'}}
+2022-09-16 15:57:55,041 INFO     Starting round 24
+2022-09-16 15:57:55,082 INFO     ts_ms:1663343875082 slice_metrics:{0: {'dl_latency [msec]': 4.20756043681669, 'tx_brate downlink [Mbps]': 0.2552646500000001, 'new_num_rbgs': 6, 'num_slice_users': 1, 'dl_buffer [bytes]': 610.9083333333333, 'cur_slice_mask': '1111110000000000000000000'}, 1: {'dl_latency [msec]': 0.0, 'tx_brate downlink [Mbps]': 0.0, 'new_num_rbgs': 6, 'num_slice_users': 1, 'dl_buffer [bytes]': 0.0, 'cur_slice_mask': '0000001111110000000000000'}, 2: {'dl_latency [msec]': 0.0, 'tx_brate downlink [Mbps]': 0.0, 'new_num_rbgs': 5, 'num_slice_users': 1, 'dl_buffer [bytes]': 0.0, 'cur_slice_mask': '0000000000001111100000000'}}
+2022-09-16 15:58:25,112 INFO     Starting round 25
+2022-09-16 15:58:25,154 INFO     ts_ms:1663343905154 slice_metrics:{0: {'dl_latency [msec]': 4.20756043681669, 'tx_brate downlink [Mbps]': 0.2552646500000001, 'new_num_rbgs': 6, 'num_slice_users': 1, 'dl_buffer [bytes]': 610.9083333333333, 'cur_slice_mask': '1111110000000000000000000'}, 1: {'dl_latency [msec]': 0.0, 'tx_brate downlink [Mbps]': 0.0, 'new_num_rbgs': 6, 'num_slice_users': 1, 'dl_buffer [bytes]': 0.0, 'cur_slice_mask': '0000001111110000000000000'}, 2: {'dl_latency [msec]': 0.0, 'tx_brate downlink [Mbps]': 0.0, 'new_num_rbgs': 5, 'num_slice_users': 1, 'dl_buffer [bytes]': 0.0, 'cur_slice_mask': '0000000000001111100000000'}}
+2022-09-16 16:00:31,302 INFO     Parsing /root/radio_api/cell-order.conf configuration file
+2022-09-16 16:01:02,672 INFO     Parsing /root/radio_api/cell-order.conf configuration file
+2022-09-16 16:01:02,672 INFO     Cell-Order configuration: {'reallocation-period-sec': 30.0, 'slice-delay-budget-msec': {0: [50, 75], 1: [15, 30], 2: [5, 10]}, 'slice-min-tx-rate-Mbps': {0: 1.5, 1: 1.5, 2: 1.5}, 'delay-budget-enabled': True}
+2022-09-16 16:01:02,673 INFO     Starting round 0
+2022-09-16 16:01:02,716 INFO     ts_ms:1663344062716 slice_metrics:{0: {'num_slice_users': 1, 'tx_brate downlink [Mbps]': 0.2552646500000001, 'new_num_rbgs': 5, 'dl_latency [msec]': 4.20756043681669, 'cur_slice_mask': '1111110000000000000000000', 'dl_buffer [bytes]': 610.9083333333333}, 1: {'num_slice_users': 1, 'tx_brate downlink [Mbps]': 0.0, 'new_num_rbgs': 5, 'dl_latency [msec]': 0.0, 'cur_slice_mask': '0000001111110000000000000', 'dl_buffer [bytes]': 0.0}, 2: {'num_slice_users': 1, 'tx_brate downlink [Mbps]': 0.0, 'new_num_rbgs': 5, 'dl_latency [msec]': 0.0, 'cur_slice_mask': '0000000000001111100000000', 'dl_buffer [bytes]': 0.0}}
+2022-09-16 16:01:02,716 INFO     Writing slicing masks
+2022-09-16 16:01:02,716 INFO     Writing full mask for slice 0: 11111000000000000
+2022-09-16 16:01:02,716 INFO     Slicing mask tenant 0: 11111000000000000
+2022-09-16 16:01:02,716 INFO     Writing slicing masks
+2022-09-16 16:01:02,717 INFO     Writing full mask for slice 1: 00000111110000000
+2022-09-16 16:01:02,717 INFO     Slicing mask tenant 1: 00000111110000000
+2022-09-16 16:01:02,717 INFO     Writing slicing masks
+2022-09-16 16:01:02,717 INFO     Writing full mask for slice 2: 00000000001111100
+2022-09-16 16:01:02,717 INFO     Slicing mask tenant 2: 00000000001111100
+2022-09-16 16:01:32,747 INFO     Starting round 1
+2022-09-16 16:01:32,792 INFO     ts_ms:1663344092791 slice_metrics:{0: {'num_slice_users': 1, 'tx_brate downlink [Mbps]': 0.44422219999999984, 'new_num_rbgs': 6, 'dl_latency [msec]': 21.907506806028245, 'cur_slice_mask': '11111000000000000', 'dl_buffer [bytes]': 2450.6833333333334}, 1: {'num_slice_users': 1, 'tx_brate downlink [Mbps]': 0.6360689312499999, 'new_num_rbgs': 6, 'dl_latency [msec]': 10.65165906224842, 'cur_slice_mask': '00000111110000000', 'dl_buffer [bytes]': 2828.0}, 2: {'num_slice_users': 1, 'tx_brate downlink [Mbps]': 2.042622849166667, 'new_num_rbgs': 6, 'dl_latency [msec]': 34.55068804409303, 'cur_slice_mask': '00000000001111100', 'dl_buffer [bytes]': 11745.941666666668}}
+2022-09-16 16:01:32,792 INFO     requested_rbg:18
+2022-09-16 16:01:32,792 INFO     Writing slicing masks
+2022-09-16 16:01:32,792 INFO     Writing full mask for slice 0: 11111000000000000
+2022-09-16 16:01:32,792 INFO     Slicing mask tenant 0: 11111000000000000
+2022-09-16 16:01:32,792 INFO     Writing slicing masks
+2022-09-16 16:01:32,792 INFO     Writing full mask for slice 1: 00000111111000000
+2022-09-16 16:01:32,792 INFO     Slicing mask tenant 1: 00000111111000000
+2022-09-16 16:01:32,793 INFO     Writing slicing masks
+2022-09-16 16:01:32,793 INFO     Writing full mask for slice 2: 00000000000111111
+2022-09-16 16:01:32,793 INFO     Slicing mask tenant 2: 00000000000111111
+2022-09-16 16:02:02,823 INFO     Starting round 2
+2022-09-16 16:02:02,868 INFO     ts_ms:1663344122868 slice_metrics:{0: {'num_slice_users': 1, 'tx_brate downlink [Mbps]': 0.942731138333333, 'new_num_rbgs': 6, 'dl_latency [msec]': 24.213673632611084, 'cur_slice_mask': '11111000000000000', 'dl_buffer [bytes]': 3152.8}, 1: {'num_slice_users': 1, 'tx_brate downlink [Mbps]': 1.786646691666667, 'new_num_rbgs': 5, 'dl_latency [msec]': 10.892472698280764, 'cur_slice_mask': '00000111111000000', 'dl_buffer [bytes]': 2617.85}, 2: {'num_slice_users': 1, 'tx_brate downlink [Mbps]': 1.7061115583333333, 'new_num_rbgs': 7, 'dl_latency [msec]': 25.339047661382946, 'cur_slice_mask': '00000000000111111', 'dl_buffer [bytes]': 3141.75}}
+2022-09-16 16:02:02,868 INFO     requested_rbg:18
+2022-09-16 16:02:02,868 INFO     Writing slicing masks
+2022-09-16 16:02:02,868 INFO     Writing full mask for slice 0: 11111100000000000
+2022-09-16 16:02:02,868 INFO     Slicing mask tenant 0: 11111100000000000
+2022-09-16 16:02:02,869 INFO     Writing slicing masks
+2022-09-16 16:02:02,869 INFO     Writing full mask for slice 1: 00000011111000000
+2022-09-16 16:02:02,869 INFO     Slicing mask tenant 1: 00000011111000000
+2022-09-16 16:02:02,869 INFO     Writing slicing masks
+2022-09-16 16:02:02,869 INFO     Writing full mask for slice 2: 00000000000111111
+2022-09-16 16:02:02,869 INFO     Slicing mask tenant 2: 00000000000111111
+2022-09-16 16:02:32,899 INFO     Starting round 3
+2022-09-16 16:02:32,946 INFO     ts_ms:1663344152946 slice_metrics:{0: {'num_slice_users': 1, 'tx_brate downlink [Mbps]': 0.033747766666666665, 'new_num_rbgs': 7, 'dl_latency [msec]': 0.5867316488053126, 'cur_slice_mask': '11111100000000000', 'dl_buffer [bytes]': 167.94166666666666}, 1: {'num_slice_users': 1, 'tx_brate downlink [Mbps]': 2.035229133333333, 'new_num_rbgs': 5, 'dl_latency [msec]': 16.761897389944714, 'cur_slice_mask': '00000011111000000', 'dl_buffer [bytes]': 4152.8}, 2: {'num_slice_users': 1, 'tx_brate downlink [Mbps]': 1.8429562166666669, 'new_num_rbgs': 7, 'dl_latency [msec]': 26.16976543833677, 'cur_slice_mask': '00000000000111111', 'dl_buffer [bytes]': 3134.133333333333}}
+2022-09-16 16:02:32,946 INFO     requested_rbg:19
+2022-09-16 16:02:32,946 INFO     Writing slicing masks
+2022-09-16 16:02:32,946 INFO     Writing full mask for slice 0: 11111100000000000
+2022-09-16 16:02:32,946 INFO     Slicing mask tenant 0: 11111100000000000
+2022-09-16 16:02:32,947 INFO     Writing slicing masks
+2022-09-16 16:02:32,947 INFO     Writing full mask for slice 1: 00000011111000000
+2022-09-16 16:02:32,947 INFO     Slicing mask tenant 1: 00000011111000000
+2022-09-16 16:02:32,947 INFO     Writing slicing masks
+2022-09-16 16:02:32,947 INFO     Writing full mask for slice 2: 00000000000111111
+2022-09-16 16:02:32,947 INFO     Slicing mask tenant 2: 00000000000111111
+2022-09-16 16:03:02,977 INFO     Starting round 4
+2022-09-16 16:03:03,026 INFO     ts_ms:1663344183026 slice_metrics:{0: {'num_slice_users': 1, 'tx_brate downlink [Mbps]': 0.45369609000000033, 'new_num_rbgs': 7, 'dl_latency [msec]': 16.128675950443828, 'cur_slice_mask': '11111100000000000', 'dl_buffer [bytes]': 953.3916666666667}, 1: {'num_slice_users': 1, 'tx_brate downlink [Mbps]': 1.9791734249999997, 'new_num_rbgs': 5, 'dl_latency [msec]': 18.144433359123546, 'cur_slice_mask': '00000011111000000', 'dl_buffer [bytes]': 4524.058333333333}, 2: {'num_slice_users': 1, 'tx_brate downlink [Mbps]': 1.7253677833333338, 'new_num_rbgs': 7, 'dl_latency [msec]': 15.10047816973334, 'cur_slice_mask': '00000000000111111', 'dl_buffer [bytes]': 2976.8083333333334}}
+2022-09-16 16:03:03,026 INFO     requested_rbg:19
+2022-09-16 16:03:03,026 INFO     Writing slicing masks
+2022-09-16 16:03:03,026 INFO     Writing full mask for slice 0: 11111100000000000
+2022-09-16 16:03:03,026 INFO     Slicing mask tenant 0: 11111100000000000
+2022-09-16 16:03:03,027 INFO     Writing slicing masks
+2022-09-16 16:03:03,027 INFO     Writing full mask for slice 1: 00000011111000000
+2022-09-16 16:03:03,027 INFO     Slicing mask tenant 1: 00000011111000000
+2022-09-16 16:03:03,027 INFO     Writing slicing masks
+2022-09-16 16:03:03,027 INFO     Writing full mask for slice 2: 00000000000111111
+2022-09-16 16:03:03,027 INFO     Slicing mask tenant 2: 00000000000111111
+2022-09-16 16:03:33,029 INFO     Starting round 5
+2022-09-16 16:03:33,086 INFO     ts_ms:1663344213086 slice_metrics:{0: {'num_slice_users': 1, 'tx_brate downlink [Mbps]': 0.40589788583333336, 'new_num_rbgs': 7, 'dl_latency [msec]': 10.870694195227786, 'cur_slice_mask': '11111100000000000', 'dl_buffer [bytes]': 937.6166666666667}, 1: {'num_slice_users': 1, 'tx_brate downlink [Mbps]': 1.9094186916666667, 'new_num_rbgs': 5, 'dl_latency [msec]': 18.441955619078065, 'cur_slice_mask': '00000011111000000', 'dl_buffer [bytes]': 4645.966666666666}, 2: {'num_slice_users': 1, 'tx_brate downlink [Mbps]': 1.8456398999999999, 'new_num_rbgs': 7, 'dl_latency [msec]': 12.375832540591363, 'cur_slice_mask': '00000000000111111', 'dl_buffer [bytes]': 2860.875}}
+2022-09-16 16:03:33,086 INFO     requested_rbg:19
+2022-09-16 16:03:33,086 INFO     Writing slicing masks
+2022-09-16 16:03:33,086 INFO     Writing full mask for slice 0: 11111100000000000
+2022-09-16 16:03:33,086 INFO     Slicing mask tenant 0: 11111100000000000
+2022-09-16 16:03:33,086 INFO     Writing slicing masks
+2022-09-16 16:03:33,087 INFO     Writing full mask for slice 1: 00000011111000000
+2022-09-16 16:03:33,087 INFO     Slicing mask tenant 1: 00000011111000000
+2022-09-16 16:03:33,087 INFO     Writing slicing masks
+2022-09-16 16:03:33,087 INFO     Writing full mask for slice 2: 00000000000111111
+2022-09-16 16:03:33,087 INFO     Slicing mask tenant 2: 00000000000111111
+2022-09-16 16:04:03,117 INFO     Starting round 6
+2022-09-16 16:04:03,170 INFO     ts_ms:1663344243170 slice_metrics:{0: {'num_slice_users': 1, 'tx_brate downlink [Mbps]': 0.0008309333333333333, 'new_num_rbgs': 7, 'dl_latency [msec]': 0.0, 'cur_slice_mask': '11111100000000000', 'dl_buffer [bytes]': 0.0}, 1: {'num_slice_users': 1, 'tx_brate downlink [Mbps]': 2.1881085, 'new_num_rbgs': 5, 'dl_latency [msec]': 16.31996380913854, 'cur_slice_mask': '00000011111000000', 'dl_buffer [bytes]': 4559.241666666667}, 2: {'num_slice_users': 1, 'tx_brate downlink [Mbps]': 1.6573224833333329, 'new_num_rbgs': 7, 'dl_latency [msec]': 24.42759614966309, 'cur_slice_mask': '00000000000111111', 'dl_buffer [bytes]': 2908.1833333333334}}
+2022-09-16 16:04:03,170 INFO     requested_rbg:19
+2022-09-16 16:04:03,170 INFO     Writing slicing masks
+2022-09-16 16:04:03,170 INFO     Writing full mask for slice 0: 11111100000000000
+2022-09-16 16:04:03,170 INFO     Slicing mask tenant 0: 11111100000000000
+2022-09-16 16:04:03,170 INFO     Writing slicing masks
+2022-09-16 16:04:03,170 INFO     Writing full mask for slice 1: 00000011111000000
+2022-09-16 16:04:03,171 INFO     Slicing mask tenant 1: 00000011111000000
+2022-09-16 16:04:03,171 INFO     Writing slicing masks
+2022-09-16 16:04:03,171 INFO     Writing full mask for slice 2: 00000000000111111
+2022-09-16 16:04:03,171 INFO     Slicing mask tenant 2: 00000000000111111
+2022-09-16 16:04:33,173 INFO     Starting round 7
+2022-09-16 16:04:33,227 INFO     ts_ms:1663344273227 slice_metrics:{0: {'num_slice_users': 1, 'tx_brate downlink [Mbps]': 0.00041013333333333335, 'new_num_rbgs': 7, 'dl_latency [msec]': 0.0, 'cur_slice_mask': '11111100000000000', 'dl_buffer [bytes]': 0.0}, 1: {'num_slice_users': 1, 'tx_brate downlink [Mbps]': 1.8953172999999996, 'new_num_rbgs': 5, 'dl_latency [msec]': 18.632591261185155, 'cur_slice_mask': '00000011111000000', 'dl_buffer [bytes]': 4289.983333333334}, 2: {'num_slice_users': 1, 'tx_brate downlink [Mbps]': 2.099283366666666, 'new_num_rbgs': 7, 'dl_latency [msec]': 21.575979623830708, 'cur_slice_mask': '00000000000111111', 'dl_buffer [bytes]': 3706.4666666666667}}
+2022-09-16 16:04:33,227 INFO     requested_rbg:19
+2022-09-16 16:04:33,227 INFO     Writing slicing masks
+2022-09-16 16:04:33,227 INFO     Writing full mask for slice 0: 11111100000000000
+2022-09-16 16:04:33,228 INFO     Slicing mask tenant 0: 11111100000000000
+2022-09-16 16:04:33,228 INFO     Writing slicing masks
+2022-09-16 16:04:33,228 INFO     Writing full mask for slice 1: 00000011111000000
+2022-09-16 16:04:33,228 INFO     Slicing mask tenant 1: 00000011111000000
+2022-09-16 16:04:33,228 INFO     Writing slicing masks
+2022-09-16 16:04:33,228 INFO     Writing full mask for slice 2: 00000000000111111
+2022-09-16 16:04:33,228 INFO     Slicing mask tenant 2: 00000000000111111
+2022-09-16 16:05:03,259 INFO     Starting round 8
+2022-09-16 16:05:03,315 INFO     ts_ms:1663344303315 slice_metrics:{0: {'num_slice_users': 1, 'tx_brate downlink [Mbps]': 0.0, 'new_num_rbgs': 7, 'dl_latency [msec]': 0.0, 'cur_slice_mask': '11111100000000000', 'dl_buffer [bytes]': 0.0}, 1: {'num_slice_users': 1, 'tx_brate downlink [Mbps]': 2.0483904333333336, 'new_num_rbgs': 5, 'dl_latency [msec]': 17.418675573223716, 'cur_slice_mask': '00000011111000000', 'dl_buffer [bytes]': 4156.516666666666}, 2: {'num_slice_users': 1, 'tx_brate downlink [Mbps]': 1.8446372166666671, 'new_num_rbgs': 7, 'dl_latency [msec]': 12.411826060293357, 'cur_slice_mask': '00000000000111111', 'dl_buffer [bytes]': 2680.7166666666667}}
+2022-09-16 16:05:03,315 INFO     requested_rbg:19
+2022-09-16 16:05:03,315 INFO     Writing slicing masks
+2022-09-16 16:05:03,315 INFO     Writing full mask for slice 0: 11111100000000000
+2022-09-16 16:05:03,315 INFO     Slicing mask tenant 0: 11111100000000000
+2022-09-16 16:05:03,316 INFO     Writing slicing masks
+2022-09-16 16:05:03,316 INFO     Writing full mask for slice 1: 00000011111000000
+2022-09-16 16:05:03,316 INFO     Slicing mask tenant 1: 00000011111000000
+2022-09-16 16:05:03,316 INFO     Writing slicing masks
+2022-09-16 16:05:03,316 INFO     Writing full mask for slice 2: 00000000000111111
+2022-09-16 16:05:03,316 INFO     Slicing mask tenant 2: 00000000000111111
+2022-09-16 16:05:33,346 INFO     Starting round 9
+2022-09-16 16:05:33,405 INFO     ts_ms:1663344333405 slice_metrics:{0: {'num_slice_users': 1, 'tx_brate downlink [Mbps]': 0.06169851666666667, 'new_num_rbgs': 7, 'dl_latency [msec]': 0.8433658970220216, 'cur_slice_mask': '11111100000000000', 'dl_buffer [bytes]': 197.80833333333334}, 1: {'num_slice_users': 1, 'tx_brate downlink [Mbps]': 1.956452083333333, 'new_num_rbgs': 5, 'dl_latency [msec]': 17.26974683919155, 'cur_slice_mask': '00000011111000000', 'dl_buffer [bytes]': 4223.916666666667}, 2: {'num_slice_users': 1, 'tx_brate downlink [Mbps]': 1.9359060083333333, 'new_num_rbgs': 7, 'dl_latency [msec]': 11.06012280053184, 'cur_slice_mask': '00000000000111111', 'dl_buffer [bytes]': 2796.6916666666666}}
+2022-09-16 16:05:33,405 INFO     requested_rbg:19
+2022-09-16 16:05:33,405 INFO     Writing slicing masks
+2022-09-16 16:05:33,405 INFO     Writing full mask for slice 0: 11111100000000000
+2022-09-16 16:05:33,405 INFO     Slicing mask tenant 0: 11111100000000000
+2022-09-16 16:05:33,406 INFO     Writing slicing masks
+2022-09-16 16:05:33,406 INFO     Writing full mask for slice 1: 00000011111000000
+2022-09-16 16:05:33,406 INFO     Slicing mask tenant 1: 00000011111000000
+2022-09-16 16:05:33,406 INFO     Writing slicing masks
+2022-09-16 16:05:33,406 INFO     Writing full mask for slice 2: 00000000000111111
+2022-09-16 16:05:33,406 INFO     Slicing mask tenant 2: 00000000000111111
+2022-09-16 16:06:03,436 INFO     Starting round 10
+2022-09-16 16:06:03,496 INFO     ts_ms:1663344363496 slice_metrics:{0: {'num_slice_users': 1, 'tx_brate downlink [Mbps]': 0.0004216, 'new_num_rbgs': 7, 'dl_latency [msec]': 0.0, 'cur_slice_mask': '11111100000000000', 'dl_buffer [bytes]': 0.0}, 1: {'num_slice_users': 1, 'tx_brate downlink [Mbps]': 2.194722366666667, 'new_num_rbgs': 5, 'dl_latency [msec]': 20.700178478616127, 'cur_slice_mask': '00000011111000000', 'dl_buffer [bytes]': 5529.191666666667}, 2: {'num_slice_users': 1, 'tx_brate downlink [Mbps]': 1.7189434166666673, 'new_num_rbgs': 7, 'dl_latency [msec]': 16.849541558804493, 'cur_slice_mask': '00000000000111111', 'dl_buffer [bytes]': 2727.95}}
+2022-09-16 16:06:03,496 INFO     requested_rbg:19
+2022-09-16 16:06:03,496 INFO     Writing slicing masks
+2022-09-16 16:06:03,497 INFO     Writing full mask for slice 0: 11111100000000000
+2022-09-16 16:06:03,497 INFO     Slicing mask tenant 0: 11111100000000000
+2022-09-16 16:06:03,497 INFO     Writing slicing masks
+2022-09-16 16:06:03,497 INFO     Writing full mask for slice 1: 00000011111000000
+2022-09-16 16:06:03,497 INFO     Slicing mask tenant 1: 00000011111000000
+2022-09-16 16:06:03,497 INFO     Writing slicing masks
+2022-09-16 16:06:03,497 INFO     Writing full mask for slice 2: 00000000000111111
+2022-09-16 16:06:03,497 INFO     Slicing mask tenant 2: 00000000000111111
+2022-09-16 16:06:33,528 INFO     Starting round 11
+2022-09-16 16:06:33,590 INFO     ts_ms:1663344393590 slice_metrics:{0: {'num_slice_users': 1, 'tx_brate downlink [Mbps]': 0.0, 'new_num_rbgs': 7, 'dl_latency [msec]': 0.0, 'cur_slice_mask': '11111100000000000', 'dl_buffer [bytes]': 0.0}, 1: {'num_slice_users': 1, 'tx_brate downlink [Mbps]': 2.0909296000000004, 'new_num_rbgs': 5, 'dl_latency [msec]': 19.30001090536662, 'cur_slice_mask': '00000011111000000', 'dl_buffer [bytes]': 5179.575}, 2: {'num_slice_users': 1, 'tx_brate downlink [Mbps]': 1.7992633333333328, 'new_num_rbgs': 7, 'dl_latency [msec]': 23.631325682897806, 'cur_slice_mask': '00000000000111111', 'dl_buffer [bytes]': 2902.8}}
+2022-09-16 16:06:33,590 INFO     requested_rbg:19
+2022-09-16 16:06:33,590 INFO     Writing slicing masks
+2022-09-16 16:06:33,590 INFO     Writing full mask for slice 0: 11111100000000000
+2022-09-16 16:06:33,591 INFO     Slicing mask tenant 0: 11111100000000000
+2022-09-16 16:06:33,591 INFO     Writing slicing masks
+2022-09-16 16:06:33,591 INFO     Writing full mask for slice 1: 00000011111000000
+2022-09-16 16:06:33,591 INFO     Slicing mask tenant 1: 00000011111000000
+2022-09-16 16:06:33,591 INFO     Writing slicing masks
+2022-09-16 16:06:33,591 INFO     Writing full mask for slice 2: 00000000000111111
+2022-09-16 16:06:33,591 INFO     Slicing mask tenant 2: 00000000000111111
+2022-09-16 16:07:03,622 INFO     Starting round 12
+2022-09-16 16:07:03,686 INFO     ts_ms:1663344423686 slice_metrics:{0: {'num_slice_users': 1, 'tx_brate downlink [Mbps]': 0.0004416, 'new_num_rbgs': 7, 'dl_latency [msec]': 0.0, 'cur_slice_mask': '11111100000000000', 'dl_buffer [bytes]': 0.0}, 1: {'num_slice_users': 1, 'tx_brate downlink [Mbps]': 2.167405, 'new_num_rbgs': 5, 'dl_latency [msec]': 21.73410914911177, 'cur_slice_mask': '00000011111000000', 'dl_buffer [bytes]': 5084.991666666667}, 2: {'num_slice_users': 1, 'tx_brate downlink [Mbps]': 1.8041845166666661, 'new_num_rbgs': 7, 'dl_latency [msec]': 13.53740702613007, 'cur_slice_mask': '00000000000111111', 'dl_buffer [bytes]': 2825.608333333333}}
+2022-09-16 16:07:03,686 INFO     requested_rbg:19
+2022-09-16 16:07:03,686 INFO     Writing slicing masks
+2022-09-16 16:07:03,686 INFO     Writing full mask for slice 0: 11111100000000000
+2022-09-16 16:07:03,687 INFO     Slicing mask tenant 0: 11111100000000000
+2022-09-16 16:07:03,687 INFO     Writing slicing masks
+2022-09-16 16:07:03,687 INFO     Writing full mask for slice 1: 00000011111000000
+2022-09-16 16:07:03,687 INFO     Slicing mask tenant 1: 00000011111000000
+2022-09-16 16:07:03,687 INFO     Writing slicing masks
+2022-09-16 16:07:03,687 INFO     Writing full mask for slice 2: 00000000000111111
+2022-09-16 16:07:03,687 INFO     Slicing mask tenant 2: 00000000000111111
+2022-09-16 16:07:33,718 INFO     Starting round 13
+2022-09-16 16:07:33,786 INFO     ts_ms:1663344453785 slice_metrics:{0: {'num_slice_users': 1, 'tx_brate downlink [Mbps]': 0.0, 'new_num_rbgs': 7, 'dl_latency [msec]': 0.0, 'cur_slice_mask': '11111100000000000', 'dl_buffer [bytes]': 0.0}, 1: {'num_slice_users': 1, 'tx_brate downlink [Mbps]': 2.2727778, 'new_num_rbgs': 5, 'dl_latency [msec]': 18.853505497263765, 'cur_slice_mask': '00000011111000000', 'dl_buffer [bytes]': 5675.1}, 2: {'num_slice_users': 1, 'tx_brate downlink [Mbps]': 1.7417398333333338, 'new_num_rbgs': 7, 'dl_latency [msec]': 16.838479330600226, 'cur_slice_mask': '00000000000111111', 'dl_buffer [bytes]': 2535.2916666666665}}
+2022-09-16 16:07:33,786 INFO     requested_rbg:19
+2022-09-16 16:07:33,786 INFO     Writing slicing masks
+2022-09-16 16:07:33,786 INFO     Writing full mask for slice 0: 11111100000000000
+2022-09-16 16:07:33,786 INFO     Slicing mask tenant 0: 11111100000000000
+2022-09-16 16:07:33,786 INFO     Writing slicing masks
+2022-09-16 16:07:33,786 INFO     Writing full mask for slice 1: 00000011111000000
+2022-09-16 16:07:33,786 INFO     Slicing mask tenant 1: 00000011111000000
+2022-09-16 16:07:33,787 INFO     Writing slicing masks
+2022-09-16 16:07:33,787 INFO     Writing full mask for slice 2: 00000000000111111
+2022-09-16 16:07:33,787 INFO     Slicing mask tenant 2: 00000000000111111
+2022-09-16 16:08:03,817 INFO     Starting round 14
+2022-09-16 16:08:03,895 INFO     ts_ms:1663344483895 slice_metrics:{0: {'num_slice_users': 1, 'tx_brate downlink [Mbps]': 0.0, 'new_num_rbgs': 7, 'dl_latency [msec]': 0.0, 'cur_slice_mask': '11111100000000000', 'dl_buffer [bytes]': 0.0}, 1: {'num_slice_users': 1, 'tx_brate downlink [Mbps]': 1.7992070666666673, 'new_num_rbgs': 5, 'dl_latency [msec]': 21.0051560112223, 'cur_slice_mask': '00000011111000000', 'dl_buffer [bytes]': 4549.266666666666}, 2: {'num_slice_users': 1, 'tx_brate downlink [Mbps]': 2.0609150166666663, 'new_num_rbgs': 7, 'dl_latency [msec]': 15.079368038533058, 'cur_slice_mask': '00000000000111111', 'dl_buffer [bytes]': 3296.991666666667}}
+2022-09-16 16:08:03,896 INFO     requested_rbg:19
+2022-09-16 16:08:03,896 INFO     Writing slicing masks
+2022-09-16 16:08:03,896 INFO     Writing full mask for slice 0: 11111100000000000
+2022-09-16 16:08:03,896 INFO     Slicing mask tenant 0: 11111100000000000
+2022-09-16 16:08:03,896 INFO     Writing slicing masks
+2022-09-16 16:08:03,896 INFO     Writing full mask for slice 1: 00000011111000000
+2022-09-16 16:08:03,896 INFO     Slicing mask tenant 1: 00000011111000000
+2022-09-16 16:08:03,896 INFO     Writing slicing masks
+2022-09-16 16:08:03,897 INFO     Writing full mask for slice 2: 00000000000111111
+2022-09-16 16:08:03,897 INFO     Slicing mask tenant 2: 00000000000111111
+2022-09-16 16:08:33,927 INFO     Starting round 15
+2022-09-16 16:08:33,998 INFO     ts_ms:1663344513998 slice_metrics:{0: {'num_slice_users': 1, 'tx_brate downlink [Mbps]': 0.0, 'new_num_rbgs': 7, 'dl_latency [msec]': 0.0, 'cur_slice_mask': '11111100000000000', 'dl_buffer [bytes]': 0.0}, 1: {'num_slice_users': 1, 'tx_brate downlink [Mbps]': 2.053479083333334, 'new_num_rbgs': 6, 'dl_latency [msec]': 34.99950929835264, 'cur_slice_mask': '00000011111000000', 'dl_buffer [bytes]': 4712.075}, 2: {'num_slice_users': 1, 'tx_brate downlink [Mbps]': 1.842266566666666, 'new_num_rbgs': 7, 'dl_latency [msec]': 13.65663156586787, 'cur_slice_mask': '00000000000111111', 'dl_buffer [bytes]': 2821.3083333333334}}
+2022-09-16 16:08:33,998 INFO     requested_rbg:20
+2022-09-16 16:08:33,998 INFO     Writing slicing masks
+2022-09-16 16:08:33,999 INFO     Writing full mask for slice 0: 11111000000000000
+2022-09-16 16:08:33,999 INFO     Slicing mask tenant 0: 11111000000000000
+2022-09-16 16:08:33,999 INFO     Writing slicing masks
+2022-09-16 16:08:33,999 INFO     Writing full mask for slice 1: 00000111111000000
+2022-09-16 16:08:33,999 INFO     Slicing mask tenant 1: 00000111111000000
+2022-09-16 16:08:33,999 INFO     Writing slicing masks
+2022-09-16 16:08:33,999 INFO     Writing full mask for slice 2: 00000000000111111
+2022-09-16 16:08:33,999 INFO     Slicing mask tenant 2: 00000000000111111
+2022-09-16 16:09:04,030 INFO     Starting round 16
+2022-09-16 16:09:04,101 INFO     ts_ms:1663344544101 slice_metrics:{0: {'num_slice_users': 1, 'tx_brate downlink [Mbps]': 0.0, 'new_num_rbgs': 6, 'dl_latency [msec]': 0.0, 'cur_slice_mask': '11111000000000000', 'dl_buffer [bytes]': 0.0}, 1: {'num_slice_users': 1, 'tx_brate downlink [Mbps]': 1.9081947183333334, 'new_num_rbgs': 6, 'dl_latency [msec]': 18.258228611316227, 'cur_slice_mask': '00000111111000000', 'dl_buffer [bytes]': 3646.65}, 2: {'num_slice_users': 1, 'tx_brate downlink [Mbps]': 2.1338174833333343, 'new_num_rbgs': 7, 'dl_latency [msec]': 15.214084505042958, 'cur_slice_mask': '00000000000111111', 'dl_buffer [bytes]': 3870.5666666666666}}
+2022-09-16 16:09:04,101 INFO     requested_rbg:19
+2022-09-16 16:09:04,102 INFO     Writing slicing masks
+2022-09-16 16:09:04,102 INFO     Writing full mask for slice 0: 11111000000000000
+2022-09-16 16:09:04,102 INFO     Slicing mask tenant 0: 11111000000000000
+2022-09-16 16:09:04,102 INFO     Writing slicing masks
+2022-09-16 16:09:04,102 INFO     Writing full mask for slice 1: 00000111111000000
+2022-09-16 16:09:04,102 INFO     Slicing mask tenant 1: 00000111111000000
+2022-09-16 16:09:04,102 INFO     Writing slicing masks
+2022-09-16 16:09:04,102 INFO     Writing full mask for slice 2: 00000000000111111
+2022-09-16 16:09:04,103 INFO     Slicing mask tenant 2: 00000000000111111
+2022-09-16 16:09:34,133 INFO     Starting round 17
+2022-09-16 16:09:34,207 INFO     ts_ms:1663344574207 slice_metrics:{0: {'num_slice_users': 1, 'tx_brate downlink [Mbps]': 0.0, 'new_num_rbgs': 6, 'dl_latency [msec]': 0.0, 'cur_slice_mask': '11111000000000000', 'dl_buffer [bytes]': 0.0}, 1: {'num_slice_users': 1, 'tx_brate downlink [Mbps]': 1.8788357249999994, 'new_num_rbgs': 5, 'dl_latency [msec]': 12.12974273513404, 'cur_slice_mask': '00000111111000000', 'dl_buffer [bytes]': 2407.8083333333334}, 2: {'num_slice_users': 1, 'tx_brate downlink [Mbps]': 2.0862969083333334, 'new_num_rbgs': 7, 'dl_latency [msec]': 14.204648288577825, 'cur_slice_mask': '00000000000111111', 'dl_buffer [bytes]': 2832.758333333333}}
+2022-09-16 16:09:34,207 INFO     requested_rbg:18
+2022-09-16 16:09:34,208 INFO     Writing slicing masks
+2022-09-16 16:09:34,208 INFO     Writing full mask for slice 0: 11111100000000000
+2022-09-16 16:09:34,208 INFO     Slicing mask tenant 0: 11111100000000000
+2022-09-16 16:09:34,208 INFO     Writing slicing masks
+2022-09-16 16:09:34,208 INFO     Writing full mask for slice 1: 00000011111000000
+2022-09-16 16:09:34,208 INFO     Slicing mask tenant 1: 00000011111000000
+2022-09-16 16:09:34,208 INFO     Writing slicing masks
+2022-09-16 16:09:34,208 INFO     Writing full mask for slice 2: 00000000000111111
+2022-09-16 16:09:34,209 INFO     Slicing mask tenant 2: 00000000000111111
+2022-09-16 16:10:04,239 INFO     Starting round 18
+2022-09-16 16:10:04,313 INFO     ts_ms:1663344604313 slice_metrics:{0: {'num_slice_users': 1, 'tx_brate downlink [Mbps]': 0.00027967916666666665, 'new_num_rbgs': 7, 'dl_latency [msec]': 0.0, 'cur_slice_mask': '11111100000000000', 'dl_buffer [bytes]': 0.0}, 1: {'num_slice_users': 1, 'tx_brate downlink [Mbps]': 1.8937992416666662, 'new_num_rbgs': 5, 'dl_latency [msec]': 19.558060137199625, 'cur_slice_mask': '00000011111000000', 'dl_buffer [bytes]': 3599.075}, 2: {'num_slice_users': 1, 'tx_brate downlink [Mbps]': 1.8775636166666672, 'new_num_rbgs': 7, 'dl_latency [msec]': 14.418572222677419, 'cur_slice_mask': '00000000000111111', 'dl_buffer [bytes]': 2960.5333333333333}}
+2022-09-16 16:10:04,313 INFO     requested_rbg:19
+2022-09-16 16:10:04,313 INFO     Writing slicing masks
+2022-09-16 16:10:04,314 INFO     Writing full mask for slice 0: 11111100000000000
+2022-09-16 16:10:04,314 INFO     Slicing mask tenant 0: 11111100000000000
+2022-09-16 16:10:04,314 INFO     Writing slicing masks
+2022-09-16 16:10:04,314 INFO     Writing full mask for slice 1: 00000011111000000
+2022-09-16 16:10:04,314 INFO     Slicing mask tenant 1: 00000011111000000
+2022-09-16 16:10:04,314 INFO     Writing slicing masks
+2022-09-16 16:10:04,314 INFO     Writing full mask for slice 2: 00000000000111111
+2022-09-16 16:10:04,314 INFO     Slicing mask tenant 2: 00000000000111111
+2022-09-16 16:10:34,345 INFO     Starting round 19
+2022-09-16 16:10:34,422 INFO     ts_ms:1663344634422 slice_metrics:{0: {'num_slice_users': 1, 'tx_brate downlink [Mbps]': 0.0069333791666666665, 'new_num_rbgs': 7, 'dl_latency [msec]': 0.532448198335055, 'cur_slice_mask': '11111100000000000', 'dl_buffer [bytes]': 35.05}, 1: {'num_slice_users': 1, 'tx_brate downlink [Mbps]': 2.032648158333333, 'new_num_rbgs': 5, 'dl_latency [msec]': 20.688509809334544, 'cur_slice_mask': '00000011111000000', 'dl_buffer [bytes]': 4843.983333333334}, 2: {'num_slice_users': 1, 'tx_brate downlink [Mbps]': 1.9149693833333348, 'new_num_rbgs': 7, 'dl_latency [msec]': 24.924304557509757, 'cur_slice_mask': '00000000000111111', 'dl_buffer [bytes]': 2816.3166666666666}}
+2022-09-16 16:10:34,422 INFO     requested_rbg:19
+2022-09-16 16:10:34,422 INFO     Writing slicing masks
+2022-09-16 16:10:34,422 INFO     Writing full mask for slice 0: 11111100000000000
+2022-09-16 16:10:34,422 INFO     Slicing mask tenant 0: 11111100000000000
+2022-09-16 16:10:34,422 INFO     Writing slicing masks
+2022-09-16 16:10:34,422 INFO     Writing full mask for slice 1: 00000011111000000
+2022-09-16 16:10:34,422 INFO     Slicing mask tenant 1: 00000011111000000
+2022-09-16 16:10:34,423 INFO     Writing slicing masks
+2022-09-16 16:10:34,423 INFO     Writing full mask for slice 2: 00000000000111111
+2022-09-16 16:10:34,423 INFO     Slicing mask tenant 2: 00000000000111111
+2022-09-16 16:11:04,453 INFO     Starting round 20
+2022-09-16 16:11:04,532 INFO     ts_ms:1663344664532 slice_metrics:{0: {'num_slice_users': 1, 'tx_brate downlink [Mbps]': 0.9443904833333333, 'new_num_rbgs': 7, 'dl_latency [msec]': 38.33484581743168, 'cur_slice_mask': '11111100000000000', 'dl_buffer [bytes]': 3937.7166666666667}, 1: {'num_slice_users': 1, 'tx_brate downlink [Mbps]': 1.774785116666667, 'new_num_rbgs': 5, 'dl_latency [msec]': 21.897256912035132, 'cur_slice_mask': '00000011111000000', 'dl_buffer [bytes]': 4883.941666666667}, 2: {'num_slice_users': 1, 'tx_brate downlink [Mbps]': 1.7683446533333333, 'new_num_rbgs': 7, 'dl_latency [msec]': 12.54213155459317, 'cur_slice_mask': '00000000000111111', 'dl_buffer [bytes]': 2601.241666666667}}
+2022-09-16 16:11:04,532 INFO     requested_rbg:19
+2022-09-16 16:11:04,532 INFO     Writing slicing masks
+2022-09-16 16:11:04,532 INFO     Writing full mask for slice 0: 11111100000000000
+2022-09-16 16:11:04,532 INFO     Slicing mask tenant 0: 11111100000000000
+2022-09-16 16:11:04,532 INFO     Writing slicing masks
+2022-09-16 16:11:04,533 INFO     Writing full mask for slice 1: 00000011111000000
+2022-09-16 16:11:04,533 INFO     Slicing mask tenant 1: 00000011111000000
+2022-09-16 16:11:04,533 INFO     Writing slicing masks
+2022-09-16 16:11:04,533 INFO     Writing full mask for slice 2: 00000000000111111
+2022-09-16 16:11:04,533 INFO     Slicing mask tenant 2: 00000000000111111
+2022-09-16 16:11:34,563 INFO     Starting round 21
+2022-09-16 16:11:34,651 INFO     ts_ms:1663344694651 slice_metrics:{0: {'num_slice_users': 1, 'tx_brate downlink [Mbps]': 0.19562838666666663, 'new_num_rbgs': 7, 'dl_latency [msec]': 6.053114482624668, 'cur_slice_mask': '11111100000000000', 'dl_buffer [bytes]': 189.425}, 1: {'num_slice_users': 1, 'tx_brate downlink [Mbps]': 2.337256533333333, 'new_num_rbgs': 5, 'dl_latency [msec]': 23.883759291459665, 'cur_slice_mask': '00000011111000000', 'dl_buffer [bytes]': 6711.916666666667}, 2: {'num_slice_users': 1, 'tx_brate downlink [Mbps]': 1.5554430383333335, 'new_num_rbgs': 7, 'dl_latency [msec]': 11.016628894287285, 'cur_slice_mask': '00000000000111111', 'dl_buffer [bytes]': 2258.0}}
+2022-09-16 16:11:34,652 INFO     requested_rbg:19
+2022-09-16 16:11:34,652 INFO     Writing slicing masks
+2022-09-16 16:11:34,652 INFO     Writing full mask for slice 0: 11111100000000000
+2022-09-16 16:11:34,652 INFO     Slicing mask tenant 0: 11111100000000000
+2022-09-16 16:11:34,652 INFO     Writing slicing masks
+2022-09-16 16:11:34,652 INFO     Writing full mask for slice 1: 00000011111000000
+2022-09-16 16:11:34,652 INFO     Slicing mask tenant 1: 00000011111000000
+2022-09-16 16:11:34,653 INFO     Writing slicing masks
+2022-09-16 16:11:34,653 INFO     Writing full mask for slice 2: 00000000000111111
+2022-09-16 16:11:34,653 INFO     Slicing mask tenant 2: 00000000000111111
+2022-09-16 16:12:04,683 INFO     Starting round 22
+2022-09-16 16:12:04,768 INFO     ts_ms:1663344724768 slice_metrics:{0: {'num_slice_users': 1, 'tx_brate downlink [Mbps]': 0.22975454999999997, 'new_num_rbgs': 7, 'dl_latency [msec]': 13.823203556150137, 'cur_slice_mask': '11111100000000000', 'dl_buffer [bytes]': 290.2}, 1: {'num_slice_users': 1, 'tx_brate downlink [Mbps]': 2.072090616666668, 'new_num_rbgs': 5, 'dl_latency [msec]': 23.07954837573109, 'cur_slice_mask': '00000011111000000', 'dl_buffer [bytes]': 6122.941666666667}, 2: {'num_slice_users': 1, 'tx_brate downlink [Mbps]': 1.6397759999999997, 'new_num_rbgs': 7, 'dl_latency [msec]': 11.039410791453918, 'cur_slice_mask': '00000000000111111', 'dl_buffer [bytes]': 2063.6666666666665}}
+2022-09-16 16:12:04,768 INFO     requested_rbg:19
+2022-09-16 16:12:04,768 INFO     Writing slicing masks
+2022-09-16 16:12:04,769 INFO     Writing full mask for slice 0: 11111100000000000
+2022-09-16 16:12:04,769 INFO     Slicing mask tenant 0: 11111100000000000
+2022-09-16 16:12:04,769 INFO     Writing slicing masks
+2022-09-16 16:12:04,769 INFO     Writing full mask for slice 1: 00000011111000000
+2022-09-16 16:12:04,769 INFO     Slicing mask tenant 1: 00000011111000000
+2022-09-16 16:12:04,769 INFO     Writing slicing masks
+2022-09-16 16:12:04,769 INFO     Writing full mask for slice 2: 00000000000111111
+2022-09-16 16:12:04,769 INFO     Slicing mask tenant 2: 00000000000111111
+2022-09-16 16:12:34,800 INFO     Starting round 23
+2022-09-16 16:12:34,885 INFO     ts_ms:1663344754885 slice_metrics:{0: {'num_slice_users': 1, 'tx_brate downlink [Mbps]': 0.19423976666666667, 'new_num_rbgs': 7, 'dl_latency [msec]': 4.78595487671995, 'cur_slice_mask': '11111100000000000', 'dl_buffer [bytes]': 302.575}, 1: {'num_slice_users': 1, 'tx_brate downlink [Mbps]': 2.0193321249999996, 'new_num_rbgs': 5, 'dl_latency [msec]': 20.128371563719245, 'cur_slice_mask': '00000011111000000', 'dl_buffer [bytes]': 5307.125}, 2: {'num_slice_users': 1, 'tx_brate downlink [Mbps]': 1.9120518333333332, 'new_num_rbgs': 7, 'dl_latency [msec]': 13.207696093625316, 'cur_slice_mask': '00000000000111111', 'dl_buffer [bytes]': 2969.741666666667}}
+2022-09-16 16:12:34,885 INFO     requested_rbg:19
+2022-09-16 16:12:34,885 INFO     Writing slicing masks
+2022-09-16 16:12:34,885 INFO     Writing full mask for slice 0: 11111100000000000
+2022-09-16 16:12:34,886 INFO     Slicing mask tenant 0: 11111100000000000
+2022-09-16 16:12:34,886 INFO     Writing slicing masks
+2022-09-16 16:12:34,886 INFO     Writing full mask for slice 1: 00000011111000000
+2022-09-16 16:12:34,886 INFO     Slicing mask tenant 1: 00000011111000000
+2022-09-16 16:12:34,886 INFO     Writing slicing masks
+2022-09-16 16:12:34,886 INFO     Writing full mask for slice 2: 00000000000111111
+2022-09-16 16:12:34,886 INFO     Slicing mask tenant 2: 00000000000111111
+2022-09-16 16:13:04,917 INFO     Starting round 24
+2022-09-16 16:13:05,006 INFO     ts_ms:1663344785006 slice_metrics:{0: {'num_slice_users': 1, 'tx_brate downlink [Mbps]': 0.010709866666666663, 'new_num_rbgs': 7, 'dl_latency [msec]': 0.0, 'cur_slice_mask': '11111100000000000', 'dl_buffer [bytes]': 0.0}, 1: {'num_slice_users': 1, 'tx_brate downlink [Mbps]': 2.100199266666666, 'new_num_rbgs': 5, 'dl_latency [msec]': 21.033309431751203, 'cur_slice_mask': '00000011111000000', 'dl_buffer [bytes]': 5722.175}, 2: {'num_slice_users': 1, 'tx_brate downlink [Mbps]': 1.9243370833333335, 'new_num_rbgs': 7, 'dl_latency [msec]': 16.026219213937686, 'cur_slice_mask': '00000000000111111', 'dl_buffer [bytes]': 3254.1583333333333}}
+2022-09-16 16:13:05,006 INFO     requested_rbg:19
+2022-09-16 16:13:05,006 INFO     Writing slicing masks
+2022-09-16 16:13:05,006 INFO     Writing full mask for slice 0: 11111100000000000
+2022-09-16 16:13:05,006 INFO     Slicing mask tenant 0: 11111100000000000
+2022-09-16 16:13:05,006 INFO     Writing slicing masks
+2022-09-16 16:13:05,006 INFO     Writing full mask for slice 1: 00000011111000000
+2022-09-16 16:13:05,006 INFO     Slicing mask tenant 1: 00000011111000000
+2022-09-16 16:13:05,007 INFO     Writing slicing masks
+2022-09-16 16:13:05,007 INFO     Writing full mask for slice 2: 00000000000111111
+2022-09-16 16:13:05,007 INFO     Slicing mask tenant 2: 00000000000111111
+2022-09-16 16:13:35,037 INFO     Starting round 25
+2022-09-16 16:13:35,127 INFO     ts_ms:1663344815127 slice_metrics:{0: {'num_slice_users': 1, 'tx_brate downlink [Mbps]': 0.0004074666666666667, 'new_num_rbgs': 7, 'dl_latency [msec]': 0.0, 'cur_slice_mask': '11111100000000000', 'dl_buffer [bytes]': 0.0}, 1: {'num_slice_users': 1, 'tx_brate downlink [Mbps]': 2.0133906833333337, 'new_num_rbgs': 5, 'dl_latency [msec]': 17.297479832684953, 'cur_slice_mask': '00000011111000000', 'dl_buffer [bytes]': 3956.7916666666665}, 2: {'num_slice_users': 1, 'tx_brate downlink [Mbps]': 1.8495896499999998, 'new_num_rbgs': 7, 'dl_latency [msec]': 20.50053709889587, 'cur_slice_mask': '00000000000111111', 'dl_buffer [bytes]': 3106.45}}
+2022-09-16 16:13:35,128 INFO     requested_rbg:19
+2022-09-16 16:13:35,128 INFO     Writing slicing masks
+2022-09-16 16:13:35,128 INFO     Writing full mask for slice 0: 11111100000000000
+2022-09-16 16:13:35,128 INFO     Slicing mask tenant 0: 11111100000000000
+2022-09-16 16:13:35,128 INFO     Writing slicing masks
+2022-09-16 16:13:35,128 INFO     Writing full mask for slice 1: 00000011111000000
+2022-09-16 16:13:35,128 INFO     Slicing mask tenant 1: 00000011111000000
+2022-09-16 16:13:35,128 INFO     Writing slicing masks
+2022-09-16 16:13:35,129 INFO     Writing full mask for slice 2: 00000000000111111
+2022-09-16 16:13:35,129 INFO     Slicing mask tenant 2: 00000000000111111
+2022-09-16 16:14:05,159 INFO     Starting round 26
+2022-09-16 16:14:05,253 INFO     ts_ms:1663344845253 slice_metrics:{0: {'num_slice_users': 1, 'tx_brate downlink [Mbps]': 0.041091216666666666, 'new_num_rbgs': 7, 'dl_latency [msec]': 0.1780898415983868, 'cur_slice_mask': '11111100000000000', 'dl_buffer [bytes]': 38.93333333333333}, 1: {'num_slice_users': 1, 'tx_brate downlink [Mbps]': 2.145495616666667, 'new_num_rbgs': 6, 'dl_latency [msec]': 35.20830968836197, 'cur_slice_mask': '00000011111000000', 'dl_buffer [bytes]': 5975.333333333333}, 2: {'num_slice_users': 1, 'tx_brate downlink [Mbps]': 1.6664500250000003, 'new_num_rbgs': 7, 'dl_latency [msec]': 35.369967732436, 'cur_slice_mask': '00000000000111111', 'dl_buffer [bytes]': 2831.358333333333}}
+2022-09-16 16:14:05,253 INFO     requested_rbg:20
+2022-09-16 16:14:05,253 INFO     Writing slicing masks
+2022-09-16 16:14:05,253 INFO     Writing full mask for slice 0: 11111000000000000
+2022-09-16 16:14:05,253 INFO     Slicing mask tenant 0: 11111000000000000
+2022-09-16 16:14:05,254 INFO     Writing slicing masks
+2022-09-16 16:14:05,254 INFO     Writing full mask for slice 1: 00000111111000000
+2022-09-16 16:14:05,254 INFO     Slicing mask tenant 1: 00000111111000000
+2022-09-16 16:14:05,254 INFO     Writing slicing masks
+2022-09-16 16:14:05,254 INFO     Writing full mask for slice 2: 00000000000111111
+2022-09-16 16:14:05,254 INFO     Slicing mask tenant 2: 00000000000111111
+2022-09-16 16:14:35,284 INFO     Starting round 27
+2022-09-16 16:14:35,388 INFO     ts_ms:1663344875388 slice_metrics:{0: {'num_slice_users': 1, 'tx_brate downlink [Mbps]': 0.0, 'new_num_rbgs': 6, 'dl_latency [msec]': 0.0, 'cur_slice_mask': '11111000000000000', 'dl_buffer [bytes]': 0.0}, 1: {'num_slice_users': 1, 'tx_brate downlink [Mbps]': 0.12452131666666667, 'new_num_rbgs': 7, 'dl_latency [msec]': 0.4123397904098715, 'cur_slice_mask': '00000111111000000', 'dl_buffer [bytes]': 114.05}, 2: {'num_slice_users': 1, 'tx_brate downlink [Mbps]': 0.4894171666666666, 'new_num_rbgs': 7, 'dl_latency [msec]': 3.998788918356103, 'cur_slice_mask': '00000000000111111', 'dl_buffer [bytes]': 1840.6}}
+2022-09-16 16:14:35,388 INFO     requested_rbg:20
+2022-09-16 16:14:35,388 INFO     Writing slicing masks
+2022-09-16 16:14:35,388 INFO     Writing full mask for slice 0: 11111000000000000
+2022-09-16 16:14:35,388 INFO     Slicing mask tenant 0: 11111000000000000
+2022-09-16 16:14:35,388 INFO     Writing slicing masks
+2022-09-16 16:14:35,388 INFO     Writing full mask for slice 1: 00000111111000000
+2022-09-16 16:14:35,388 INFO     Slicing mask tenant 1: 00000111111000000
+2022-09-16 16:14:35,389 INFO     Writing slicing masks
+2022-09-16 16:14:35,389 INFO     Writing full mask for slice 2: 00000000000111111
+2022-09-16 16:14:35,389 INFO     Slicing mask tenant 2: 00000000000111111
+2022-09-16 16:15:05,419 INFO     Starting round 28
+2022-09-16 16:15:05,516 INFO     ts_ms:1663344905516 slice_metrics:{0: {'num_slice_users': 1, 'tx_brate downlink [Mbps]': 0.0, 'new_num_rbgs': 6, 'dl_latency [msec]': 0.0, 'cur_slice_mask': '11111000000000000', 'dl_buffer [bytes]': 0.0}, 1: {'num_slice_users': 1, 'tx_brate downlink [Mbps]': 0.0, 'new_num_rbgs': 7, 'dl_latency [msec]': 0.0, 'cur_slice_mask': '00000111111000000', 'dl_buffer [bytes]': 0.0}, 2: {'num_slice_users': 1, 'tx_brate downlink [Mbps]': 0.0, 'new_num_rbgs': 7, 'dl_latency [msec]': 0.0, 'cur_slice_mask': '00000000000111111', 'dl_buffer [bytes]': 0.0}}
+2022-09-16 16:15:05,516 INFO     requested_rbg:20
+2022-09-16 16:15:05,516 INFO     Writing slicing masks
+2022-09-16 16:15:05,516 INFO     Writing full mask for slice 0: 11111000000000000
+2022-09-16 16:15:05,517 INFO     Slicing mask tenant 0: 11111000000000000
+2022-09-16 16:15:05,517 INFO     Writing slicing masks
+2022-09-16 16:15:05,517 INFO     Writing full mask for slice 1: 00000111111000000
+2022-09-16 16:15:05,517 INFO     Slicing mask tenant 1: 00000111111000000
+2022-09-16 16:15:05,517 INFO     Writing slicing masks
+2022-09-16 16:15:05,517 INFO     Writing full mask for slice 2: 00000000000111111
+2022-09-16 16:15:05,517 INFO     Slicing mask tenant 2: 00000000000111111
+2022-09-16 16:15:40,817 INFO     Parsing /root/radio_api/cell-order.conf configuration file
+2022-09-16 16:15:40,817 INFO     Cell-Order configuration: {'delay-budget-enabled': True, 'slice-delay-budget-msec': {0: [50, 75], 1: [15, 30], 2: [5, 10]}, 'reallocation-period-sec': 30.0, 'slice-min-tx-rate-Mbps': {0: 1.5, 1: 1.5, 2: 1.5}}
+2022-09-16 16:15:40,817 INFO     Starting round 0
+2022-09-16 16:15:40,915 INFO     ts_ms:1663344940915 slice_metrics:{0: {'dl_latency [msec]': 0.0, 'tx_brate downlink [Mbps]': 0.0, 'new_num_rbgs': 5, 'cur_slice_mask': '11111000000000000', 'num_slice_users': 1, 'dl_buffer [bytes]': 0.0}, 1: {'dl_latency [msec]': 0.0, 'tx_brate downlink [Mbps]': 0.0, 'new_num_rbgs': 5, 'cur_slice_mask': '00000111111000000', 'num_slice_users': 1, 'dl_buffer [bytes]': 0.0}, 2: {'dl_latency [msec]': 0.0, 'tx_brate downlink [Mbps]': 0.0, 'new_num_rbgs': 5, 'cur_slice_mask': '00000000000111111', 'num_slice_users': 1, 'dl_buffer [bytes]': 0.0}}
+2022-09-16 16:15:40,915 INFO     Writing slicing masks
+2022-09-16 16:15:40,916 INFO     Writing full mask for slice 0: 11111000000000000
+2022-09-16 16:15:40,916 INFO     Slicing mask tenant 0: 11111000000000000
+2022-09-16 16:15:40,916 INFO     Writing slicing masks
+2022-09-16 16:15:40,916 INFO     Writing full mask for slice 1: 00000111110000000
+2022-09-16 16:15:40,916 INFO     Slicing mask tenant 1: 00000111110000000
+2022-09-16 16:15:40,916 INFO     Writing slicing masks
+2022-09-16 16:15:40,916 INFO     Writing full mask for slice 2: 00000000001111100
+2022-09-16 16:15:40,916 INFO     Slicing mask tenant 2: 00000000001111100
+2022-09-16 16:16:10,947 INFO     Starting round 1
+2022-09-16 16:16:11,046 INFO     ts_ms:1663344971046 slice_metrics:{0: {'dl_latency [msec]': 26.99815610110835, 'tx_brate downlink [Mbps]': 0.4194482333333332, 'new_num_rbgs': 6, 'cur_slice_mask': '11111000000000000', 'num_slice_users': 1, 'dl_buffer [bytes]': 1688.5333333333333}, 1: {'dl_latency [msec]': 6.531734238611485, 'tx_brate downlink [Mbps]': 0.45930387541666673, 'new_num_rbgs': 6, 'cur_slice_mask': '00000111110000000', 'num_slice_users': 1, 'dl_buffer [bytes]': 1517.7083333333333}, 2: {'dl_latency [msec]': 18.397931882664423, 'tx_brate downlink [Mbps]': 1.5443063833333324, 'new_num_rbgs': 4, 'cur_slice_mask': '00000000001111100', 'num_slice_users': 1, 'dl_buffer [bytes]': 6038.291666666667}}
+2022-09-16 16:16:11,046 INFO     Writing slicing masks
+2022-09-16 16:16:11,046 INFO     Writing full mask for slice 0: 11111100000000000
+2022-09-16 16:16:11,046 INFO     Slicing mask tenant 0: 11111100000000000
+2022-09-16 16:16:11,046 INFO     Writing slicing masks
+2022-09-16 16:16:11,046 INFO     Writing full mask for slice 1: 00000011111100000
+2022-09-16 16:16:11,047 INFO     Slicing mask tenant 1: 00000011111100000
+2022-09-16 16:16:11,047 INFO     Writing slicing masks
+2022-09-16 16:16:11,047 INFO     Writing full mask for slice 2: 00000000000011110
+2022-09-16 16:16:11,047 INFO     Slicing mask tenant 2: 00000000000011110
+2022-09-16 16:16:41,077 INFO     Starting round 2
+2022-09-16 16:16:41,186 INFO     ts_ms:1663345001186 slice_metrics:{0: {'dl_latency [msec]': 4.527500353008888, 'tx_brate downlink [Mbps]': 0.36711760750000005, 'new_num_rbgs': 7, 'cur_slice_mask': '11111100000000000', 'num_slice_users': 1, 'dl_buffer [bytes]': 369.575}, 1: {'dl_latency [msec]': 15.513755083662469, 'tx_brate downlink [Mbps]': 1.6360444333333335, 'new_num_rbgs': 7, 'cur_slice_mask': '00000011111100000', 'num_slice_users': 1, 'dl_buffer [bytes]': 2553.4333333333334}, 2: {'dl_latency [msec]': 24.545243096283272, 'tx_brate downlink [Mbps]': 1.868694791666666, 'new_num_rbgs': 3, 'cur_slice_mask': '00000000000011110', 'num_slice_users': 1, 'dl_buffer [bytes]': 5136.425}}
+2022-09-16 16:16:41,186 INFO     Writing slicing masks
+2022-09-16 16:16:41,186 INFO     Writing full mask for slice 0: 11111110000000000
+2022-09-16 16:16:41,186 INFO     Slicing mask tenant 0: 11111110000000000
+2022-09-16 16:16:41,186 INFO     Writing slicing masks
+2022-09-16 16:16:41,187 INFO     Writing full mask for slice 1: 00000001111111000
+2022-09-16 16:16:41,187 INFO     Slicing mask tenant 1: 00000001111111000
+2022-09-16 16:16:41,187 INFO     Writing slicing masks
+2022-09-16 16:16:41,187 INFO     Writing full mask for slice 2: 00000000000000111
+2022-09-16 16:16:41,187 INFO     Slicing mask tenant 2: 00000000000000111
+2022-09-16 16:17:11,217 INFO     Starting round 3
+2022-09-16 16:17:11,319 INFO     ts_ms:1663345031319 slice_metrics:{0: {'dl_latency [msec]': 2.0795883898173617, 'tx_brate downlink [Mbps]': 0.2755398358333333, 'new_num_rbgs': 8, 'cur_slice_mask': '11111110000000000', 'num_slice_users': 1, 'dl_buffer [bytes]': 236.76666666666668}, 1: {'dl_latency [msec]': 17.027894124155207, 'tx_brate downlink [Mbps]': 1.9287872499999996, 'new_num_rbgs': 8, 'cur_slice_mask': '00000001111111000', 'num_slice_users': 1, 'dl_buffer [bytes]': 3400.35}, 2: {'dl_latency [msec]': 42.15626137080903, 'tx_brate downlink [Mbps]': 1.4905000000000004, 'new_num_rbgs': 4, 'cur_slice_mask': '00000000000000111', 'num_slice_users': 1, 'dl_buffer [bytes]': 7917.491666666667}}
+2022-09-16 16:17:11,319 INFO     requested_rbg:20
+2022-09-16 16:17:11,319 INFO     Writing slicing masks
+2022-09-16 16:17:11,319 INFO     Writing full mask for slice 0: 11111100000000000
+2022-09-16 16:17:11,319 INFO     Slicing mask tenant 0: 11111100000000000
+2022-09-16 16:17:11,319 INFO     Writing slicing masks
+2022-09-16 16:17:11,319 INFO     Writing full mask for slice 1: 00000011111110000
+2022-09-16 16:17:11,320 INFO     Slicing mask tenant 1: 00000011111110000
+2022-09-16 16:17:11,320 INFO     Writing slicing masks
+2022-09-16 16:17:11,320 INFO     Writing full mask for slice 2: 00000000000001111
+2022-09-16 16:17:11,320 INFO     Slicing mask tenant 2: 00000000000001111
+2022-09-16 16:17:41,350 INFO     Starting round 4
+2022-09-16 16:17:41,453 INFO     ts_ms:1663345061453 slice_metrics:{0: {'dl_latency [msec]': 30.812452313221627, 'tx_brate downlink [Mbps]': 0.3005169375, 'new_num_rbgs': 7, 'cur_slice_mask': '11111100000000000', 'num_slice_users': 1, 'dl_buffer [bytes]': 601.1166666666667}, 1: {'dl_latency [msec]': 12.393930026017491, 'tx_brate downlink [Mbps]': 1.974405666666667, 'new_num_rbgs': 8, 'cur_slice_mask': '00000011111110000', 'num_slice_users': 1, 'dl_buffer [bytes]': 2301.3333333333335}, 2: {'dl_latency [msec]': 19.09772315902892, 'tx_brate downlink [Mbps]': 1.7127784333333331, 'new_num_rbgs': 3, 'cur_slice_mask': '00000000000001111', 'num_slice_users': 1, 'dl_buffer [bytes]': 4111.941666666667}}
+2022-09-16 16:17:41,454 INFO     requested_rbg:18
+2022-09-16 16:17:41,454 INFO     Writing slicing masks
+2022-09-16 16:17:41,454 INFO     Writing full mask for slice 0: 11111110000000000
+2022-09-16 16:17:41,454 INFO     Slicing mask tenant 0: 11111110000000000
+2022-09-16 16:17:41,454 INFO     Writing slicing masks
+2022-09-16 16:17:41,454 INFO     Writing full mask for slice 1: 00000001111111000
+2022-09-16 16:17:41,454 INFO     Slicing mask tenant 1: 00000001111111000
+2022-09-16 16:17:41,454 INFO     Writing slicing masks
+2022-09-16 16:17:41,455 INFO     Writing full mask for slice 2: 00000000000000111
+2022-09-16 16:17:41,455 INFO     Slicing mask tenant 2: 00000000000000111
+2022-09-16 16:18:11,485 INFO     Starting round 5
+2022-09-16 16:18:11,592 INFO     ts_ms:1663345091592 slice_metrics:{0: {'dl_latency [msec]': 8.899803130159084, 'tx_brate downlink [Mbps]': 0.48332813916666684, 'new_num_rbgs': 8, 'cur_slice_mask': '11111110000000000', 'num_slice_users': 1, 'dl_buffer [bytes]': 1016.0416666666666}, 1: {'dl_latency [msec]': 10.905376793637588, 'tx_brate downlink [Mbps]': 1.9946614583333335, 'new_num_rbgs': 8, 'cur_slice_mask': '00000001111111000', 'num_slice_users': 1, 'dl_buffer [bytes]': 2407.1}, 2: {'dl_latency [msec]': 37.74454587551326, 'tx_brate downlink [Mbps]': 1.4229693750000005, 'new_num_rbgs': 4, 'cur_slice_mask': '00000000000000111', 'num_slice_users': 1, 'dl_buffer [bytes]': 6571.7}}
+2022-09-16 16:18:11,592 INFO     requested_rbg:20
+2022-09-16 16:18:11,592 INFO     Writing slicing masks
+2022-09-16 16:18:11,592 INFO     Writing full mask for slice 0: 11111100000000000
+2022-09-16 16:18:11,592 INFO     Slicing mask tenant 0: 11111100000000000
+2022-09-16 16:18:11,592 INFO     Writing slicing masks
+2022-09-16 16:18:11,592 INFO     Writing full mask for slice 1: 00000011111110000
+2022-09-16 16:18:11,593 INFO     Slicing mask tenant 1: 00000011111110000
+2022-09-16 16:18:11,593 INFO     Writing slicing masks
+2022-09-16 16:18:11,593 INFO     Writing full mask for slice 2: 00000000000001111
+2022-09-16 16:18:11,593 INFO     Slicing mask tenant 2: 00000000000001111
+2022-09-16 16:18:41,623 INFO     Starting round 6
+2022-09-16 16:18:41,732 INFO     ts_ms:1663345121732 slice_metrics:{0: {'dl_latency [msec]': 24.46032835091308, 'tx_brate downlink [Mbps]': 0.26442743500000015, 'new_num_rbgs': 7, 'cur_slice_mask': '11111100000000000', 'num_slice_users': 1, 'dl_buffer [bytes]': 449.45}, 1: {'dl_latency [msec]': 15.32358863856251, 'tx_brate downlink [Mbps]': 2.3329678666666656, 'new_num_rbgs': 8, 'cur_slice_mask': '00000011111110000', 'num_slice_users': 1, 'dl_buffer [bytes]': 4084.95}, 2: {'dl_latency [msec]': 22.144578343625373, 'tx_brate downlink [Mbps]': 1.626473191666667, 'new_num_rbgs': 3, 'cur_slice_mask': '00000000000001111', 'num_slice_users': 1, 'dl_buffer [bytes]': 4987.7}}
+2022-09-16 16:18:41,732 INFO     requested_rbg:18
+2022-09-16 16:18:41,732 INFO     Writing slicing masks
+2022-09-16 16:18:41,732 INFO     Writing full mask for slice 0: 11111110000000000
+2022-09-16 16:18:41,733 INFO     Slicing mask tenant 0: 11111110000000000
+2022-09-16 16:18:41,733 INFO     Writing slicing masks
+2022-09-16 16:18:41,733 INFO     Writing full mask for slice 1: 00000001111111000
+2022-09-16 16:18:41,733 INFO     Slicing mask tenant 1: 00000001111111000
+2022-09-16 16:18:41,733 INFO     Writing slicing masks
+2022-09-16 16:18:41,733 INFO     Writing full mask for slice 2: 00000000000000111
+2022-09-16 16:18:41,733 INFO     Slicing mask tenant 2: 00000000000000111
+2022-09-16 16:19:11,764 INFO     Starting round 7
+2022-09-16 16:19:11,888 INFO     ts_ms:1663345151888 slice_metrics:{0: {'dl_latency [msec]': 1.6722551255395985, 'tx_brate downlink [Mbps]': 0.14656776000000002, 'new_num_rbgs': 8, 'cur_slice_mask': '11111110000000000', 'num_slice_users': 1, 'dl_buffer [bytes]': 223.63333333333333}, 1: {'dl_latency [msec]': 13.523962618822177, 'tx_brate downlink [Mbps]': 1.8563616166666674, 'new_num_rbgs': 8, 'cur_slice_mask': '00000001111111000', 'num_slice_users': 1, 'dl_buffer [bytes]': 2076.7083333333335}, 2: {'dl_latency [msec]': 47.97758281906997, 'tx_brate downlink [Mbps]': 1.511772183333332, 'new_num_rbgs': 2, 'cur_slice_mask': '00000000000000111', 'num_slice_users': 1, 'dl_buffer [bytes]': 8917.2}}
+2022-09-16 16:19:11,888 INFO     requested_rbg:18
+2022-09-16 16:19:11,888 INFO     Writing slicing masks
+2022-09-16 16:19:11,888 INFO     Writing full mask for slice 0: 11111110000000000
+2022-09-16 16:19:11,889 INFO     Slicing mask tenant 0: 11111110000000000
+2022-09-16 16:19:11,889 INFO     Writing slicing masks
+2022-09-16 16:19:11,889 INFO     Writing full mask for slice 1: 00000001111111100
+2022-09-16 16:19:11,889 INFO     Slicing mask tenant 1: 00000001111111100
+2022-09-16 16:19:11,889 INFO     Writing slicing masks
+2022-09-16 16:19:11,889 INFO     Writing full mask for slice 2: 00000000000000011
+2022-09-16 16:19:11,889 INFO     Slicing mask tenant 2: 00000000000000011
+2022-09-16 16:19:41,913 INFO     Starting round 8
+2022-09-16 16:19:42,023 INFO     ts_ms:1663345182023 slice_metrics:{0: {'dl_latency [msec]': 1.2667156924247271, 'tx_brate downlink [Mbps]': 0.18840114749999998, 'new_num_rbgs': 8, 'cur_slice_mask': '11111110000000000', 'num_slice_users': 1, 'dl_buffer [bytes]': 132.7}, 1: {'dl_latency [msec]': 15.029366875168158, 'tx_brate downlink [Mbps]': 2.2446719833333333, 'new_num_rbgs': 9, 'cur_slice_mask': '00000001111111100', 'num_slice_users': 1, 'dl_buffer [bytes]': 4071.8333333333335}, 2: {'dl_latency [msec]': 441.01137943696705, 'tx_brate downlink [Mbps]': 1.1273518416666666, 'new_num_rbgs': 3, 'cur_slice_mask': '00000000000000011', 'num_slice_users': 1, 'dl_buffer [bytes]': 62976.35833333333}}
+2022-09-16 16:19:42,023 INFO     requested_rbg:20
+2022-09-16 16:19:42,023 INFO     Writing slicing masks
+2022-09-16 16:19:42,023 INFO     Writing full mask for slice 0: 11111110000000000
+2022-09-16 16:19:42,023 INFO     Slicing mask tenant 0: 11111110000000000
+2022-09-16 16:19:42,023 INFO     Writing slicing masks
+2022-09-16 16:19:42,023 INFO     Writing full mask for slice 1: 00000001111111000
+2022-09-16 16:19:42,024 INFO     Slicing mask tenant 1: 00000001111111000
+2022-09-16 16:19:42,024 INFO     Writing slicing masks
+2022-09-16 16:19:42,024 INFO     Writing full mask for slice 2: 00000000000000111
+2022-09-16 16:19:42,024 INFO     Slicing mask tenant 2: 00000000000000111
+2022-09-16 16:20:12,054 INFO     Starting round 9
+2022-09-16 16:20:12,168 INFO     ts_ms:1663345212168 slice_metrics:{0: {'dl_latency [msec]': 0.7024082568807339, 'tx_brate downlink [Mbps]': 0.04312213333333333, 'new_num_rbgs': 8, 'cur_slice_mask': '11111110000000000', 'num_slice_users': 1, 'dl_buffer [bytes]': 37.975}, 1: {'dl_latency [msec]': 13.46680780567699, 'tx_brate downlink [Mbps]': 2.0903596333333327, 'new_num_rbgs': 8, 'cur_slice_mask': '00000001111111000', 'num_slice_users': 1, 'dl_buffer [bytes]': 3213.575}, 2: {'dl_latency [msec]': 48.724311160137184, 'tx_brate downlink [Mbps]': 1.4750045833333338, 'new_num_rbgs': 4, 'cur_slice_mask': '00000000000000111', 'num_slice_users': 1, 'dl_buffer [bytes]': 9174.216666666667}}
+2022-09-16 16:20:12,168 INFO     requested_rbg:20
+2022-09-16 16:20:12,168 INFO     Writing slicing masks
+2022-09-16 16:20:12,169 INFO     Writing full mask for slice 0: 11111100000000000
+2022-09-16 16:20:12,169 INFO     Slicing mask tenant 0: 11111100000000000
+2022-09-16 16:20:12,169 INFO     Writing slicing masks
+2022-09-16 16:20:12,169 INFO     Writing full mask for slice 1: 00000011111110000
+2022-09-16 16:20:12,169 INFO     Slicing mask tenant 1: 00000011111110000
+2022-09-16 16:20:12,169 INFO     Writing slicing masks
+2022-09-16 16:20:12,169 INFO     Writing full mask for slice 2: 00000000000001111
+2022-09-16 16:20:12,169 INFO     Slicing mask tenant 2: 00000000000001111
+2022-09-16 16:20:42,200 INFO     Starting round 10
+2022-09-16 16:20:42,314 INFO     ts_ms:1663345242314 slice_metrics:{0: {'dl_latency [msec]': 4.760055431286267, 'tx_brate downlink [Mbps]': 0.24440403333333335, 'new_num_rbgs': 7, 'cur_slice_mask': '11111100000000000', 'num_slice_users': 1, 'dl_buffer [bytes]': 354.60833333333335}, 1: {'dl_latency [msec]': 12.96402443529464, 'tx_brate downlink [Mbps]': 2.0363280166666677, 'new_num_rbgs': 8, 'cur_slice_mask': '00000011111110000', 'num_slice_users': 1, 'dl_buffer [bytes]': 3003.7916666666665}, 2: {'dl_latency [msec]': 20.22786118191966, 'tx_brate downlink [Mbps]': 1.6717581333333333, 'new_num_rbgs': 3, 'cur_slice_mask': '00000000000001111', 'num_slice_users': 1, 'dl_buffer [bytes]': 4284.975}}
+2022-09-16 16:20:42,314 INFO     requested_rbg:18
+2022-09-16 16:20:42,314 INFO     Writing slicing masks
+2022-09-16 16:20:42,314 INFO     Writing full mask for slice 0: 11111110000000000
+2022-09-16 16:20:42,315 INFO     Slicing mask tenant 0: 11111110000000000
+2022-09-16 16:20:42,315 INFO     Writing slicing masks
+2022-09-16 16:20:42,315 INFO     Writing full mask for slice 1: 00000001111111000
+2022-09-16 16:20:42,315 INFO     Slicing mask tenant 1: 00000001111111000
+2022-09-16 16:20:42,315 INFO     Writing slicing masks
+2022-09-16 16:20:42,315 INFO     Writing full mask for slice 2: 00000000000000111
+2022-09-16 16:20:42,315 INFO     Slicing mask tenant 2: 00000000000000111
+2022-09-16 16:21:12,346 INFO     Starting round 11
+2022-09-16 16:21:12,464 INFO     ts_ms:1663345272464 slice_metrics:{0: {'dl_latency [msec]': 34.28346186779557, 'tx_brate downlink [Mbps]': 0.40603937749999996, 'new_num_rbgs': 8, 'cur_slice_mask': '11111110000000000', 'num_slice_users': 1, 'dl_buffer [bytes]': 635.6416666666667}, 1: {'dl_latency [msec]': 15.211585153927109, 'tx_brate downlink [Mbps]': 1.9348356833333342, 'new_num_rbgs': 8, 'cur_slice_mask': '00000001111111000', 'num_slice_users': 1, 'dl_buffer [bytes]': 3289.875}, 2: {'dl_latency [msec]': 43.82582181341954, 'tx_brate downlink [Mbps]': 1.5292940500000005, 'new_num_rbgs': 2, 'cur_slice_mask': '00000000000000111', 'num_slice_users': 1, 'dl_buffer [bytes]': 8404.408333333333}}
+2022-09-16 16:21:12,465 INFO     requested_rbg:18
+2022-09-16 16:21:12,465 INFO     Writing slicing masks
+2022-09-16 16:21:12,465 INFO     Writing full mask for slice 0: 11111110000000000
+2022-09-16 16:21:12,465 INFO     Slicing mask tenant 0: 11111110000000000
+2022-09-16 16:21:12,465 INFO     Writing slicing masks
+2022-09-16 16:21:12,465 INFO     Writing full mask for slice 1: 00000001111111100
+2022-09-16 16:21:12,465 INFO     Slicing mask tenant 1: 00000001111111100
+2022-09-16 16:21:12,466 INFO     Writing slicing masks
+2022-09-16 16:21:12,466 INFO     Writing full mask for slice 2: 00000000000000011
+2022-09-16 16:21:12,466 INFO     Slicing mask tenant 2: 00000000000000011
+2022-09-16 16:21:42,467 INFO     Starting round 12
+2022-09-16 16:21:42,594 INFO     ts_ms:1663345302594 slice_metrics:{0: {'dl_latency [msec]': 39.18535622697242, 'tx_brate downlink [Mbps]': 0.39143398333333324, 'new_num_rbgs': 8, 'cur_slice_mask': '11111110000000000', 'num_slice_users': 1, 'dl_buffer [bytes]': 1139.9083333333333}, 1: {'dl_latency [msec]': 21.310958693153147, 'tx_brate downlink [Mbps]': 2.315122483333333, 'new_num_rbgs': 9, 'cur_slice_mask': '00000001111111100', 'num_slice_users': 1, 'dl_buffer [bytes]': 4814.825}, 2: {'dl_latency [msec]': 180.4142497121933, 'tx_brate downlink [Mbps]': 1.0948260666666665, 'new_num_rbgs': 3, 'cur_slice_mask': '00000000000000011', 'num_slice_users': 1, 'dl_buffer [bytes]': 24301.941666666666}}
+2022-09-16 16:21:42,594 INFO     requested_rbg:20
+2022-09-16 16:21:42,594 INFO     Writing slicing masks
+2022-09-16 16:21:42,594 INFO     Writing full mask for slice 0: 11111110000000000
+2022-09-16 16:21:42,594 INFO     Slicing mask tenant 0: 11111110000000000
+2022-09-16 16:21:42,595 INFO     Writing slicing masks
+2022-09-16 16:21:42,595 INFO     Writing full mask for slice 1: 00000001111111000
+2022-09-16 16:21:42,595 INFO     Slicing mask tenant 1: 00000001111111000
+2022-09-16 16:21:42,595 INFO     Writing slicing masks
+2022-09-16 16:21:42,595 INFO     Writing full mask for slice 2: 00000000000000111
+2022-09-16 16:21:42,595 INFO     Slicing mask tenant 2: 00000000000000111
+2022-09-16 16:22:12,625 INFO     Starting round 13
+2022-09-16 16:22:12,747 INFO     ts_ms:1663345332747 slice_metrics:{0: {'dl_latency [msec]': 9.672306096441947, 'tx_brate downlink [Mbps]': 0.6565316416666669, 'new_num_rbgs': 8, 'cur_slice_mask': '11111110000000000', 'num_slice_users': 1, 'dl_buffer [bytes]': 1535.1583333333333}, 1: {'dl_latency [msec]': 14.243392620917742, 'tx_brate downlink [Mbps]': 1.94712935, 'new_num_rbgs': 8, 'cur_slice_mask': '00000001111111000', 'num_slice_users': 1, 'dl_buffer [bytes]': 3283.866666666667}, 2: {'dl_latency [msec]': 38.75736316473521, 'tx_brate downlink [Mbps]': 1.4353304750000002, 'new_num_rbgs': 4, 'cur_slice_mask': '00000000000000111', 'num_slice_users': 1, 'dl_buffer [bytes]': 6922.783333333334}}
+2022-09-16 16:22:12,747 INFO     requested_rbg:20
+2022-09-16 16:22:12,748 INFO     Writing slicing masks
+2022-09-16 16:22:12,748 INFO     Writing full mask for slice 0: 11111100000000000
+2022-09-16 16:22:12,748 INFO     Slicing mask tenant 0: 11111100000000000
+2022-09-16 16:22:12,748 INFO     Writing slicing masks
+2022-09-16 16:22:12,748 INFO     Writing full mask for slice 1: 00000011111110000
+2022-09-16 16:22:12,748 INFO     Slicing mask tenant 1: 00000011111110000
+2022-09-16 16:22:12,748 INFO     Writing slicing masks
+2022-09-16 16:22:12,748 INFO     Writing full mask for slice 2: 00000000000001111
+2022-09-16 16:22:12,749 INFO     Slicing mask tenant 2: 00000000000001111
+2022-09-16 16:22:42,779 INFO     Starting round 14
+2022-09-16 16:22:42,904 INFO     ts_ms:1663345362904 slice_metrics:{0: {'dl_latency [msec]': 4.3823120508547975, 'tx_brate downlink [Mbps]': 0.19895529166666664, 'new_num_rbgs': 7, 'cur_slice_mask': '11111100000000000', 'num_slice_users': 1, 'dl_buffer [bytes]': 362.28333333333336}, 1: {'dl_latency [msec]': 12.633472870991607, 'tx_brate downlink [Mbps]': 2.0654973916666663, 'new_num_rbgs': 8, 'cur_slice_mask': '00000011111110000', 'num_slice_users': 1, 'dl_buffer [bytes]': 2918.266666666667}, 2: {'dl_latency [msec]': 24.364895369201296, 'tx_brate downlink [Mbps]': 1.8132535333333333, 'new_num_rbgs': 3, 'cur_slice_mask': '00000000000001111', 'num_slice_users': 1, 'dl_buffer [bytes]': 5253.45}}
+2022-09-16 16:22:42,904 INFO     requested_rbg:18
+2022-09-16 16:22:42,904 INFO     Writing slicing masks
+2022-09-16 16:22:42,905 INFO     Writing full mask for slice 0: 11111110000000000
+2022-09-16 16:22:42,905 INFO     Slicing mask tenant 0: 11111110000000000
+2022-09-16 16:22:42,905 INFO     Writing slicing masks
+2022-09-16 16:22:42,905 INFO     Writing full mask for slice 1: 00000001111111000
+2022-09-16 16:22:42,905 INFO     Slicing mask tenant 1: 00000001111111000
+2022-09-16 16:22:42,905 INFO     Writing slicing masks
+2022-09-16 16:22:42,905 INFO     Writing full mask for slice 2: 00000000000000111
+2022-09-16 16:22:42,905 INFO     Slicing mask tenant 2: 00000000000000111
+2022-09-16 16:23:12,936 INFO     Starting round 15
+2022-09-16 16:23:13,063 INFO     ts_ms:1663345393063 slice_metrics:{0: {'dl_latency [msec]': 38.03117708022977, 'tx_brate downlink [Mbps]': 0.27287616083333327, 'new_num_rbgs': 8, 'cur_slice_mask': '11111110000000000', 'num_slice_users': 1, 'dl_buffer [bytes]': 576.2416666666667}, 1: {'dl_latency [msec]': 39.8432701615731, 'tx_brate downlink [Mbps]': 2.0048520666666665, 'new_num_rbgs': 6, 'cur_slice_mask': '00000001111111000', 'num_slice_users': 1, 'dl_buffer [bytes]': 3382.55}, 2: {'dl_latency [msec]': 43.77441755747105, 'tx_brate downlink [Mbps]': 1.4995149499999998, 'new_num_rbgs': 4, 'cur_slice_mask': '00000000000000111', 'num_slice_users': 1, 'dl_buffer [bytes]': 8087.683333333333}}
+2022-09-16 16:23:13,063 INFO     requested_rbg:18
+2022-09-16 16:23:13,063 INFO     Writing slicing masks
+2022-09-16 16:23:13,063 INFO     Writing full mask for slice 0: 11111110000000000
+2022-09-16 16:23:13,064 INFO     Slicing mask tenant 0: 11111110000000000
+2022-09-16 16:23:13,064 INFO     Writing slicing masks
+2022-09-16 16:23:13,064 INFO     Writing full mask for slice 1: 00000001111110000
+2022-09-16 16:23:13,064 INFO     Slicing mask tenant 1: 00000001111110000
+2022-09-16 16:23:13,064 INFO     Writing slicing masks
+2022-09-16 16:23:13,064 INFO     Writing full mask for slice 2: 00000000000001111
+2022-09-16 16:23:13,064 INFO     Slicing mask tenant 2: 00000000000001111
+2022-09-16 16:23:43,095 INFO     Starting round 16
+2022-09-16 16:23:43,235 INFO     ts_ms:1663345423235 slice_metrics:{0: {'dl_latency [msec]': 184.71930801717457, 'tx_brate downlink [Mbps]': 0.4813797108333335, 'new_num_rbgs': 8, 'cur_slice_mask': '11111110000000000', 'num_slice_users': 1, 'dl_buffer [bytes]': 727.6333333333333}, 1: {'dl_latency [msec]': 10.270561187932083, 'tx_brate downlink [Mbps]': 1.5451253333333337, 'new_num_rbgs': 7, 'cur_slice_mask': '00000001111110000', 'num_slice_users': 1, 'dl_buffer [bytes]': 1930.5083333333334}, 2: {'dl_latency [msec]': 21.95265377832307, 'tx_brate downlink [Mbps]': 1.8784840999999999, 'new_num_rbgs': 3, 'cur_slice_mask': '00000000000001111', 'num_slice_users': 1, 'dl_buffer [bytes]': 5083.366666666667}}
+2022-09-16 16:23:43,235 INFO     requested_rbg:18
+2022-09-16 16:23:43,235 INFO     Writing slicing masks
+2022-09-16 16:23:43,235 INFO     Writing full mask for slice 0: 11111110000000000
+2022-09-16 16:23:43,235 INFO     Slicing mask tenant 0: 11111110000000000
+2022-09-16 16:23:43,235 INFO     Writing slicing masks
+2022-09-16 16:23:43,235 INFO     Writing full mask for slice 1: 00000001111111000
+2022-09-16 16:23:43,236 INFO     Slicing mask tenant 1: 00000001111111000
+2022-09-16 16:23:43,236 INFO     Writing slicing masks
+2022-09-16 16:23:43,236 INFO     Writing full mask for slice 2: 00000000000000111
+2022-09-16 16:23:43,236 INFO     Slicing mask tenant 2: 00000000000000111
+2022-09-16 16:24:13,266 INFO     Starting round 17
+2022-09-16 16:24:13,402 INFO     ts_ms:1663345453402 slice_metrics:{0: {'dl_latency [msec]': 34.09563536976317, 'tx_brate downlink [Mbps]': 0.5745047458333337, 'new_num_rbgs': 8, 'cur_slice_mask': '11111110000000000', 'num_slice_users': 1, 'dl_buffer [bytes]': 1160.6}, 1: {'dl_latency [msec]': 13.57795491121813, 'tx_brate downlink [Mbps]': 1.9501048608333336, 'new_num_rbgs': 8, 'cur_slice_mask': '00000001111111000', 'num_slice_users': 1, 'dl_buffer [bytes]': 2809.741666666667}, 2: {'dl_latency [msec]': 45.79022512877028, 'tx_brate downlink [Mbps]': 1.458868725000001, 'new_num_rbgs': 4, 'cur_slice_mask': '00000000000000111', 'num_slice_users': 1, 'dl_buffer [bytes]': 8352.05}}
+2022-09-16 16:24:13,402 INFO     requested_rbg:20
+2022-09-16 16:24:13,402 INFO     Writing slicing masks
+2022-09-16 16:24:13,402 INFO     Writing full mask for slice 0: 11111100000000000
+2022-09-16 16:24:13,402 INFO     Slicing mask tenant 0: 11111100000000000
+2022-09-16 16:24:13,402 INFO     Writing slicing masks
+2022-09-16 16:24:13,402 INFO     Writing full mask for slice 1: 00000011111110000
+2022-09-16 16:24:13,403 INFO     Slicing mask tenant 1: 00000011111110000
+2022-09-16 16:24:13,403 INFO     Writing slicing masks
+2022-09-16 16:24:13,403 INFO     Writing full mask for slice 2: 00000000000001111
+2022-09-16 16:24:13,403 INFO     Slicing mask tenant 2: 00000000000001111
+2022-09-16 16:24:43,410 INFO     Starting round 18
+2022-09-16 16:24:43,543 INFO     ts_ms:1663345483543 slice_metrics:{0: {'dl_latency [msec]': 18.06094623620778, 'tx_brate downlink [Mbps]': 0.21109134333333332, 'new_num_rbgs': 7, 'cur_slice_mask': '11111100000000000', 'num_slice_users': 1, 'dl_buffer [bytes]': 165.78333333333333}, 1: {'dl_latency [msec]': 19.312095757517568, 'tx_brate downlink [Mbps]': 2.0740778249999994, 'new_num_rbgs': 8, 'cur_slice_mask': '00000011111110000', 'num_slice_users': 1, 'dl_buffer [bytes]': 2870.5916666666667}, 2: {'dl_latency [msec]': 25.101546022640466, 'tx_brate downlink [Mbps]': 1.7797487833333332, 'new_num_rbgs': 3, 'cur_slice_mask': '00000000000001111', 'num_slice_users': 1, 'dl_buffer [bytes]': 5363.033333333334}}
+2022-09-16 16:24:43,543 INFO     requested_rbg:18
+2022-09-16 16:24:43,544 INFO     Writing slicing masks
+2022-09-16 16:24:43,544 INFO     Writing full mask for slice 0: 11111110000000000
+2022-09-16 16:24:43,544 INFO     Slicing mask tenant 0: 11111110000000000
+2022-09-16 16:24:43,544 INFO     Writing slicing masks
+2022-09-16 16:24:43,544 INFO     Writing full mask for slice 1: 00000001111111000
+2022-09-16 16:24:43,544 INFO     Slicing mask tenant 1: 00000001111111000
+2022-09-16 16:24:43,544 INFO     Writing slicing masks
+2022-09-16 16:24:43,544 INFO     Writing full mask for slice 2: 00000000000000111
+2022-09-16 16:24:43,545 INFO     Slicing mask tenant 2: 00000000000000111
+2022-09-16 16:25:13,575 INFO     Starting round 19
+2022-09-16 16:25:13,713 INFO     ts_ms:1663345513713 slice_metrics:{0: {'dl_latency [msec]': 9.68194232909454, 'tx_brate downlink [Mbps]': 0.3114685083333334, 'new_num_rbgs': 8, 'cur_slice_mask': '11111110000000000', 'num_slice_users': 1, 'dl_buffer [bytes]': 533.2583333333333}, 1: {'dl_latency [msec]': 13.122209398700225, 'tx_brate downlink [Mbps]': 2.034584516666665, 'new_num_rbgs': 8, 'cur_slice_mask': '00000001111111000', 'num_slice_users': 1, 'dl_buffer [bytes]': 2664.616666666667}, 2: {'dl_latency [msec]': 39.272453012871864, 'tx_brate downlink [Mbps]': 1.4704316833333333, 'new_num_rbgs': 4, 'cur_slice_mask': '00000000000000111', 'num_slice_users': 1, 'dl_buffer [bytes]': 6874.716666666666}}
+2022-09-16 16:25:13,713 INFO     requested_rbg:20
+2022-09-16 16:25:13,713 INFO     Writing slicing masks
+2022-09-16 16:25:13,713 INFO     Writing full mask for slice 0: 11111100000000000
+2022-09-16 16:25:13,713 INFO     Slicing mask tenant 0: 11111100000000000
+2022-09-16 16:25:13,714 INFO     Writing slicing masks
+2022-09-16 16:25:13,714 INFO     Writing full mask for slice 1: 00000011111110000
+2022-09-16 16:25:13,714 INFO     Slicing mask tenant 1: 00000011111110000
+2022-09-16 16:25:13,714 INFO     Writing slicing masks
+2022-09-16 16:25:13,714 INFO     Writing full mask for slice 2: 00000000000001111
+2022-09-16 16:25:13,714 INFO     Slicing mask tenant 2: 00000000000001111
+2022-09-16 16:25:43,744 INFO     Starting round 20
+2022-09-16 16:25:43,895 INFO     ts_ms:1663345543895 slice_metrics:{0: {'dl_latency [msec]': 0.9429860504079254, 'tx_brate downlink [Mbps]': 0.03985980833333333, 'new_num_rbgs': 7, 'cur_slice_mask': '11111100000000000', 'num_slice_users': 1, 'dl_buffer [bytes]': 72.35}, 1: {'dl_latency [msec]': 8.875616468274584, 'tx_brate downlink [Mbps]': 1.9530377833333337, 'new_num_rbgs': 8, 'cur_slice_mask': '00000011111110000', 'num_slice_users': 1, 'dl_buffer [bytes]': 2143.5}, 2: {'dl_latency [msec]': 25.02361137734591, 'tx_brate downlink [Mbps]': 1.8985742833333328, 'new_num_rbgs': 3, 'cur_slice_mask': '00000000000001111', 'num_slice_users': 1, 'dl_buffer [bytes]': 5878.216666666666}}
+2022-09-16 16:25:43,895 INFO     requested_rbg:18
+2022-09-16 16:25:43,895 INFO     Writing slicing masks
+2022-09-16 16:25:43,895 INFO     Writing full mask for slice 0: 11111110000000000
+2022-09-16 16:25:43,895 INFO     Slicing mask tenant 0: 11111110000000000
+2022-09-16 16:25:43,895 INFO     Writing slicing masks
+2022-09-16 16:25:43,895 INFO     Writing full mask for slice 1: 00000001111111000
+2022-09-16 16:25:43,896 INFO     Slicing mask tenant 1: 00000001111111000
+2022-09-16 16:25:43,896 INFO     Writing slicing masks
+2022-09-16 16:25:43,896 INFO     Writing full mask for slice 2: 00000000000000111
+2022-09-16 16:25:43,896 INFO     Slicing mask tenant 2: 00000000000000111
+2022-09-16 16:26:13,926 INFO     Starting round 21
+2022-09-16 16:26:14,072 INFO     ts_ms:1663345574072 slice_metrics:{0: {'dl_latency [msec]': 0.0, 'tx_brate downlink [Mbps]': 0.004245134166666667, 'new_num_rbgs': 8, 'cur_slice_mask': '11111110000000000', 'num_slice_users': 1, 'dl_buffer [bytes]': 0.0}, 1: {'dl_latency [msec]': 7.774303415917685, 'tx_brate downlink [Mbps]': 2.0634079833333336, 'new_num_rbgs': 8, 'cur_slice_mask': '00000001111111000', 'num_slice_users': 1, 'dl_buffer [bytes]': 3034.7166666666667}, 2: {'dl_latency [msec]': 17.52879265325095, 'tx_brate downlink [Mbps]': 0.5809039166666669, 'new_num_rbgs': 4, 'cur_slice_mask': '00000000000000111', 'num_slice_users': 1, 'dl_buffer [bytes]': 3469.75}}
+2022-09-16 16:26:14,072 INFO     requested_rbg:20
+2022-09-16 16:26:14,072 INFO     Writing slicing masks
+2022-09-16 16:26:14,072 INFO     Writing full mask for slice 0: 11111100000000000
+2022-09-16 16:26:14,073 INFO     Slicing mask tenant 0: 11111100000000000
+2022-09-16 16:26:14,073 INFO     Writing slicing masks
+2022-09-16 16:26:14,073 INFO     Writing full mask for slice 1: 00000011111110000
+2022-09-16 16:26:14,073 INFO     Slicing mask tenant 1: 00000011111110000
+2022-09-16 16:26:14,073 INFO     Writing slicing masks
+2022-09-16 16:26:14,073 INFO     Writing full mask for slice 2: 00000000000001111
+2022-09-16 16:26:14,073 INFO     Slicing mask tenant 2: 00000000000001111
+2022-09-16 16:26:44,104 INFO     Starting round 22
+2022-09-16 16:26:44,250 INFO     ts_ms:1663345604250 slice_metrics:{0: {'dl_latency [msec]': 0.0, 'tx_brate downlink [Mbps]': 0.0, 'new_num_rbgs': 7, 'cur_slice_mask': '11111100000000000', 'num_slice_users': 1, 'dl_buffer [bytes]': 0.0}, 1: {'dl_latency [msec]': 0.0, 'tx_brate downlink [Mbps]': 0.0, 'new_num_rbgs': 8, 'cur_slice_mask': '00000011111110000', 'num_slice_users': 1, 'dl_buffer [bytes]': 0.0}, 2: {'dl_latency [msec]': 0.0, 'tx_brate downlink [Mbps]': 0.0, 'new_num_rbgs': 5, 'cur_slice_mask': '00000000000001111', 'num_slice_users': 1, 'dl_buffer [bytes]': 0.0}}
+2022-09-16 16:26:44,250 INFO     requested_rbg:20
+2022-09-16 16:26:44,250 INFO     Writing slicing masks
+2022-09-16 16:26:44,250 INFO     Writing full mask for slice 0: 11111100000000000
+2022-09-16 16:26:44,250 INFO     Slicing mask tenant 0: 11111100000000000
+2022-09-16 16:26:44,250 INFO     Writing slicing masks
+2022-09-16 16:26:44,251 INFO     Writing full mask for slice 1: 00000011111100000
+2022-09-16 16:26:44,251 INFO     Slicing mask tenant 1: 00000011111100000
+2022-09-16 16:26:44,251 INFO     Writing slicing masks
+2022-09-16 16:26:44,251 INFO     Writing full mask for slice 2: 00000000000011111
+2022-09-16 16:26:44,251 INFO     Slicing mask tenant 2: 00000000000011111
