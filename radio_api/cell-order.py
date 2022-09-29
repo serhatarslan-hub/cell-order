@@ -97,7 +97,7 @@ def cell_order_for_delay_target(cell_order_config: dict, metrics_db: dict, slice
             curr_hi_delay_budget = cell_order_config['slice-delay-budget-msec'][s_key][1]
             curr_tx_rate_budget = cell_order_config['slice-min-tx-rate-Mbps'][s_key]
 
-            if s_val[DL_LAT_KEYWORD] > curr_hi_delay_budget or s_val[DL_THP_KEYWORD] < curr_tx_rate_budget:
+            if s_val[DL_LAT_KEYWORD] > curr_hi_delay_budget or (s_val[DL_THP_KEYWORD] < curr_tx_rate_budget and s_val[DL_LAT_KEYWORD] != 0.0):
                 # Allocate more resources to this slice
                 slice_metrics[s_key]['new_num_rbgs'] = min(slice_metrics[s_key]['new_num_rbgs'] + 1, constants.MAX_RBG)
                 mask_to_write = True
