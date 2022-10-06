@@ -10,11 +10,13 @@ import constants
 from scope_start import read_metrics, get_metric_value, get_slice_users,\
     read_slice_scheduling, read_slice_mask, write_tenant_slicing_mask,\
     write_slice_scheduling, average_metric, avg_slice_metrics
+import mcs_mapper
 
 NUM_SLICE_USERS_KEYWORD = 'num_slice_users'
 DL_BUFFER_KEYWORD = 'dl_buffer [bytes]'
 DL_THP_KEYWORD = 'tx_brate downlink [Mbps]'
 DL_LAT_KEYWORD = 'dl_latency [msec]'
+DL_MCS_KEYWORD = 'dl_mcs'
 
 
 # Calculates the latency for each imsi at each timestep in msec
@@ -68,6 +70,7 @@ def cell_order_for_delay_target(cell_order_config: dict, metrics_db: dict, slice
     avg_dl_lat_msec = average_metric(metrics_db, DL_LAT_KEYWORD)
     avg_dl_buffer_bytes = average_metric(metrics_db, DL_BUFFER_KEYWORD)
     avg_dl_thr_mbps = average_metric(metrics_db, DL_THP_KEYWORD)
+    avg_dl_mcs = average_metric(metrics_db, DL_MCS_KEYWORD)
 
     # sum metrics over slice
     slice_metrics = dict()
@@ -78,6 +81,7 @@ def cell_order_for_delay_target(cell_order_config: dict, metrics_db: dict, slice
     avg_slice_metrics(slice_metrics, slice_users, avg_dl_lat_msec, DL_LAT_KEYWORD)
     avg_slice_metrics(slice_metrics, slice_users, avg_dl_buffer_bytes, DL_BUFFER_KEYWORD)
     avg_slice_metrics(slice_metrics, slice_users, avg_dl_thr_mbps, DL_THP_KEYWORD)
+    avg_slice_metrics(slice_metrics, slice_users, avg_dl_mcs, DL_MCS_KEYWORD)
 
     mask_to_write = False
     tot_num_rbg_rqstd = 0
@@ -86,16 +90,20 @@ def cell_order_for_delay_target(cell_order_config: dict, metrics_db: dict, slice
         slice_metrics[s_key]['cur_slice_mask'] = read_slice_mask(s_key) # string
         slice_metrics[s_key]['new_num_rbgs'] = slice_metrics[s_key]['cur_slice_mask'].count('1')
 
+        curr_tx_rate_budget = cell_order_config['slice-min-tx-rate-Mbps'][s_key]
+        req_n_prbs = mcs_mapper.calculate_n_prbs(curr_tx_rate_budget, 
+                                                 round(s_val[DL_MCS_KEYWORD]))
+
         if (iter_cnt < 1):
             # Make sure to start with a fair allocation
-            slice_metrics[s_key]['new_num_rbgs'] = int(constants.MAX_RBG / len(list(slice_metrics)))
+            slice_metrics[s_key]['new_num_rbgs'] = req_n_prbs
+            # slice_metrics[s_key]['new_num_rbgs'] = int(constants.MAX_RBG / len(list(slice_metrics)))
             mask_to_write = True
 
         elif cell_order_config['delay-budget-enabled']:
 
             curr_lo_delay_budget = cell_order_config['slice-delay-budget-msec'][s_key][0]
             curr_hi_delay_budget = cell_order_config['slice-delay-budget-msec'][s_key][1]
-            curr_tx_rate_budget = cell_order_config['slice-min-tx-rate-Mbps'][s_key]
 
             if s_val[DL_LAT_KEYWORD] > curr_hi_delay_budget or (s_val[DL_THP_KEYWORD] < curr_tx_rate_budget and s_val[DL_LAT_KEYWORD] != 0.0):
                 # Allocate more resources to this slice
@@ -179,11 +187,12 @@ if __name__ == '__main__':
     # Scope exposes telemetry every 250 msec
     telemetry_lines_to_read = int(4 * cell_order_config['reallocation-period-sec'])
 
-    round = -1
+    time.sleep(5)
+    iter = -1
     while True:
 
-        round += 1
-        logging.info('Starting round ' + str(round))
+        iter += 1
+        logging.info('Starting round ' + str(iter))
 
         # read metrics database {imsi->{ts->{metric_name->val}}}
         metrics_db = read_metrics(lines_num=telemetry_lines_to_read)
@@ -191,6 +200,6 @@ if __name__ == '__main__':
         # get slicing associations {slice_id->(imsi)}
         slice_users = get_slice_users(metrics_db)
 
-        cell_order_for_delay_target(cell_order_config, metrics_db, slice_users, round)
+        cell_order_for_delay_target(cell_order_config, metrics_db, slice_users, iter)
 
         time.sleep(cell_order_config['reallocation-period-sec'])
