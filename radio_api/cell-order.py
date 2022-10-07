@@ -97,8 +97,10 @@ def cell_order_for_delay_target(cell_order_config: dict, metrics_db: dict, slice
 
         if (iter_cnt < 1):
             # Make sure to start with a fair allocation
-            slice_metrics[s_key]['new_num_rbgs'] = req_n_prbs
-            # slice_metrics[s_key]['new_num_rbgs'] = int(constants.MAX_RBG / len(list(slice_metrics)))
+            if (cell_order_config['delay-budget-enabled']):
+                slice_metrics[s_key]['new_num_rbgs'] = int(constants.MAX_RBG / len(list(slice_metrics)))
+            else:
+                slice_metrics[s_key]['new_num_rbgs'] = req_n_prbs
             mask_to_write = True
 
         elif cell_order_config['delay-budget-enabled']:

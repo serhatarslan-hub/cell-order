@@ -52,7 +52,6 @@ def calculate_n_prbs(req_thp: float, mcs: int, n_mimo: int = 3) -> int:
         n_prb = idx + 1
         max_thp = calculate_thp_mbps(mcs, n_prb, n_mimo)
         if (max_thp >= req_thp):
-            print("********** mcs: {} max thp: {} req_thp: {} n_prb: {}".format(mcs, max_thp, req_thp, n_prb))
             break
     
     return n_prb
