@@ -61,7 +61,7 @@ def readjust_rbgs_to_capacity(slice_metrics: dict, tot_num_rbg_rqstd: int) -> No
 # Implement Delay Target aware resource allocation policy
 # in this case, assign more resources to slices/users if dl_buffer is above threshold 
 # if the current latency is below some lower bound, deallocate resources to reduce resource consumption
-def cell_order_for_delay_target(cell_order_config: dict, metrics_db: dict, slice_users: dict, iter_cnt: int) -> None:
+def cell_order_for_delay_target(cell_order_config: dict, metrics_db: dict, slice_users: dict, iter_cnt: int) -> dict:
 
     # Add the latency in milliseconds into the metrics_db
     calculate_dl_latency_metric(metrics_db)
@@ -90,8 +90,9 @@ def cell_order_for_delay_target(cell_order_config: dict, metrics_db: dict, slice
         slice_metrics[s_key]['cur_slice_mask'] = read_slice_mask(s_key) # string
         slice_metrics[s_key]['new_num_rbgs'] = slice_metrics[s_key]['cur_slice_mask'].count('1')
 
-        curr_tx_rate_budget = cell_order_config['slice-min-tx-rate-Mbps'][s_key]
-        req_n_prbs = mcs_mapper.calculate_n_prbs(curr_tx_rate_budget, 
+        curr_tx_rate_budget_low = cell_order_config['slice-tx-rate-budget-Mbps'][s_key][0]
+        curr_tx_rate_budget_hi = cell_order_config['slice-tx-rate-budget-Mbps'][s_key][1]
+        req_n_prbs = mcs_mapper.calculate_n_prbs(curr_tx_rate_budget_hi, 
                                                  round(s_val[DL_MCS_KEYWORD]))
 
         if (iter_cnt < 1):
@@ -105,12 +106,14 @@ def cell_order_for_delay_target(cell_order_config: dict, metrics_db: dict, slice
             curr_lo_delay_budget = cell_order_config['slice-delay-budget-msec'][s_key][0]
             curr_hi_delay_budget = cell_order_config['slice-delay-budget-msec'][s_key][1]
 
-            if s_val[DL_LAT_KEYWORD] > curr_hi_delay_budget or (s_val[DL_THP_KEYWORD] < curr_tx_rate_budget and s_val[DL_LAT_KEYWORD] != 0.0):
+            if s_val[DL_LAT_KEYWORD] > curr_hi_delay_budget or (s_val[DL_THP_KEYWORD] < curr_tx_rate_budget_low and s_val[DL_LAT_KEYWORD] != 0.0):
                 # Allocate more resources to this slice
-                slice_metrics[s_key]['new_num_rbgs'] = min(slice_metrics[s_key]['new_num_rbgs'] + 1, constants.MAX_RBG)
+                slice_metrics[s_key]['new_num_rbgs'] = min(req_n_prbs + 1, constants.MAX_RBG)
+                # slice_metrics[s_key]['new_num_rbgs'] = min(slice_metrics[s_key]['new_num_rbgs'] + 1, constants.MAX_RBG)
                 mask_to_write = True
             elif s_val[DL_LAT_KEYWORD] < curr_lo_delay_budget:
                 # Allocate less resources to this slice
+                # slice_metrics[s_key]['new_num_rbgs'] = max(req_n_prbs - 1, 1)
                 slice_metrics[s_key]['new_num_rbgs'] = max(slice_metrics[s_key]['new_num_rbgs'] - 1, 1)
                 mask_to_write = True
 
@@ -139,6 +142,8 @@ def cell_order_for_delay_target(cell_order_config: dict, metrics_db: dict, slice
             config_params = {'network_slicing_enabled': True, 'tenant_number': 1, 'slice_allocation': new_mask}
             write_tenant_slicing_mask(config_params, True, s_key)
 
+    return slice_metrics
+
 
 # get cell-order parameters from configuration file
 def parse_cell_order_config_file(filename: str) -> dict:
@@ -152,7 +157,7 @@ def parse_cell_order_config_file(filename: str) -> dict:
         # convert to right types
         if param_val.lower() in ['true', 'false']:
             config[param_key] = bool(param_val == 'True')
-        elif param_key in ['slice-delay-budget-msec', 'slice-min-tx-rate-Mbps']:
+        elif param_key in ['slice-delay-budget-msec', 'slice-tx-rate-budget-Mbps']:
             # Convert some config to python dictionary
             config[param_key] = ast.literal_eval(param_val)
         elif param_key in ['reallocation-period-sec']:
