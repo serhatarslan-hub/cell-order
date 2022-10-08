@@ -98,9 +98,9 @@ def cell_order_for_delay_target(cell_order_config: dict, metrics_db: dict, slice
         if (iter_cnt < 1):
             # Make sure to start with a fair allocation
             if (cell_order_config['delay-budget-enabled']):
-                slice_metrics[s_key]['new_num_rbgs'] = int(constants.MAX_RBG / len(list(slice_metrics)))
+                slice_metrics[s_key]['new_num_rbgs'] = req_n_prbs + 1
             else:
-                slice_metrics[s_key]['new_num_rbgs'] = req_n_prbs
+                slice_metrics[s_key]['new_num_rbgs'] = int(constants.MAX_RBG / len(list(slice_metrics)))
             mask_to_write = True
 
         elif cell_order_config['delay-budget-enabled']:
@@ -110,14 +110,28 @@ def cell_order_for_delay_target(cell_order_config: dict, metrics_db: dict, slice
 
             if s_val[DL_LAT_KEYWORD] > curr_hi_delay_budget or (s_val[DL_THP_KEYWORD] < curr_tx_rate_budget_low and s_val[DL_LAT_KEYWORD] != 0.0):
                 # Allocate more resources to this slice
-                slice_metrics[s_key]['new_num_rbgs'] = min(req_n_prbs + 1, constants.MAX_RBG)
+                if (slice_metrics[s_key]['new_num_rbgs'] >= req_n_prbs):
+                    slice_metrics[s_key]['new_num_rbgs'] = min(slice_metrics[s_key]['new_num_rbgs'] + 2, constants.MAX_RBG)
+                else:
+                    slice_metrics[s_key]['new_num_rbgs'] = min(req_n_prbs, constants.MAX_RBG)
+                
+                # slice_metrics[s_key]['new_num_rbgs'] = min(req_n_prbs + 1, constants.MAX_RBG)
                 # slice_metrics[s_key]['new_num_rbgs'] = min(slice_metrics[s_key]['new_num_rbgs'] + 1, constants.MAX_RBG)
                 mask_to_write = True
             elif s_val[DL_LAT_KEYWORD] < curr_lo_delay_budget:
-                # Allocate less resources to this slice
+                # De-allocate resources from this slice
+                if (slice_metrics[s_key]['new_num_rbgs'] > req_n_prbs):
+                    slice_metrics[s_key]['new_num_rbgs'] = req_n_prbs - 1
+                else:
+                    slice_metrics[s_key]['new_num_rbgs'] = max(slice_metrics[s_key]['new_num_rbgs'] - 1, 1)
+
+                # slice_metrics[s_key]['new_num_rbgs'] = max(slice_metrics[s_key]['new_num_rbgs'] - 1, 1)
                 # slice_metrics[s_key]['new_num_rbgs'] = max(req_n_prbs - 1, 1)
-                slice_metrics[s_key]['new_num_rbgs'] = max(slice_metrics[s_key]['new_num_rbgs'] - 1, 1)
                 mask_to_write = True
+            else:
+                # Try to maintain the current latency 
+                mask_to_write = slice_metrics[s_key]['new_num_rbgs'] != req_n_prbs + 1
+                slice_metrics[s_key]['new_num_rbgs'] = req_n_prbs + 1
 
         tot_num_rbg_rqstd += slice_metrics[s_key]['new_num_rbgs']
 
@@ -173,6 +187,7 @@ if __name__ == '__main__':
     # Define command line arguments
     parser = argparse.ArgumentParser()
     parser.add_argument('--config-file', type=str, required=True, help='Configuration file to parse.')
+    parser.add_argument('--t', type=float, default=0, help='Seconds to run for (0 for unlimited)')
     args = parser.parse_args()
 
     # configure logger and console output
@@ -194,9 +209,11 @@ if __name__ == '__main__':
     # Scope exposes telemetry every 250 msec
     telemetry_lines_to_read = int(4 * cell_order_config['reallocation-period-sec'])
 
+    tot_iter =  args.t / cell_order_config['reallocation-period-sec']
+
     time.sleep(5)
     iter = -1
-    while True:
+    while iter < tot_iter or args.t == 0:
 
         iter += 1
         logging.info('Starting round ' + str(iter))
