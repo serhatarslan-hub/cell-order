@@ -88,7 +88,8 @@ def cell_order_for_delay_target(cell_order_config: dict, metrics_db: dict, slice
     for s_key, s_val in slice_metrics.items():
         # get current slicing mask
         slice_metrics[s_key]['cur_slice_mask'] = read_slice_mask(s_key) # string
-        slice_metrics[s_key]['new_num_rbgs'] = slice_metrics[s_key]['cur_slice_mask'].count('1')
+        cur_num_rbgs = slice_metrics[s_key]['cur_slice_mask'].count('1')
+        slice_metrics[s_key]['new_num_rbgs'] = cur_num_rbgs
 
         curr_tx_rate_budget_low = cell_order_config['slice-tx-rate-budget-Mbps'][s_key][0]
         curr_tx_rate_budget_hi = cell_order_config['slice-tx-rate-budget-Mbps'][s_key][1]
@@ -101,7 +102,6 @@ def cell_order_for_delay_target(cell_order_config: dict, metrics_db: dict, slice
                 slice_metrics[s_key]['new_num_rbgs'] = req_n_prbs + 1
             else:
                 slice_metrics[s_key]['new_num_rbgs'] = int(constants.MAX_RBG / len(list(slice_metrics)))
-            mask_to_write = True
 
         elif cell_order_config['delay-budget-enabled']:
 
@@ -110,34 +110,36 @@ def cell_order_for_delay_target(cell_order_config: dict, metrics_db: dict, slice
 
             if s_val[DL_LAT_KEYWORD] > curr_hi_delay_budget or (s_val[DL_THP_KEYWORD] < curr_tx_rate_budget_low and s_val[DL_LAT_KEYWORD] != 0.0):
                 # Allocate more resources to this slice
-                if (slice_metrics[s_key]['new_num_rbgs'] >= req_n_prbs):
-                    slice_metrics[s_key]['new_num_rbgs'] = min(slice_metrics[s_key]['new_num_rbgs'] + 2, constants.MAX_RBG)
+                # slice_metrics[s_key]['new_num_rbgs'] = min(max(cur_num_rbgs, req_n_prbs) + 1, req_n_prbs + 2)
+                if (cur_num_rbgs > req_n_prbs):
+                    slice_metrics[s_key]['new_num_rbgs'] = req_n_prbs + 2
+                    # slice_metrics[s_key]['new_num_rbgs'] = slice_metrics[s_key]['new_num_rbgs'] + 1
                 else:
-                    slice_metrics[s_key]['new_num_rbgs'] = min(req_n_prbs, constants.MAX_RBG)
-                
+                    slice_metrics[s_key]['new_num_rbgs'] = req_n_prbs + 1
+
                 # slice_metrics[s_key]['new_num_rbgs'] = min(req_n_prbs + 1, constants.MAX_RBG)
                 # slice_metrics[s_key]['new_num_rbgs'] = min(slice_metrics[s_key]['new_num_rbgs'] + 1, constants.MAX_RBG)
-                mask_to_write = True
             elif s_val[DL_LAT_KEYWORD] < curr_lo_delay_budget:
                 # De-allocate resources from this slice
-                if (slice_metrics[s_key]['new_num_rbgs'] > req_n_prbs):
-                    slice_metrics[s_key]['new_num_rbgs'] = req_n_prbs - 1
+                if (cur_num_rbgs > req_n_prbs):
+                    slice_metrics[s_key]['new_num_rbgs'] = max(req_n_prbs - 1, 1)
                 else:
-                    slice_metrics[s_key]['new_num_rbgs'] = max(slice_metrics[s_key]['new_num_rbgs'] - 1, 1)
+                    slice_metrics[s_key]['new_num_rbgs'] = max(cur_num_rbgs - 1, 1)
 
                 # slice_metrics[s_key]['new_num_rbgs'] = max(slice_metrics[s_key]['new_num_rbgs'] - 1, 1)
                 # slice_metrics[s_key]['new_num_rbgs'] = max(req_n_prbs - 1, 1)
-                mask_to_write = True
             else:
                 # Try to maintain the current latency 
-                mask_to_write = slice_metrics[s_key]['new_num_rbgs'] != req_n_prbs + 1
                 slice_metrics[s_key]['new_num_rbgs'] = req_n_prbs + 1
 
+        mask_to_write = mask_to_write or (slice_metrics[s_key]['new_num_rbgs'] != cur_num_rbgs)
         tot_num_rbg_rqstd += slice_metrics[s_key]['new_num_rbgs']
 
     # get timestamp for logging purposes
     timestamp_ms = int(time.time() * 1000)
-    logging.info('ts_ms:' + str(timestamp_ms) + ' slice_metrics:' + str(slice_metrics))
+    if (iter_cnt > 0):
+        # Don't log the first iteration because cell-order hasn't kicked in yet
+        logging.info('ts_ms:' + str(timestamp_ms) + ' slice_metrics:' + str(slice_metrics))
 
     if mask_to_write:
 
@@ -157,6 +159,10 @@ def cell_order_for_delay_target(cell_order_config: dict, metrics_db: dict, slice
             # tenant_number needs to be there but is not used in this case
             config_params = {'network_slicing_enabled': True, 'tenant_number': 1, 'slice_allocation': new_mask}
             write_tenant_slicing_mask(config_params, True, s_key)
+
+        if (iter_cnt < 1):
+            # Wait for the initial allocations to stabilize
+            time.sleep(5)
 
     return slice_metrics
 
@@ -211,7 +217,6 @@ if __name__ == '__main__':
 
     tot_iter =  args.t / cell_order_config['reallocation-period-sec']
 
-    time.sleep(5)
     iter = -1
     while iter < tot_iter or args.t == 0:
 

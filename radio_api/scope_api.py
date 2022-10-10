@@ -337,7 +337,8 @@ def write_tenant_slicing_mask(config_params: dict, full_mask: bool=False, slice_
     out_file = path + filename
 
     if config_params['network_slicing_enabled']:
-        logging.info('Writing slicing masks')
+        # logging.info('Writing slicing masks')
+        pass
     else:
         logging.info('Network slicing disabled. Not writing slicing masks')
         return
@@ -363,7 +364,7 @@ def write_full_slice_mask(slice_idx: int, slice_mask: str, rows_to_write: int, o
 
     # write mask on file
     with open(filename, 'w') as f:
-        logging.info('Slicing mask tenant ' + str(slice_idx) + ': ' + slice_mask)
+        # logging.info('Slicing mask tenant ' + str(slice_idx) + ': ' + slice_mask)
         for r_idx in range(rows_to_write):
             f.write(slice_mask + '\n')
 

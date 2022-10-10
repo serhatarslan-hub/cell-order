@@ -88,11 +88,17 @@ if __name__ == '__main__':
     summarize_over_sla_period(data, SLA_PERIOD)
 
     for s_idx, metrics in data.items():
-        success_filter = np.logical_and(metrics['lat_msec'] > slice_delay_budget_msec[s_idx][0],
-                                        metrics['lat_msec'] < slice_delay_budget_msec[s_idx][1])
-        success_ratio = 100. * len(metrics['lat_msec'][success_filter]) / len(metrics['lat_msec'])
-        low_latency_filter = metrics['lat_msec'] < slice_delay_budget_msec[s_idx][1]
+        log_str = "\n\tLatency values for slice {}:".format(s_idx)
+        for margin in [0, 5, 10]:
+            budget_lo = max(0, slice_delay_budget_msec[s_idx][0] - margin)
+            budget_hi = max(0, slice_delay_budget_msec[s_idx][1] + margin)
+            filter = np.logical_and(metrics['lat_msec'] >= budget_lo,
+                                    metrics['lat_msec'] <= budget_hi)
+            success_ratio = 100. * len(metrics['lat_msec'][filter]) / len(metrics['lat_msec'])
+            log_str += " ([{},{}]: {:.2f}%)".format(budget_lo, budget_hi, success_ratio)
+        
+        low_latency_filter = metrics['lat_msec'] <= slice_delay_budget_msec[s_idx][1]
         low_latency_ratio = 100. * len(metrics['lat_msec'][low_latency_filter]) / len(metrics['lat_msec'])
-        print("\n\tLatency values for slice {} (Budget:{}) (Success Rate:{:.2f}%) (Low Lat Rate:{:.2f}%):\n"
-              .format(s_idx, slice_delay_budget_msec[s_idx], success_ratio, low_latency_ratio))
-        print("{}".format(metrics['lat_msec']))
+        log_str += " (Low-Lat Rate: {:.2f}%)".format(low_latency_ratio)
+
+        print("{}\n\n{}".format(log_str, metrics['lat_msec']))
