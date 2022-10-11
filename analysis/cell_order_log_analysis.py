@@ -1,11 +1,10 @@
+import argparse
 import numpy as np
 import re
 import ast
 
 CELL_ORDER_LOG_PATTERN = ".*ts_ms:(?P<ts>\d*) slice_metrics:(?P<metrics_dict>.*)"
 CELL_ORDER_CONF_PATTERN = ".*Cell-Order configuration: ((?P<conf_dict>{.*}))"
-
-cell_order_log_filename = '/logs/cell-order.log'
 
 SLA_PERIOD = 30 # seconds over which the SLAs are negotiated
 
@@ -34,7 +33,8 @@ def read_cell_order_log(filename):
                                      'raw_lat_msec': [], 
                                      'raw_n_rbgs': [],
                                      'raw_tx_mbps': [], 
-                                     'raw_buf_bytes': []}
+                                     'raw_buf_bytes': [],
+                                     'raw_mcs': []}
 
                 retval[s_idx]['raw_ts_sec'].append( ts - ts_min )
                 retval[s_idx]['raw_lat_msec'].append( float(metrics['dl_latency [msec]']) )
@@ -42,6 +42,7 @@ def read_cell_order_log(filename):
                 retval[s_idx]['raw_n_rbgs'].append( int(metrics['cur_slice_mask'].count('1')) )
                 retval[s_idx]['raw_tx_mbps'].append( float(metrics['tx_brate downlink [Mbps]']) )
                 retval[s_idx]['raw_buf_bytes'].append( float(metrics['dl_buffer [bytes]']) )
+                retval[s_idx]['raw_mcs'].append( float(metrics['dl_mcs']) )
 
     for s_idx, s_data in retval.items():
         retval[s_idx]['raw_ts_sec'] = np.array(s_data['raw_ts_sec'])
@@ -49,6 +50,7 @@ def read_cell_order_log(filename):
         retval[s_idx]['raw_n_rbgs'] = np.array(s_data['raw_n_rbgs'])
         retval[s_idx]['raw_tx_mbps'] = np.array(s_data['raw_tx_mbps'])
         retval[s_idx]['raw_buf_bytes'] = np.array(s_data['raw_buf_bytes'])
+        retval[s_idx]['raw_mcs'] = np.array(s_data['raw_mcs'])
 
     return retval, slice_delay_budget_msec
 
@@ -81,24 +83,40 @@ def summarize_over_sla_period(raw_data, period):
         raw_data[s_idx]['lat_msec'] = np.array(raw_data[s_idx]['lat_msec'])
         raw_data[s_idx]['tx_mbps'] = np.array(raw_data[s_idx]['tx_mbps'])
         raw_data[s_idx]['buf_bytes'] = np.array(raw_data[s_idx]['buf_bytes'])
-            
-if __name__ == '__main__':
 
-    data, slice_delay_budget_msec = read_cell_order_log(cell_order_log_filename)
-    summarize_over_sla_period(data, SLA_PERIOD)
-
+def print_latency_stats(data, start_time, end_time, slice_delay_budget_msec):
     for s_idx, metrics in data.items():
+        stat_filter = np.logical_and(metrics['ts_sec'] >= start_time,
+                                     metrics['ts_sec'] <= end_time)
+        lat_stat_metrics = metrics['lat_msec'][stat_filter]
         log_str = "\n\tLatency values for slice {}:".format(s_idx)
         for margin in [0, 5, 10]:
             budget_lo = max(0, slice_delay_budget_msec[s_idx][0] - margin)
             budget_hi = max(0, slice_delay_budget_msec[s_idx][1] + margin)
-            filter = np.logical_and(metrics['lat_msec'] >= budget_lo,
-                                    metrics['lat_msec'] <= budget_hi)
-            success_ratio = 100. * len(metrics['lat_msec'][filter]) / len(metrics['lat_msec'])
+            filter = np.logical_and(lat_stat_metrics >= budget_lo,
+                                    lat_stat_metrics <= budget_hi)
+            success_ratio = 100. * len(lat_stat_metrics[filter]) / len(lat_stat_metrics)
             log_str += " ([{},{}]: {:.2f}%)".format(budget_lo, budget_hi, success_ratio)
         
-        low_latency_filter = metrics['lat_msec'] <= slice_delay_budget_msec[s_idx][1]
-        low_latency_ratio = 100. * len(metrics['lat_msec'][low_latency_filter]) / len(metrics['lat_msec'])
+        low_latency_filter = lat_stat_metrics <= slice_delay_budget_msec[s_idx][1]
+        low_latency_ratio = 100. * len(lat_stat_metrics[low_latency_filter]) / len(lat_stat_metrics)
         log_str += " (Low-Lat Rate: {:.2f}%)".format(low_latency_ratio)
 
-        print("{}\n\n{}".format(log_str, metrics['lat_msec']))
+        print("{}\n\n{}".format(log_str, lat_stat_metrics))
+            
+if __name__ == '__main__':
+
+    # Define command line arguments
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--log-file', type=str, default='/logs/cell-order.log', 
+                        help='Log file to parse.')
+    parser.add_argument('--start-time', type=float, default=0, 
+                        help='Time after the first log to start the analysis (sec)')
+    parser.add_argument('--end-time', type=float, default=10000, 
+                        help='Time after the first log to end the analysis (sec)')
+    args = parser.parse_args()
+
+    data, slice_delay_budget_msec = read_cell_order_log(args.log_file)
+    summarize_over_sla_period(data, SLA_PERIOD)
+
+    print_latency_stats(data, args.start_time, args.end_time, slice_delay_budget_msec)
