@@ -52,9 +52,10 @@ def read_cell_order_log(filename):
         retval[s_idx]['raw_buf_bytes'] = np.array(s_data['raw_buf_bytes'])
         retval[s_idx]['raw_mcs'] = np.array(s_data['raw_mcs'])
 
+    print("Data for {} seconds has been extracted".format(max(retval[s_idx]['raw_ts_sec'])))
     return retval, slice_delay_budget_msec
 
-def summarize_over_sla_period(raw_data, period):
+def summarize_over_sla_period(raw_data, period, outlier_percentile = 5):
 
     for s_idx, s_data in raw_data.items():
         if (period == 0):
@@ -74,7 +75,10 @@ def summarize_over_sla_period(raw_data, period):
                                             raw_data[s_idx]['raw_ts_sec'] < cur_ts + period)
             if (cur_idx_filter.any()):
                 raw_data[s_idx]['ts_sec'].append(cur_ts + period)
-                raw_data[s_idx]['lat_msec'].append(np.mean(raw_data[s_idx]['raw_lat_msec'][cur_idx_filter]))
+
+                lat_filter = np.logical_and(raw_data[s_idx]['raw_lat_msec'][cur_idx_filter] <= np.percentile(raw_data[s_idx]['raw_lat_msec'][cur_idx_filter], 100 - outlier_percentile),
+                                            raw_data[s_idx]['raw_lat_msec'][cur_idx_filter] > np.percentile(raw_data[s_idx]['raw_lat_msec'][cur_idx_filter], outlier_percentile))
+                raw_data[s_idx]['lat_msec'].append(np.mean(raw_data[s_idx]['raw_lat_msec'][cur_idx_filter][lat_filter]))
                 raw_data[s_idx]['tx_mbps'].append(np.mean(raw_data[s_idx]['raw_tx_mbps'][cur_idx_filter]))
                 raw_data[s_idx]['buf_bytes'].append(np.mean(raw_data[s_idx]['raw_buf_bytes'][cur_idx_filter]))
             cur_ts += period
@@ -114,9 +118,11 @@ if __name__ == '__main__':
                         help='Time after the first log to start the analysis (sec)')
     parser.add_argument('--end-time', type=float, default=10000, 
                         help='Time after the first log to end the analysis (sec)')
+    parser.add_argument('--outlier-percentile', type=float, default=0, 
+                        help='Percentile to clip-off from both ends before calculating SLA')
     args = parser.parse_args()
 
     data, slice_delay_budget_msec = read_cell_order_log(args.log_file)
-    summarize_over_sla_period(data, SLA_PERIOD)
+    summarize_over_sla_period(data, SLA_PERIOD, args.outlier_percentile)
 
     print_latency_stats(data, args.start_time, args.end_time, slice_delay_budget_msec)
