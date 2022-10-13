@@ -98,10 +98,10 @@ def cell_order_for_delay_target(cell_order_config: dict, metrics_db: dict, slice
 
         if (iter_cnt < 1):
             # Make sure to start with a fair allocation
-            if (cell_order_config['delay-budget-enabled']):
-                slice_metrics[s_key]['new_num_rbgs'] = req_n_prbs + 1
-            else:
-                slice_metrics[s_key]['new_num_rbgs'] = int(constants.MAX_RBG / len(list(slice_metrics)))
+            # if (cell_order_config['delay-budget-enabled']):
+            #     slice_metrics[s_key]['new_num_rbgs'] = req_n_prbs + 1
+            # else:
+            slice_metrics[s_key]['new_num_rbgs'] = int(constants.MAX_RBG / len(list(slice_metrics)))
 
         elif cell_order_config['delay-budget-enabled']:
 
@@ -110,21 +110,22 @@ def cell_order_for_delay_target(cell_order_config: dict, metrics_db: dict, slice
 
             if s_val[DL_LAT_KEYWORD] > curr_hi_delay_budget or (s_val[DL_THP_KEYWORD] < curr_tx_rate_budget_low and s_val[DL_LAT_KEYWORD] != 0.0):
                 # Allocate more resources to this slice
-                # slice_metrics[s_key]['new_num_rbgs'] = min(max(cur_num_rbgs, req_n_prbs) + 1, req_n_prbs + 2)
-                if (cur_num_rbgs > req_n_prbs):
-                    slice_metrics[s_key]['new_num_rbgs'] = req_n_prbs + 2
-                    # slice_metrics[s_key]['new_num_rbgs'] = slice_metrics[s_key]['new_num_rbgs'] + 1
-                else:
-                    slice_metrics[s_key]['new_num_rbgs'] = req_n_prbs + 1
+                slice_metrics[s_key]['new_num_rbgs'] = min(max(cur_num_rbgs, req_n_prbs) + 1, req_n_prbs + 3)
+                # if (cur_num_rbgs > req_n_prbs):
+                #     slice_metrics[s_key]['new_num_rbgs'] = req_n_prbs + 2
+                #     # slice_metrics[s_key]['new_num_rbgs'] = slice_metrics[s_key]['new_num_rbgs'] + 1
+                # else:
+                #     slice_metrics[s_key]['new_num_rbgs'] = req_n_prbs + 1
 
                 # slice_metrics[s_key]['new_num_rbgs'] = min(req_n_prbs + 1, constants.MAX_RBG)
                 # slice_metrics[s_key]['new_num_rbgs'] = min(slice_metrics[s_key]['new_num_rbgs'] + 1, constants.MAX_RBG)
             elif s_val[DL_LAT_KEYWORD] < curr_lo_delay_budget:
                 # De-allocate resources from this slice
-                if (cur_num_rbgs > req_n_prbs):
-                    slice_metrics[s_key]['new_num_rbgs'] = max(req_n_prbs - 1, 1)
-                else:
-                    slice_metrics[s_key]['new_num_rbgs'] = max(cur_num_rbgs - 1, 1)
+                slice_metrics[s_key]['new_num_rbgs'] = max(min(cur_num_rbgs, req_n_prbs) - 1, 1)
+                # if (cur_num_rbgs > req_n_prbs):
+                #     slice_metrics[s_key]['new_num_rbgs'] = max(req_n_prbs - 1, 1)
+                # else:
+                #     slice_metrics[s_key]['new_num_rbgs'] = max(cur_num_rbgs - 1, 1)
 
                 # slice_metrics[s_key]['new_num_rbgs'] = max(slice_metrics[s_key]['new_num_rbgs'] - 1, 1)
                 # slice_metrics[s_key]['new_num_rbgs'] = max(req_n_prbs - 1, 1)
@@ -160,9 +161,9 @@ def cell_order_for_delay_target(cell_order_config: dict, metrics_db: dict, slice
             config_params = {'network_slicing_enabled': True, 'tenant_number': 1, 'slice_allocation': new_mask}
             write_tenant_slicing_mask(config_params, True, s_key)
 
-        if (iter_cnt < 1):
-            # Wait for the initial allocations to stabilize
-            time.sleep(5)
+    if (iter_cnt < 1):
+        # Wait for the initial allocations to stabilize
+        time.sleep(5)
 
     return slice_metrics
 
@@ -218,6 +219,7 @@ if __name__ == '__main__':
     tot_iter =  args.t / cell_order_config['reallocation-period-sec']
 
     iter = -1
+    iter_start_time = time.time()
     while iter < tot_iter or args.t == 0:
 
         iter += 1
@@ -231,4 +233,6 @@ if __name__ == '__main__':
 
         cell_order_for_delay_target(cell_order_config, metrics_db, slice_users, iter)
 
-        time.sleep(cell_order_config['reallocation-period-sec'])
+        iter_time = time.time() - iter_start_time
+        time.sleep(max(0, cell_order_config['reallocation-period-sec'] - iter_time))
+        iter_start_time = time.time()
