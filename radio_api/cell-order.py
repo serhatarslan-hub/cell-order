@@ -110,7 +110,10 @@ def cell_order_for_delay_target(cell_order_config: dict, metrics_db: dict, slice
 
             if s_val[DL_LAT_KEYWORD] > curr_hi_delay_budget or (s_val[DL_THP_KEYWORD] < curr_tx_rate_budget_low and s_val[DL_LAT_KEYWORD] != 0.0):
                 # Allocate more resources to this slice
-                slice_metrics[s_key]['new_num_rbgs'] = min(max(cur_num_rbgs, req_n_prbs) + 1, req_n_prbs + 3)
+                double_n_prbs = mcs_mapper.calculate_n_prbs(2*curr_tx_rate_budget_hi, 
+                                                            round(s_val[DL_MCS_KEYWORD]))
+                slice_metrics[s_key]['new_num_rbgs'] = min(max(cur_num_rbgs, req_n_prbs) + 1, double_n_prbs)
+                # slice_metrics[s_key]['new_num_rbgs'] = min(max(cur_num_rbgs, req_n_prbs) + 1, req_n_prbs + 3)
                 # if (cur_num_rbgs > req_n_prbs):
                 #     slice_metrics[s_key]['new_num_rbgs'] = req_n_prbs + 2
                 #     # slice_metrics[s_key]['new_num_rbgs'] = slice_metrics[s_key]['new_num_rbgs'] + 1
