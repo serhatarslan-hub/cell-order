@@ -77,8 +77,11 @@ def summarize_over_sla_period(raw_data, period, outlier_percentile = 5):
                 raw_data[s_idx]['ts_sec'].append(cur_ts + period)
 
                 lat_filter = np.logical_and(raw_data[s_idx]['raw_lat_msec'][cur_idx_filter] <= np.percentile(raw_data[s_idx]['raw_lat_msec'][cur_idx_filter], 100 - outlier_percentile),
-                                            raw_data[s_idx]['raw_lat_msec'][cur_idx_filter] > np.percentile(raw_data[s_idx]['raw_lat_msec'][cur_idx_filter], outlier_percentile))
-                raw_data[s_idx]['lat_msec'].append(np.mean(raw_data[s_idx]['raw_lat_msec'][cur_idx_filter][lat_filter]))
+                                            raw_data[s_idx]['raw_lat_msec'][cur_idx_filter] >= np.percentile(raw_data[s_idx]['raw_lat_msec'][cur_idx_filter], outlier_percentile))
+                if (lat_filter.any()):
+                    raw_data[s_idx]['lat_msec'].append(np.mean(raw_data[s_idx]['raw_lat_msec'][cur_idx_filter][lat_filter]))
+                else:
+                    raw_data[s_idx]['lat_msec'].append(0.)
                 raw_data[s_idx]['tx_mbps'].append(np.mean(raw_data[s_idx]['raw_tx_mbps'][cur_idx_filter]))
                 raw_data[s_idx]['buf_bytes'].append(np.mean(raw_data[s_idx]['raw_buf_bytes'][cur_idx_filter]))
             cur_ts += period
