@@ -6,8 +6,6 @@ import ast
 CELL_ORDER_LOG_PATTERN = ".*ts_ms:(?P<ts>\d*) slice_metrics:(?P<metrics_dict>.*)"
 CELL_ORDER_CONF_PATTERN = ".*Cell-Order configuration: ((?P<conf_dict>{.*}))"
 
-SLA_PERIOD = 30 # seconds over which the SLAs are negotiated
-
 def read_cell_order_log(filename):
     retval = {}
     ts_min = None
@@ -34,7 +32,8 @@ def read_cell_order_log(filename):
                                      'raw_n_rbgs': [],
                                      'raw_tx_mbps': [], 
                                      'raw_buf_bytes': [],
-                                     'raw_mcs': []}
+                                     'raw_mcs': [],
+                                     'raw_cqi': []}
 
                 retval[s_idx]['raw_ts_sec'].append( ts - ts_min )
                 retval[s_idx]['raw_lat_msec'].append( float(metrics['dl_latency [msec]']) )
@@ -42,15 +41,14 @@ def read_cell_order_log(filename):
                 retval[s_idx]['raw_n_rbgs'].append( int(metrics['cur_slice_mask'].count('1')) )
                 retval[s_idx]['raw_tx_mbps'].append( float(metrics['tx_brate downlink [Mbps]']) )
                 retval[s_idx]['raw_buf_bytes'].append( float(metrics['dl_buffer [bytes]']) )
-                retval[s_idx]['raw_mcs'].append( float(metrics['dl_mcs']) )
+                if ('dl_mcs' in metrics.keys()):
+                    retval[s_idx]['raw_mcs'].append( float(metrics['dl_mcs']) )
+                if ('dl_cqi' in metrics.keys()):
+                    retval[s_idx]['raw_cqi'].append( float(metrics['dl_cqi']) )
 
     for s_idx, s_data in retval.items():
-        retval[s_idx]['raw_ts_sec'] = np.array(s_data['raw_ts_sec'])
-        retval[s_idx]['raw_lat_msec'] = np.array(s_data['raw_lat_msec'])
-        retval[s_idx]['raw_n_rbgs'] = np.array(s_data['raw_n_rbgs'])
-        retval[s_idx]['raw_tx_mbps'] = np.array(s_data['raw_tx_mbps'])
-        retval[s_idx]['raw_buf_bytes'] = np.array(s_data['raw_buf_bytes'])
-        retval[s_idx]['raw_mcs'] = np.array(s_data['raw_mcs'])
+        for metric_type, metric_vals in s_data.items():
+            retval[s_idx][metric_type] = np.array(metric_vals)
 
     print("Data for {} seconds has been extracted".format(max(retval[s_idx]['raw_ts_sec'])))
     return retval, slice_delay_budget_msec
@@ -121,11 +119,13 @@ if __name__ == '__main__':
                         help='Time after the first log to start the analysis (sec)')
     parser.add_argument('--end-time', type=float, default=10000, 
                         help='Time after the first log to end the analysis (sec)')
+    parser.add_argument('--sla-period', type=float, default=30, 
+                        help='Seconds over which the SLAs are negotiated')
     parser.add_argument('--outlier-percentile', type=float, default=0, 
                         help='Percentile to clip-off from both ends before calculating SLA')
     args = parser.parse_args()
 
     data, slice_delay_budget_msec = read_cell_order_log(args.log_file)
-    summarize_over_sla_period(data, SLA_PERIOD, args.outlier_percentile)
+    summarize_over_sla_period(data, args.sla_period, args.outlier_percentile)
 
     print_latency_stats(data, args.start_time, args.end_time, slice_delay_budget_msec)

@@ -17,6 +17,7 @@ DL_BUFFER_KEYWORD = 'dl_buffer [bytes]'
 DL_THP_KEYWORD = 'tx_brate downlink [Mbps]'
 DL_LAT_KEYWORD = 'dl_latency [msec]'
 DL_MCS_KEYWORD = 'dl_mcs'
+DL_CQI_KEYWORD = 'dl_cqi'
 
 
 # Calculates the latency for each imsi at each timestep in msec
@@ -71,6 +72,7 @@ def cell_order_for_delay_target(cell_order_config: dict, metrics_db: dict, slice
     avg_dl_buffer_bytes = average_metric(metrics_db, DL_BUFFER_KEYWORD)
     avg_dl_thr_mbps = average_metric(metrics_db, DL_THP_KEYWORD)
     avg_dl_mcs = average_metric(metrics_db, DL_MCS_KEYWORD)
+    avg_dl_cqi = average_metric(metrics_db, DL_CQI_KEYWORD)
 
     # sum metrics over slice
     slice_metrics = dict()
@@ -82,6 +84,7 @@ def cell_order_for_delay_target(cell_order_config: dict, metrics_db: dict, slice
     avg_slice_metrics(slice_metrics, slice_users, avg_dl_buffer_bytes, DL_BUFFER_KEYWORD)
     avg_slice_metrics(slice_metrics, slice_users, avg_dl_thr_mbps, DL_THP_KEYWORD)
     avg_slice_metrics(slice_metrics, slice_users, avg_dl_mcs, DL_MCS_KEYWORD)
+    avg_slice_metrics(slice_metrics, slice_users, avg_dl_cqi, DL_CQI_KEYWORD)
 
     mask_to_write = False
     tot_num_rbg_rqstd = 0
