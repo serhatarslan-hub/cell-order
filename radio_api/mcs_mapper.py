@@ -46,7 +46,7 @@ def calculate_thp_mbps(mcs: int, n_prbs: int, n_mimo: int = 3) -> float:
 # Estimates minimum number of PRBs needed to achieve the requested throughput
 def calculate_n_prbs(req_thp: float, mcs: int, n_mimo: int = 3) -> int:
 
-    assert mcs <= MAX_MCS, "The MCS value cannot be larger than 31!"
+    assert mcs <= MAX_MCS, "The MCS value cannot be larger than 31! ({} was given)".format(mcs)
 
     for idx in range(MAX_N_PRB):
         n_prb = idx + 1

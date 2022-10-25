@@ -53,14 +53,16 @@ def read_cell_order_log(filename):
     print("Data for {} seconds has been extracted".format(max(retval[s_idx]['raw_ts_sec'])))
     return retval, slice_delay_budget_msec
 
-def summarize_over_sla_period(raw_data, period, outlier_percentile = 5):
+def summarize_over_sla_period(raw_data, sla_period, outlier_percentile = 5):
 
     for s_idx, s_data in raw_data.items():
-        if (period == 0):
+        if (sla_period == 0):
             raw_data[s_idx]['ts_sec'] = raw_data[s_idx]['raw_ts_sec']
             raw_data[s_idx]['lat_msec'] = raw_data[s_idx]['raw_lat_msec']
             raw_data[s_idx]['tx_mbps'] = raw_data[s_idx]['raw_tx_mbps']
             raw_data[s_idx]['buf_bytes'] = raw_data[s_idx]['raw_buf_bytes']
+            if ('dl_cqi' in s_data.keys()):
+                    raw_data[s_idx]['cqi'] = raw_data[s_idx]['raw_cqi']
             continue
 
         cur_ts = raw_data[s_idx]['raw_ts_sec'][0]
@@ -68,11 +70,12 @@ def summarize_over_sla_period(raw_data, period, outlier_percentile = 5):
         raw_data[s_idx]['lat_msec'] = []
         raw_data[s_idx]['tx_mbps'] = []
         raw_data[s_idx]['buf_bytes'] = []
+        raw_data[s_idx]['cqi'] = []
         while (cur_ts <= raw_data[s_idx]['raw_ts_sec'][-1]):
             cur_idx_filter = np.logical_and(raw_data[s_idx]['raw_ts_sec'] >= cur_ts, 
-                                            raw_data[s_idx]['raw_ts_sec'] < cur_ts + period)
+                                            raw_data[s_idx]['raw_ts_sec'] < cur_ts + sla_period)
             if (cur_idx_filter.any()):
-                raw_data[s_idx]['ts_sec'].append(cur_ts + period)
+                raw_data[s_idx]['ts_sec'].append(cur_ts + sla_period)
 
                 lat_filter = np.logical_and(raw_data[s_idx]['raw_lat_msec'][cur_idx_filter] <= np.percentile(raw_data[s_idx]['raw_lat_msec'][cur_idx_filter], 100 - outlier_percentile),
                                             raw_data[s_idx]['raw_lat_msec'][cur_idx_filter] >= np.percentile(raw_data[s_idx]['raw_lat_msec'][cur_idx_filter], outlier_percentile))
@@ -82,12 +85,14 @@ def summarize_over_sla_period(raw_data, period, outlier_percentile = 5):
                     raw_data[s_idx]['lat_msec'].append(0.)
                 raw_data[s_idx]['tx_mbps'].append(np.mean(raw_data[s_idx]['raw_tx_mbps'][cur_idx_filter]))
                 raw_data[s_idx]['buf_bytes'].append(np.mean(raw_data[s_idx]['raw_buf_bytes'][cur_idx_filter]))
-            cur_ts += period
+                raw_data[s_idx]['cqi'].append(np.mean(raw_data[s_idx]['raw_cqi'][cur_idx_filter]))
+            cur_ts += sla_period
 
         raw_data[s_idx]['ts_sec'] = np.array(raw_data[s_idx]['ts_sec'])
         raw_data[s_idx]['lat_msec'] = np.array(raw_data[s_idx]['lat_msec'])
         raw_data[s_idx]['tx_mbps'] = np.array(raw_data[s_idx]['tx_mbps'])
         raw_data[s_idx]['buf_bytes'] = np.array(raw_data[s_idx]['buf_bytes'])
+        raw_data[s_idx]['cqi'] = np.array(raw_data[s_idx]['cqi'])
 
 def print_latency_stats(data, start_time, end_time, slice_delay_budget_msec):
     for s_idx, metrics in data.items():
@@ -108,6 +113,15 @@ def print_latency_stats(data, start_time, end_time, slice_delay_budget_msec):
         log_str += " (Low-Lat Rate: {:.2f}%)".format(low_latency_ratio)
 
         print("{}\n\n{}".format(log_str, lat_stat_metrics))
+
+def print_cqi_stats(data, start_time, end_time):
+    for s_idx, metrics in data.items():
+        stat_filter = np.logical_and(metrics['ts_sec'] >= start_time,
+                                     metrics['ts_sec'] <= end_time)
+        cqi_stat_metrics = metrics['cqi'][stat_filter]
+        print("\n\tCQI stats for slice {}:".format(s_idx))
+
+        print(cqi_stat_metrics)
             
 if __name__ == '__main__':
 
@@ -123,9 +137,13 @@ if __name__ == '__main__':
                         help='Seconds over which the SLAs are negotiated')
     parser.add_argument('--outlier-percentile', type=float, default=0, 
                         help='Percentile to clip-off from both ends before calculating SLA')
+    parser.add_argument('--print-cqi', type=bool, default=False, 
+                        help='Whether to print CQI values with the latency stats')
     args = parser.parse_args()
 
     data, slice_delay_budget_msec = read_cell_order_log(args.log_file)
     summarize_over_sla_period(data, args.sla_period, args.outlier_percentile)
 
     print_latency_stats(data, args.start_time, args.end_time, slice_delay_budget_msec)
+
+    print_cqi_stats(data, args.start_time, args.end_time)
