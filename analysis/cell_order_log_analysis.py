@@ -137,7 +137,7 @@ if __name__ == '__main__':
                         help='Seconds over which the SLAs are negotiated')
     parser.add_argument('--outlier-percentile', type=float, default=0, 
                         help='Percentile to clip-off from both ends before calculating SLA')
-    parser.add_argument('--print-cqi', type=bool, default=False, 
+    parser.add_argument('--print-cqi', action='store_true',
                         help='Whether to print CQI values with the latency stats')
     args = parser.parse_args()
 
@@ -146,4 +146,5 @@ if __name__ == '__main__':
 
     print_latency_stats(data, args.start_time, args.end_time, slice_delay_budget_msec)
 
-    print_cqi_stats(data, args.start_time, args.end_time)
+    if (args.print_cqi):
+        print_cqi_stats(data, args.start_time, args.end_time)

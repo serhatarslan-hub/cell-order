@@ -293,7 +293,8 @@ def get_config_params(config: dict) -> dict:
                   'slice-users': 'slice_users',
                   'bs-config': 'bs_config',
                   'ue-config': 'ue_config',
-                  'iperf-target-rate': 'iperf_target_rate'}
+                  'iperf-target-rate': 'iperf_target_rate',
+                  'iperf-udp': 'iperf_udp'}
 
     # get length of longest string for printing purposes
     longest_word = sorted(param_dict.keys(), key=len)[-1]
@@ -333,6 +334,9 @@ def get_config_params(config: dict) -> dict:
                 parameter_found = True
             elif param_key == 'iperf-target-rate':
                 config_params[param_value] = '0'
+                parameter_found = True
+            elif param_key == 'iperf-udp':
+                config_params[param_value] = False
                 parameter_found = True
             else:
                 parameter_found = False
@@ -444,7 +448,8 @@ def is_node_bs(bs_ue_num: int, use_colosseumcli: bool) -> tuple:
 
 
 # start iperf client in reverse mode
-def start_iperf_client(tmux_session_name: str, server_ip: str, client_ip: str, iperf_target_rate: str) -> None:
+def start_iperf_client(tmux_session_name: str, server_ip: str, client_ip: str, 
+                       iperf_target_rate: str, iperf_udp: bool) -> None:
 
     default_port = 5201
 
@@ -457,6 +462,9 @@ def start_iperf_client(tmux_session_name: str, server_ip: str, client_ip: str, i
 
     if (iperf_target_rate != '0'):
         iperf_cmd += ' -b ' + iperf_target_rate
+
+    if (iperf_udp):
+        iperf_cmd += ' -u'
 
     # wrap command in while loop to repeat it if it fails to start
     # (e.g., if ue is not yet connected to the bs)
@@ -612,7 +620,8 @@ def run_scope(bs_ue_num: int, iperf: bool, use_colosseumcli: bool,
             logging.info('iPerf option detected, sleeping ' + str(sleep_time) + 's')
             time.sleep(sleep_time)
 
-            start_iperf_client(tmux_session_name, srslte_bs_ip, my_srslte_ip, config_params['iperf_target_rate'])
+            start_iperf_client(tmux_session_name, srslte_bs_ip, my_srslte_ip, 
+                               config_params['iperf_target_rate'], config_params['iperf_udp'])
 
 
 if __name__ == '__main__':
@@ -631,6 +640,7 @@ if __name__ == '__main__':
         The other arguments are ignored if config file is passed')
     parser.add_argument('--iperf', help='Generate traffic through iperf3, downlink only', action='store_true')
     parser.add_argument('--iperf-target-rate', type=str, help='target bitrate in bps for iperf [KMG] (O for unlimited)')
+    parser.add_argument('--iperf-udp', help='Use UDP traffic for iperf3', action='store_true')
     parser.add_argument('--users-bs', type=int, default=3, help='Maximum number of users per base station')
     parser.add_argument('--colcli', help='Use colosseumcli APIs to get list of active nodes.\
         This parameter is specific to Colosseum and it is only available in interactive mode', action='store_true')
@@ -681,6 +691,7 @@ if __name__ == '__main__':
                   'colosseumcli': args.colcli,
                   'iperf': args.iperf,
                   'iperf-target-rate': args.iperf_target_rate,
+                  'iperf-udp': args.iperf_udp,
                   'users-bs': args.users_bs,
                   'write-config-parameters': args.write_config_parameters,
                   'network-slicing': args.network_slicing,
@@ -737,6 +748,13 @@ if __name__ == '__main__':
         if args.iperf_target_rate:
             config['iperf-target-rate'] = args.iperf_target_rate
             logging.info('Overriding iperf target rate to ' + args.iperf_target_rate)
+
+        if config.get('iperf-udp') is None:
+            config['iperf-udp'] = False
+
+        if args.iperf_udp:
+            config['iperf-udp'] = args.iperf_udp
+            logging.info('Overriding iperf udp option to {}'.format(args.iperf_udp))
 
     print_configuration(config)
     config_params = get_config_params(config)

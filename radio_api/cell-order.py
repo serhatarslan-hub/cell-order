@@ -201,6 +201,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--config-file', type=str, required=True, help='Configuration file to parse.')
     parser.add_argument('--t', type=float, default=0, help='Seconds to run for (0 for unlimited)')
+    parser.add_argument('--delay-budget-disabled', default=False, action='store_true',
+                        help='Overwrite and disable delay budget control.')
     args = parser.parse_args()
 
     # configure logger and console output
@@ -217,6 +219,8 @@ if __name__ == '__main__':
 
     # parse heuristic config file
     cell_order_config = parse_cell_order_config_file(filename)
+    if (args.delay_budget_disabled):
+        cell_order_config['delay-budget-enabled'] = False
     logging.info('Cell-Order configuration: ' + str(cell_order_config))
 
     # Scope exposes telemetry every 250 msec
