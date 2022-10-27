@@ -114,14 +114,14 @@ def print_latency_stats(data, start_time, end_time, slice_delay_budget_msec):
 
         print("{}\n\n{}".format(log_str, lat_stat_metrics))
 
-def print_cqi_stats(data, start_time, end_time):
+def print_stats(data, metric, start_time, end_time):
     for s_idx, metrics in data.items():
         stat_filter = np.logical_and(metrics['ts_sec'] >= start_time,
                                      metrics['ts_sec'] <= end_time)
-        cqi_stat_metrics = metrics['cqi'][stat_filter]
-        print("\n\tCQI stats for slice {}:".format(s_idx))
+        stat_metrics = metrics[metric][stat_filter]
+        print("\n\t{} stats for slice {}:".format(metric.upper(), s_idx))
 
-        print(cqi_stat_metrics)
+        print(stat_metrics)
             
 if __name__ == '__main__':
 
@@ -139,6 +139,8 @@ if __name__ == '__main__':
                         help='Percentile to clip-off from both ends before calculating SLA')
     parser.add_argument('--print-cqi', action='store_true',
                         help='Whether to print CQI values with the latency stats')
+    parser.add_argument('--print-tx-rate', action='store_true',
+                        help='Whether to print TX rates with the latency stats')
     args = parser.parse_args()
 
     data, slice_delay_budget_msec = read_cell_order_log(args.log_file)
@@ -147,4 +149,7 @@ if __name__ == '__main__':
     print_latency_stats(data, args.start_time, args.end_time, slice_delay_budget_msec)
 
     if (args.print_cqi):
-        print_cqi_stats(data, args.start_time, args.end_time)
+        print_stats(data, 'cqi', args.start_time, args.end_time)
+
+    if (args.print_tx_rate):
+        print_stats(data, 'tx_mbps', args.start_time, args.end_time)

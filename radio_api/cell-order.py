@@ -111,11 +111,15 @@ def cell_order_for_delay_target(cell_order_config: dict, metrics_db: dict, slice
             curr_lo_delay_budget = cell_order_config['slice-delay-budget-msec'][s_key][0]
             curr_hi_delay_budget = cell_order_config['slice-delay-budget-msec'][s_key][1]
 
-            if s_val[DL_LAT_KEYWORD] > curr_hi_delay_budget or (s_val[DL_THP_KEYWORD] < curr_tx_rate_budget_low and s_val[DL_LAT_KEYWORD] != 0.0):
+            if (s_val[DL_CQI_KEYWORD] < 0.5):
+                # It is not feasible to allocate good resources for this UE anyway
+                slice_metrics[s_key]['new_num_rbgs'] = 1
+
+            elif s_val[DL_LAT_KEYWORD] > curr_hi_delay_budget or (s_val[DL_THP_KEYWORD] < curr_tx_rate_budget_low and s_val[DL_LAT_KEYWORD] != 0.0):
                 # Allocate more resources to this slice
                 double_n_prbs = mcs_mapper.calculate_n_prbs(2*curr_tx_rate_budget_hi, 
                                                             round(s_val[DL_MCS_KEYWORD]))
-                slice_metrics[s_key]['new_num_rbgs'] = min(max(cur_num_rbgs, req_n_prbs) + 1, double_n_prbs)
+                slice_metrics[s_key]['new_num_rbgs'] = min(max(cur_num_rbgs, req_n_prbs) + 2, double_n_prbs)
                 # slice_metrics[s_key]['new_num_rbgs'] = min(max(cur_num_rbgs, req_n_prbs) + 1, req_n_prbs + 3)
                 # if (cur_num_rbgs > req_n_prbs):
                 #     slice_metrics[s_key]['new_num_rbgs'] = req_n_prbs + 2
@@ -127,7 +131,7 @@ def cell_order_for_delay_target(cell_order_config: dict, metrics_db: dict, slice
                 # slice_metrics[s_key]['new_num_rbgs'] = min(slice_metrics[s_key]['new_num_rbgs'] + 1, constants.MAX_RBG)
             elif s_val[DL_LAT_KEYWORD] < curr_lo_delay_budget:
                 # De-allocate resources from this slice
-                slice_metrics[s_key]['new_num_rbgs'] = max(min(cur_num_rbgs, req_n_prbs) - 1, 1)
+                slice_metrics[s_key]['new_num_rbgs'] = max(min(cur_num_rbgs, req_n_prbs) - 2, 1)
                 # if (cur_num_rbgs > req_n_prbs):
                 #     slice_metrics[s_key]['new_num_rbgs'] = max(req_n_prbs - 1, 1)
                 # else:
