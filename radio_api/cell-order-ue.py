@@ -20,7 +20,7 @@ def cell_order_ue_delay_measurements(iperf_start_time_ms:int, iperf_output_file:
             return
 
     for interval_data in iperf_output['intervals']:
-        assert len(interval_data['streams']) == 0, MULTI_FLOW_ERR
+        assert len(interval_data['streams']) == 1, MULTI_FLOW_ERR
 
         stream_data = interval_data['streams'][0]
         assert stream_data['sender'], "Iperf's RTT can only be displayed if sender!"

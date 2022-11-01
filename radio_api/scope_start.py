@@ -512,22 +512,21 @@ def run_scope(config: dict, scope_config: dict):
         else:
             logging.info('Packet capture via tcpdump disabled')
 
-        # if config['cell-order']:
-        #     for ue_ip in srs_col_ip_mapping.values():
-        #         cell_order_ue_cmd = 'python3 cell-order-ue.py'
-        #         cell_order_ue_cmd += ' --ue-ip {}'.format(ue_ip)
-        #         cell_order_ue_cmd += ' --iperf-target-rate {}'.format(config['iperf-target-rate'])
-        #         cell_order_ue_cmd += ' --iperf-udp {}'.format(config['iperf-udp'])
-        #         run_tmux_command(cell_order_ue_cmd, tmux_session_name)
+        if config['cell-order']:
+            for ue_ip in sorted(srs_col_ip_mapping.values()):
+                cell_order_ue_cmd = 'python3 cell-order-ue.py'
+                cell_order_ue_cmd += ' --ue-ip {}'.format(ue_ip)
+                cell_order_ue_cmd += ' --iperf-target-rate {}'.format(config['iperf-target-rate'])
+                if (config['iperf-udp']):
+                    cell_order_ue_cmd += ' --iperf-udp'
+                run_tmux_command(cell_order_ue_cmd, tmux_session_name)
 
-        #     # Create a tmux window but don't start running cell-order until UEs are connected
-        #     cell_order_cmd = 'python3 cell-order.py --config-file cell-order.conf --t -1'
-        #     run_tmux_command(cell_order_cmd, tmux_session_name)
-        
-        # elif config['iperf']:
+            # Create a tmux window but don't start running cell-order until UEs are connected
+            cell_order_cmd = 'python3 cell-order.py --config-file cell-order.conf --t -1'
+            run_tmux_command(cell_order_cmd, tmux_session_name)
 
-        if config['iperf']:
-            for ue_ip in srs_col_ip_mapping.values():
+        elif config['iperf']:
+            for ue_ip in sorted(srs_col_ip_mapping.values()):
                 # derive port offset from the UE IP
                 port_offset = int(ue_ip.split('.')[-1])
                 port = constants.DEFAULT_IPERF_PORT + port_offset

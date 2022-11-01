@@ -9,7 +9,7 @@ def run_tmux_command(cmd: str, session_name: str) -> None:
     # define tmux commands
     tmux_create_session = 'tmux new-session -d -s ' + session_name
     tmux_split_window = 'tmux split-window -h -t ' + session_name + '.right'
-    tmux_spread_layout = 'tmux select-layout -E'
+    tmux_spread_layout = 'tmux select-layout even-horizontal'
     tmux_run_cmd = 'tmux send -t ' + session_name + ' "' + cmd + '" ENTER'
 
     # start new session. This returns 'duplicate session' if session already exists
@@ -43,7 +43,7 @@ def start_iperf_client(server_ip: str, port: int, tmux_session_name: str='',
         iperf_cmd += ' -u'
 
     if (json_filename != ''):
-        iperf_cmd += '--json -logfile ' + json_filename
+        iperf_cmd += ' --json --logfile ' + json_filename
 
     if (loop):
         # wrap command in while loop to repeat it if it fails to start
