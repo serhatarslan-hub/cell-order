@@ -232,11 +232,10 @@ if __name__ == '__main__':
 
     tot_iter =  args.t / cell_order_config['reallocation-period-sec']
 
-    iter = -1
+    iter = 0
     iter_start_time = time.time()
     while iter < tot_iter or args.t == 0:
 
-        iter += 1
         logging.info('Starting round ' + str(iter))
 
         # read metrics database {imsi->{ts->{metric_name->val}}}
@@ -250,3 +249,5 @@ if __name__ == '__main__':
         iter_time = time.time() - iter_start_time
         time.sleep(max(0, cell_order_config['reallocation-period-sec'] - iter_time))
         iter_start_time = time.time()
+
+        iter += 1

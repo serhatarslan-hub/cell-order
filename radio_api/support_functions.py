@@ -1,4 +1,6 @@
 import subprocess
+import logging
+import os
 
 
 # run tmux command in the specified session
@@ -7,6 +9,7 @@ def run_tmux_command(cmd: str, session_name: str) -> None:
     # define tmux commands
     tmux_create_session = 'tmux new-session -d -s ' + session_name
     tmux_split_window = 'tmux split-window -h -t ' + session_name + '.right'
+    tmux_spread_layout = 'tmux select-layout -E'
     tmux_run_cmd = 'tmux send -t ' + session_name + ' "' + cmd + '" ENTER'
 
     # start new session. This returns 'duplicate session' if session already exists
@@ -16,5 +19,60 @@ def run_tmux_command(cmd: str, session_name: str) -> None:
     if 'duplicate session' in result.stderr.decode("utf-8"):
         subprocess.run(tmux_split_window, shell=True)
 
+    # spread out the windows evenly on the screen
+    subprocess.run(tmux_spread_layout, shell=True)
+
     # run command in last created window
     subprocess.run(tmux_run_cmd, shell=True)
+
+# start iperf client
+def start_iperf_client(server_ip: str, port: int, tmux_session_name: str='',  
+                       iperf_target_rate: str='0', iperf_udp: bool=False, 
+                       reversed: bool=True, duration: int=600, loop: bool=True,
+                       json_filename: str='') -> None:
+
+    iperf_cmd = 'iperf3 -c {} -p {} -t {}'.format(server_ip, port, duration)
+
+    if (reversed):
+        iperf_cmd += ' -R'
+
+    if (iperf_target_rate != '0'):
+        iperf_cmd += ' -b ' + iperf_target_rate
+
+    if (iperf_udp):
+        iperf_cmd += ' -u'
+
+    if (json_filename != ''):
+        iperf_cmd += '--json -logfile ' + json_filename
+
+    if (loop):
+        # wrap command in while loop to repeat it if it fails to start
+        # (e.g., if ue is not yet connected to the bs)
+        iperf_cmd = 'while ! %s; do sleep 1; done' % (iperf_cmd)
+
+    logging.info('Starting iperf3 client: ' + iperf_cmd)
+
+    if (tmux_session_name):
+        run_tmux_command(iperf_cmd, tmux_session_name)
+    else:
+        os.system(iperf_cmd)
+
+
+# start iperf server
+def start_iperf_server(port: int, tmux_session_name: str='',
+                       run_as_deamon: bool=True) -> None:
+
+    iperf_cmd = 'iperf3 -s -p ' + str(port)
+    
+    if (run_as_deamon):
+        iperf_cmd += ' -D'
+        logging.info('Starting iperf3 server in background on port ' + str(port))
+        os.system(iperf_cmd)
+    elif (tmux_session_name):
+        logging.info('Starting iperf3 server on port ' + str(port))
+        run_tmux_command(iperf_cmd, tmux_session_name)
+    else:
+        logging.error('No tmux session name provded, exiting. ' + \
+        'If you want to run iperf server on the bakground, ' + \
+        'set the run_as_deamon parameter to True. ')
+        exit(1)
