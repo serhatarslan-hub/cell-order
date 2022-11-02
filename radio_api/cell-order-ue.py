@@ -67,6 +67,8 @@ if __name__ == '__main__':
     console.setFormatter(formatter)
     logging.getLogger('').addHandler(console)
 
+    logging.info('slice_id:' + str(slice_id))
+
     # Run in loop until UE is connected. This will not be considered for cell-order
     start_iperf_client(args.ue_ip, iperf_port, 
                        iperf_target_rate=args.iperf_target_rate, 

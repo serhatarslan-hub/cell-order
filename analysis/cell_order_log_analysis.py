@@ -5,10 +5,11 @@ import ast
 
 CELL_ORDER_LOG_PATTERN = ".*ts_ms:(?P<ts>\d*) slice_metrics:(?P<metrics_dict>.*)"
 CELL_ORDER_CONF_PATTERN = ".*Cell-Order configuration: ((?P<conf_dict>{.*}))"
+CELL_ORDER_UE_LOG_PATTERN = ".*ts_ms:(?P<ts>\d*) stream:(?P<stream_dict>.*)"
+CELL_ORDER_UE_SLICE_PATTERN = ".*slice_id:(?P<slice_id>.*)"
 
-def read_cell_order_log(filename):
+def read_cell_order_log(filename, ts_start=None):
     retval = {}
-    ts_min = None
     with open(filename,'r') as f:
         for line in f:
             if ('ts_ms' not in line):
@@ -22,8 +23,10 @@ def read_cell_order_log(filename):
             ts = float(log.group('ts')) / 1000. # in sec
             metrics_dict = ast.literal_eval(log.group('metrics_dict'))
 
-            if not ts_min:
-                ts_min = ts
+            if not ts_start:
+                ts_start = ts
+            elif ts < ts_start:
+                continue
 
             for s_idx, metrics in metrics_dict.items():
                 if s_idx not in list(retval):
@@ -35,7 +38,7 @@ def read_cell_order_log(filename):
                                      'raw_mcs': [],
                                      'raw_cqi': []}
 
-                retval[s_idx]['raw_ts_sec'].append( ts - ts_min )
+                retval[s_idx]['raw_ts_sec'].append( ts - ts_start )
                 retval[s_idx]['raw_lat_msec'].append( float(metrics['dl_latency [msec]']) )
                 # retval[s_idx]['raw_n_rbgs'].append( int(metrics['new_num_rbgs']) )
                 retval[s_idx]['raw_n_rbgs'].append( int(metrics['cur_slice_mask'].count('1')) )
@@ -51,48 +54,97 @@ def read_cell_order_log(filename):
             retval[s_idx][metric_type] = np.array(metric_vals)
 
     print("Data for {} seconds has been extracted".format(max(retval[s_idx]['raw_ts_sec'])))
-    return retval, slice_delay_budget_msec
+    return retval, slice_delay_budget_msec, ts_start
+
+def read_cell_order_ue_log(filename, ts_start=None):
+    retval = {'raw_ts_sec':[],
+              'raw_mbps':[],
+              'raw_cwnd_bytes':[],
+              'raw_bytes':[],
+              'raw_rtt_msec':[],
+              'raw_rttvar_msec':[],
+              'raw_n_rtx':[]}
+
+    with open(filename,'r') as f:
+        for line in f:
+            if ('ts_ms' not in line):
+                if ('slice_id' in line):
+                    slice_id_log = re.match(CELL_ORDER_UE_SLICE_PATTERN, line)
+                    slice_id = int(slice_id_log.group('slice_id'))
+                continue
+
+            log = re.match(CELL_ORDER_UE_LOG_PATTERN, line)
+            ts = float(log.group('ts')) / 1000. # in sec
+            stream_dict = ast.literal_eval(log.group('stream_dict'))
+
+            if not ts_start:
+                ts_start = ts
+            elif ts < ts_start:
+                continue
+
+            retval['raw_ts_sec'].append( ts - ts_start )
+            retval['raw_mbps'].append( float(stream_dict['bits_per_second']) / 1e6)
+            retval['raw_cwnd_bytes'].append( float(stream_dict['snd_cwnd']) )
+            retval['raw_bytes'].append( float(stream_dict['bytes']) )
+            retval['raw_rtt_msec'].append( float(stream_dict['rtt']) / 1e3)
+            retval['raw_rttvar_msec'].append( float(stream_dict['rttvar']) / 1e3)
+            retval['raw_n_rtx'].append( int(stream_dict['retransmits']) )
+
+    for key, val in retval.items():
+        retval[key] = np.array(val)
+
+    print("UE Data for {} seconds has been extracted".format(max(retval['raw_ts_sec'])))
+    return retval, slice_id, ts_start
 
 def summarize_over_sla_period(raw_data, sla_period, outlier_percentile = 5):
 
     for s_idx, s_data in raw_data.items():
         if (sla_period == 0):
-            raw_data[s_idx]['ts_sec'] = raw_data[s_idx]['raw_ts_sec']
-            raw_data[s_idx]['lat_msec'] = raw_data[s_idx]['raw_lat_msec']
-            raw_data[s_idx]['tx_mbps'] = raw_data[s_idx]['raw_tx_mbps']
-            raw_data[s_idx]['buf_bytes'] = raw_data[s_idx]['raw_buf_bytes']
-            if ('dl_cqi' in s_data.keys()):
-                    raw_data[s_idx]['cqi'] = raw_data[s_idx]['raw_cqi']
+            for raw_key, val in raw_data[s_idx].items():
+                if ('raw_' in raw_key):
+                    new_key = raw_key.replace('raw_', '')
+                    raw_data[s_idx][new_key] = raw_data[s_idx][raw_key]
             continue
 
+        assert 'raw_ts_sec' in raw_data[s_idx].keys(), "Raw Data must have timestamps!"
         cur_ts = raw_data[s_idx]['raw_ts_sec'][0]
-        raw_data[s_idx]['ts_sec'] = []
-        raw_data[s_idx]['lat_msec'] = []
-        raw_data[s_idx]['tx_mbps'] = []
-        raw_data[s_idx]['buf_bytes'] = []
-        raw_data[s_idx]['cqi'] = []
+
+        raw_keys = list(raw_data[s_idx].keys())
+
+        # Summarize the metrics over the sla period
         while (cur_ts <= raw_data[s_idx]['raw_ts_sec'][-1]):
             cur_idx_filter = np.logical_and(raw_data[s_idx]['raw_ts_sec'] >= cur_ts, 
                                             raw_data[s_idx]['raw_ts_sec'] < cur_ts + sla_period)
             if (cur_idx_filter.any()):
-                raw_data[s_idx]['ts_sec'].append(cur_ts + sla_period)
+                for raw_key in raw_keys:
+                    assert 'raw' in raw_key
 
-                lat_filter = np.logical_and(raw_data[s_idx]['raw_lat_msec'][cur_idx_filter] <= np.percentile(raw_data[s_idx]['raw_lat_msec'][cur_idx_filter], 100 - outlier_percentile),
-                                            raw_data[s_idx]['raw_lat_msec'][cur_idx_filter] >= np.percentile(raw_data[s_idx]['raw_lat_msec'][cur_idx_filter], outlier_percentile))
-                if (lat_filter.any()):
-                    raw_data[s_idx]['lat_msec'].append(np.mean(raw_data[s_idx]['raw_lat_msec'][cur_idx_filter][lat_filter]))
-                else:
-                    raw_data[s_idx]['lat_msec'].append(0.)
-                raw_data[s_idx]['tx_mbps'].append(np.mean(raw_data[s_idx]['raw_tx_mbps'][cur_idx_filter]))
-                raw_data[s_idx]['buf_bytes'].append(np.mean(raw_data[s_idx]['raw_buf_bytes'][cur_idx_filter]))
-                raw_data[s_idx]['cqi'].append(np.mean(raw_data[s_idx]['raw_cqi'][cur_idx_filter]))
+                    new_key = raw_key.replace('raw_', '')
+                    if (new_key not in raw_data[s_idx].keys()):
+                        # Initialize summarized metrics
+                        raw_data[s_idx][new_key] = []
+
+                    cur_vals = raw_data[s_idx][raw_key][cur_idx_filter]
+                    if ('ts_sec' in new_key):
+                        raw_data[s_idx]['ts_sec'].append(cur_ts + sla_period)
+
+                    elif ('msec' in new_key): # Latency or RTT
+                        outlier_filter = np.logical_and(cur_vals <= np.percentile(cur_vals, 100 - outlier_percentile),
+                                                        cur_vals >= np.percentile(cur_vals, outlier_percentile))
+                        if (outlier_filter.any()):
+                            raw_data[s_idx][new_key].append(np.mean(cur_vals[outlier_filter]))
+                        else:
+                            raw_data[s_idx][new_key].append(0.)
+
+                    else:
+                        raw_data[s_idx][new_key].append(np.mean(cur_vals))
+
             cur_ts += sla_period
 
-        raw_data[s_idx]['ts_sec'] = np.array(raw_data[s_idx]['ts_sec'])
-        raw_data[s_idx]['lat_msec'] = np.array(raw_data[s_idx]['lat_msec'])
-        raw_data[s_idx]['tx_mbps'] = np.array(raw_data[s_idx]['tx_mbps'])
-        raw_data[s_idx]['buf_bytes'] = np.array(raw_data[s_idx]['buf_bytes'])
-        raw_data[s_idx]['cqi'] = np.array(raw_data[s_idx]['cqi'])
+        for s_idx, s_data in raw_data.items():
+            for key, val in s_data.items():
+                if ('raw_' not in key):
+                    raw_data[s_idx][key] = np.array(val)
 
 def print_latency_stats(data, start_time, end_time, slice_delay_budget_msec):
     for s_idx, metrics in data.items():

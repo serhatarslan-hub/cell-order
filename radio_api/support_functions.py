@@ -30,8 +30,12 @@ def start_iperf_client(server_ip: str, port: int, tmux_session_name: str='',
                        iperf_target_rate: str='0', iperf_udp: bool=False, 
                        reversed: bool=True, duration: int=600, loop: bool=True,
                        json_filename: str='') -> None:
+    
+    # In order to be able to measure RTTs precisely, iperf needs to be 
+    # configured to measure 1 packet worth data delivery
+    iperf_block_length = 1460
 
-    iperf_cmd = 'iperf3 -c {} -p {} -t {}'.format(server_ip, port, duration)
+    iperf_cmd = 'iperf3 -c {} -p {} -t {} --length {}'.format(server_ip, port, duration, iperf_block_length)
 
     if (reversed):
         iperf_cmd += ' -R'
