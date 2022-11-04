@@ -204,7 +204,7 @@ if __name__ == '__main__':
     # Define command line arguments
     parser = argparse.ArgumentParser()
     parser.add_argument('--config-file', type=str, required=True, help='Configuration file to parse.')
-    parser.add_argument('--t', type=float, default=0, help='Seconds to run for (0 for unlimited)')
+    parser.add_argument('--t', type=float, default=600, help='Seconds to run for (0 for unlimited)')
     parser.add_argument('--delay-budget-disabled', default=False, action='store_true',
                         help='Overwrite and disable delay budget control.')
     args = parser.parse_args()
