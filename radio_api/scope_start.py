@@ -514,7 +514,7 @@ def run_scope(config: dict, scope_config: dict):
 
         if config['cell-order']:
             for ue_ip in sorted(srs_col_ip_mapping.values()):
-                cell_order_ue_cmd = 'python3 cell-order-ue.py'
+                cell_order_ue_cmd = 'python3 run_cell_order_client.py'
                 cell_order_ue_cmd += ' --ue-ip {}'.format(ue_ip)
                 cell_order_ue_cmd += ' --iperf-target-rate {}'.format(config['iperf-target-rate'])
                 if (config['iperf-udp']):
@@ -522,7 +522,7 @@ def run_scope(config: dict, scope_config: dict):
                 run_tmux_command(cell_order_ue_cmd, tmux_session_name)
 
             # Create a tmux window but don't start running cell-order until UEs are connected
-            cell_order_cmd = 'python3 cell-order.py --config-file cell-order.conf --t -1'
+            cell_order_cmd = 'python3 run_cell_order_server.py --config-file cell_order.conf --t -1'
             run_tmux_command(cell_order_cmd, tmux_session_name)
 
         elif config['iperf']:
