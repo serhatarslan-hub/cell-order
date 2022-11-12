@@ -522,7 +522,7 @@ def run_scope(config: dict, scope_config: dict):
                 run_tmux_command(cell_order_ue_cmd, tmux_session_name)
 
             # Create a tmux window but don't start running cell-order until UEs are connected
-            cell_order_cmd = 'python3 run_cell_order_server.py --config-file cell_order.conf --t -1'
+            cell_order_cmd = 'python3 run_cell_order_server.py --config-file cell_order.conf'
             run_tmux_command(cell_order_cmd, tmux_session_name)
 
         elif config['iperf']:
