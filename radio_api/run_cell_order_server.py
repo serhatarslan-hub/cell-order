@@ -18,14 +18,18 @@ def parse_cell_order_config_file(filename: str) -> dict:
     with open(filename, 'r') as file:
         config = json.load(file)
 
+    dict_var_keys = ['slice-delay-budget-msec', 'slice-tx-rate-budget-Mbps']
+    float_var_keys = ['reallocation-period-sec', 'sla-period-sec', 
+                      'sla-grace-period-sec', 'outlier-percentile']
+
     for param_key, param_val in config.items():
         # convert to right types
         if param_val.lower() in ['true', 'false']:
             config[param_key] = bool(param_val == 'True')
-        elif param_key in ['slice-delay-budget-msec', 'slice-tx-rate-budget-Mbps']:
+        elif param_key in dict_var_keys:
             # Convert some config to python dictionary
             config[param_key] = ast.literal_eval(param_val)
-        elif param_key in ['reallocation-period-sec', 'sla-period-sec', 'sla-grace-period-sec']:
+        elif param_key in float_var_keys:
             config[param_key] = float(param_val)
 
     return config

@@ -2,6 +2,7 @@ import asyncio
 import logging
 import time
 import json
+import numpy as np
 
 import constants
 import mcs_mapper
@@ -14,11 +15,14 @@ DEFAULT_CELL_ORDER_FIELDS = {
     'msg_type': None,
     'client_ip': None,
     'client_port': constants.DEFAULT_CELL_ORDER_PORT,
-    'negotiation_id': None,
+    'nid': None,
     'service_type': 'best_effort',
     'start_time': 0,
     'sla_period': 30,
-    'budgets': {'lat_msec': [0., 5000.], 'thp_Mbps': [0., 1000.]},
+    'budgets': {
+        constants.DL_LAT_KEYWORD: [0., 5000.], 
+        constants.DL_THP_KEYWORD: [0., 1000.]
+    },
     'price': None
 }
 
@@ -33,8 +37,8 @@ class CellOrderServerProtocol(asyncio.Protocol):
         self.loop = loop
         self.config = config
         self.telemetry_lines_to_read = int(4 * self.config['reallocation-period-sec'])
-        self.connected_users = {}
-        self.next_negotiation_id = 0
+        self.clients = {}
+        self.next_nid = 0
         self.negotiations = {}
         self.reallocation_handle = None
 
@@ -43,21 +47,27 @@ class CellOrderServerProtocol(asyncio.Protocol):
         peername = transport.get_extra_info('peername')
         logging.info('Connection from {}'.format(peername))
 
-        slice_id = self.get_slice_id(peername[1])
-        self.connected_users[slice_id] = {'transport': transport,
-                                          'active_negotiation_id': None,
-                                          'sla_end_time': 0,
-                                          'cancel_handle': None}
+        uid = self.get_uid(peername[1])
+        self.clients[uid] = {'transport': transport,
+                             'active_nid': None,
+                             'sla_end_time': 0,
+                             'cancel_handle': None,
+                             'stats':{}}
 
-    def get_slice_id(self, client_port: int) -> int:
+    def get_uid(self, client_port: int) -> int:
+        """
+        Determine the user ID for the client which is equivalent to slice ID
+        Args:
+            client_port: The port number hich the client uses for its traffic
+        """
         
-        # TODO: Determine slice ID with a more elegant way
-        return client_port - constants.DEFAULT_CELL_ORDER_PORT - 3
+        # TODO: Determine user ID (slice ID) with a more elegant way
+        return (client_port - constants.DEFAULT_IPERF_PORT) % 3
 
     def data_received(self, data):
 
         msg = data.decode().strip()
-        logging.info("Received Message: {}".format(msg))
+        logging.info("Received Message:{}".format(msg))
 
         cell_order_msg = DEFAULT_CELL_ORDER_FIELDS.copy()
         try:
@@ -65,25 +75,24 @@ class CellOrderServerProtocol(asyncio.Protocol):
         except Exception as e:
             print("==> Internal error")
             print(e)
-            # TODO: Do we really want to ignore the received message here?
-            return
+            return # TODO: Do we want to ignore the received message here?
 
-        slice_id = self.get_slice_id(cell_order_msg['client_port'])
+        uid = self.get_uid(cell_order_msg['client_port'])
         client_name = (cell_order_msg['client_ip'], cell_order_msg['client_port'])
-        if (slice_id in self.connected_users.keys()):
-            peername = self.connected_users[slice_id]['transport'].get_extra_info('peername')
+        if (uid in self.clients.keys()):
+            peername = self.clients[uid]['transport'].get_extra_info('peername')
             if (peername != client_name):
                 logging.error("Cell-Order Server couldn't find the state for {}!".format(client_name))
                 return
 
             if (cell_order_msg['msg_type'] == 'request'):
-                self.handle_request(slice_id, cell_order_msg)
+                self.handle_request(uid, cell_order_msg)
 
             elif (cell_order_msg['msg_type'] == 'consume'):
-                self.handle_consume(slice_id, cell_order_msg)
+                self.handle_consume(uid, cell_order_msg)
 
             elif (cell_order_msg['msg_type'] == 'dispute'):
-                self.handle_dispute(slice_id, cell_order_msg)
+                self.handle_dispute(uid, cell_order_msg)
 
             else:
                 logging.error("Cell-Order Server received a message of unknown type: {}".format(cell_order_msg))
@@ -91,15 +100,15 @@ class CellOrderServerProtocol(asyncio.Protocol):
         else:
             logging.error("Cell-Order Server has not established a session with the client {}!".format(client_name))
 
-    def handle_request(self, slice_id: int, request_msg: dict) -> None:
+    def handle_request(self, uid: int, request_msg: dict) -> None:
         
         assert request_msg['msg_type'] == 'request'
 
-        if (self.is_feasible(slice_id, request_msg)):
+        if (self.is_feasible(uid, request_msg)):
             price = 10 # TODO: Look-up from a pricing table
 
-            negotiation_id = self.next_negotiation_id
-            self.negotiations[negotiation_id] = {
+            nid = self.next_nid
+            self.negotiations[nid] = {
                 'client_ip': request_msg['client_ip'],
                 'client_port': request_msg['client_port'],
                 'service_type': request_msg['service_type'],
@@ -107,161 +116,205 @@ class CellOrderServerProtocol(asyncio.Protocol):
                 'budgets': request_msg['budgets'],
                 'price': price
             }
-            self.next_negotiation_id += 1
+            self.next_nid += 1
 
-            if (self.connected_users[slice_id]['cancel_handle']):
-                self.connected_users[slice_id]['cancel_handle'].cancel()
-            self.connected_users[slice_id]['cancel_handle'] = \
+            if (self.clients[uid]['cancel_handle']):
+                self.clients[uid]['cancel_handle'].cancel()
+            self.clients[uid]['cancel_handle'] = \
                 self.loop.call_later(self.config['sla-grace-period-sec'], 
-                                     lambda: self.send_cancel(slice_id, negotiation_id, price=0))
+                                     lambda: self.send_cancel(uid, nid, price=0))
 
         else:
             price = 9999 # Basically infinity
-            negotiation_id = -1
+            nid = -1
 
-        self.send_response(slice_id, request_msg, negotiation_id, price)
+        self.send_response(uid, request_msg, nid, price)
 
-    def is_feasible(self, slice_id: int, request_msg: dict) -> bool:
+    def is_feasible(self, uid: int, request_msg: dict) -> bool:
 
         # TODO: Determine if the request is feasible
         return True
 
-    def handle_consume(self, slice_id: int, consume_msg: dict) -> None:
+    def handle_consume(self, uid: int, consume_msg: dict) -> None:
         
         assert consume_msg['msg_type'] == 'consume'
 
-        negotiation_id = consume_msg['negotiation_id']
-        if (negotiation_id not in self.negotiations.keys()):
+        nid = consume_msg['nid']
+        if (nid not in self.negotiations.keys()):
             logging.error("Cell-Order Server cannot find the negotiation for consume msg: {}".format(consume_msg))
             return
 
-        negotiator = (self.negotiations[negotiation_id]['client_ip'],
-                      self.negotiations[negotiation_id]['client_port'])
+        negotiator = (self.negotiations[nid]['client_ip'],
+                      self.negotiations[nid]['client_port'])
         client_name = (consume_msg['client_ip'], consume_msg['client_port'])
         if (negotiator != client_name):
             logging.error("Cell-Order Server received a consume for a different negotiation: {}".format(negotiator))
             return
 
-        expected_payment = self.negotiations[negotiation_id]['price']
+        expected_payment = self.negotiations[nid]['price']
         if (consume_msg['price'] < expected_payment):
             logging.error("Cell-Order Server received insufficient payment: " +\
                           "{} (expected: {})".format(consume_msg['price'], expected_payment))
             return
 
-        if (self.connected_users[slice_id]['cancel_handle']):
-            self.connected_users[slice_id]['cancel_handle'].cancel()
-
-        if (self.is_feasible(slice_id, self.negotiations[negotiation_id])):
-            self.send_supply(slice_id, consume_msg, negotiation_id, price=expected_payment)
+        if (self.is_feasible(uid, self.negotiations[nid])):
+            self.send_supply(uid, consume_msg, nid, price=expected_payment)
         else:
-            self.send_cancel(slice_id, negotiation_id, price=expected_payment)
+            self.send_cancel(uid, nid, price=expected_payment)
 
-    def is_disputable(self, slice_id: int, negotiation_id: int) -> bool:
+    def get_avg_stats(self, uid: int, nid: int, sla_keyword: str) -> float:
+        stats = self.clients[uid]['stats']
 
-        # TODO: Determine if the request is feasible
-        return True
+        if (not stats):
+            logging.error("Average stats calculated without any measurements!")
+            return self.negotiations[nid]['budgets'][sla_keyword][1]
 
-    def handle_dispute(self, slice_id: int, dispute_msg: dict) -> None:
+        now = time.time()
+        time_from_prev_sla = now \
+                             - self.negotiations[nid]['sla_period'] \
+                             - self.config['sla-grace-period-sec']
+        sla_stats = []
+        for ts_sec, metrics in stats.items():
+            if (ts_sec < time_from_prev_sla):
+                continue
+            sla_stats.append(metrics[sla_keyword])
+
+        if (not sla_stats):
+            logging.error("Average stats calculated without any measurements!")
+            return self.negotiations[nid]['budgets'][sla_keyword][1]
+
+        sla_stats = np.array(sla_stats)
+        outlier_percentile = self.config['outlier-percentile']
+        outlier_filter = np.logical_and(sla_stats <= np.percentile(sla_stats, 100 - outlier_percentile),
+                                        sla_stats >= np.percentile(sla_stats, outlier_percentile))
+        return np.mean(sla_stats[outlier_filter])
+
+    def evaluate_dispute(self, uid: int, nid: int):
+
+        service_type = self.negotiations[nid]['service_type']
+        if (service_type == 'latency'):
+            sla_keyword = constants.DL_LAT_KEYWORD
+
+        elif (service_type == 'throughput'):
+            sla_keyword = constants.DL_THP_KEYWORD
+
+        else:
+            # Either best effort, or un-recognized service type
+            return False, 0 # Can not be disputed, no refunds given
+
+        avg_stat = self.get_avg_stats(uid, nid, sla_keyword)
+        if (avg_stat >= self.negotiations[nid]['budgets'][sla_keyword][0] and \
+            avg_stat <= self.negotiations[nid]['budgets'][sla_keyword][1]):
+            return False, 0 # Unlawful dispute, no refunds given
+
+        # TODO: Calculate refund
+        refund = 0
+
+        return True, refund
+
+    def handle_dispute(self, uid: int, dispute_msg: dict) -> None:
         
         assert dispute_msg['msg_type'] == 'dispute'
 
-        negotiation_id = dispute_msg['negotiation_id']
-        if (negotiation_id not in self.negotiations.keys()):
+        nid = dispute_msg['nid']
+        if (nid not in self.negotiations.keys()):
             logging.error("Cell-Order Server cannot find the negotiation for dispute msg: {}".format(dispute_msg))
             return
 
-        negotiator = (self.negotiations[negotiation_id]['client_ip'],
-                      self.negotiations[negotiation_id]['client_port'])
+        negotiator = (self.negotiations[nid]['client_ip'],
+                      self.negotiations[nid]['client_port'])
         client_name = (dispute_msg['client_ip'], dispute_msg['client_port'])
         if (negotiator != client_name):
             logging.error("Cell-Order Server received a dispute for a different negotiation: {}".format(negotiator))
             return
 
-        if (self.connected_users[slice_id]['cancel_handle']):
-            self.connected_users[slice_id]['cancel_handle'].cancel()
-
-        if (self.is_disputable(slice_id, negotiation_id)):
+        is_disputable, refund = self.evaluate_dispute(uid, nid)
+        if (is_disputable):
             # Tell the client to continue without paying for the next SLA period
-            self.send_supply(slice_id, dispute_msg, negotiation_id, price=0)
-
+            self.send_supply(uid, dispute_msg, nid, price=0)
         else:
-            # TODO: Calculate refund
-            refund = 0
-
-            self.send_cancel(slice_id, negotiation_id, price=refund)
+            self.send_cancel(uid, nid, price=refund)
 
 
-    def send_response(self, slice_id: int, request_msg: dict, 
-                            negotiation_id: int, price: float) -> None:
+    def send_response(self, uid: int, request_msg: dict, 
+                            nid: int, price: float) -> None:
 
         response_msg = DEFAULT_CELL_ORDER_FIELDS.copy()
         response_msg['msg_type'] = 'response'
         response_msg['client_ip'] = request_msg['client_ip']
         response_msg['client_port'] = request_msg['client_port']
-        response_msg['negotiation_id'] = negotiation_id
+        response_msg['nid'] = nid
         response_msg['service_type'] = request_msg['service_type']
         response_msg['budgets'] = request_msg['budgets']
         response_msg['price'] = price
-        self.connected_users[slice_id]['transport'].write(json.dumps(response_msg))
-        logging.info("Sent Message: {}".format(response_msg))
+        self.clients[uid]['transport'].write(json.dumps(response_msg))
+        logging.info("Sent Message:{}".format(response_msg))
 
-    def send_supply(self, slice_id: int, msg: dict, 
-                          negotiation_id: int, price: float) -> None:
+    def send_supply(self, uid: int, msg: dict, 
+                          nid: int, price: float) -> None:
 
-        if (self.connected_users[slice_id]['active_negotiation_id'] != negotiation_id):
+        if (self.clients[uid]['active_nid'] != nid):
             # Overwrite the active negotiation id and garbage collect
-            old_negotiation_id = self.connected_users[slice_id]['active_negotiation_id']
+            old_nid = self.clients[uid]['active_nid']
             try:
-                self.negotiations.pop(old_negotiation_id)
+                self.negotiations.pop(old_nid)
             except:
                 pass
-            self.connected_users[slice_id]['active_negotiation_id'] = negotiation_id
+            self.clients[uid]['active_nid'] = nid
 
-        time_to_next_sla = self.negotiations[negotiation_id]['sla_period'] \
+        time_to_next_sla = self.negotiations[nid]['sla_period'] \
                             + self.config['sla-grace-period-sec']
-        self.connected_users[slice_id]['sla_end_time'] = time.time() + time_to_next_sla
+        self.clients[uid]['sla_end_time'] = time.time() + time_to_next_sla
+
+        self.clients[uid]['stats'] = {} # Refresh stored measurements for a new sla
 
         if (not self.reallocation_handle):
             self.reallocation_handle = self.loop.call_soon(lambda: self.reallocate_resources())
 
-        self.connected_users[slice_id]['cancel_handle'] = \
+        if (self.clients[uid]['cancel_handle']):
+            self.clients[uid]['cancel_handle'].cancel()
+        self.clients[uid]['cancel_handle'] = \
             self.loop.call_later(time_to_next_sla, 
-                                 lambda: self.send_cancel(slice_id, negotiation_id, price=0))
+                                 lambda: self.send_cancel(uid, nid, price=0))
 
         supply_msg = DEFAULT_CELL_ORDER_FIELDS.copy()
         supply_msg['msg_type'] = 'supply'
         supply_msg['client_ip'] = msg['client_ip']
         supply_msg['client_port'] = msg['client_port']
-        supply_msg['negotiation_id'] = negotiation_id
-        supply_msg['service_type'] = self.negotiations[negotiation_id]['service_type']
+        supply_msg['nid'] = nid
+        supply_msg['service_type'] = self.negotiations[nid]['service_type']
         supply_msg['start_time'] = msg['start_time']
-        supply_msg['sla_period'] = self.negotiations[negotiation_id]['sla_period']
-        supply_msg['budgets'] = self.negotiations[negotiation_id]['budgets']
+        supply_msg['sla_period'] = self.negotiations[nid]['sla_period']
+        supply_msg['budgets'] = self.negotiations[nid]['budgets']
         supply_msg['price'] = price
-        self.connected_users[slice_id]['transport'].write(json.dumps(supply_msg))
-        logging.info("Sent Message: {}".format(supply_msg))
+        self.clients[uid]['transport'].write(json.dumps(supply_msg))
+        logging.info("Sent Message:{}".format(supply_msg))
 
-    def send_cancel(self, slice_id: int, negotiation_id: int, price: float) -> None:
+    def send_cancel(self, uid: int, nid: int, price: float) -> None:
         
         cancel_msg = DEFAULT_CELL_ORDER_FIELDS.copy()
         cancel_msg['msg_type'] = 'cancel'
-        cancel_msg['client_ip'] = self.negotiations[negotiation_id]['client_ip']
-        cancel_msg['client_port'] = self.negotiations[negotiation_id]['client_port']
-        cancel_msg['negotiation_id'] = negotiation_id
-        cancel_msg['service_type'] = self.negotiations[negotiation_id]['service_type']
-        cancel_msg['sla_period'] = self.negotiations[negotiation_id]['sla_period']
-        cancel_msg['budgets'] = self.negotiations[negotiation_id]['budgets']
+        cancel_msg['client_ip'] = self.negotiations[nid]['client_ip']
+        cancel_msg['client_port'] = self.negotiations[nid]['client_port']
+        cancel_msg['nid'] = nid
+        cancel_msg['service_type'] = self.negotiations[nid]['service_type']
+        cancel_msg['sla_period'] = self.negotiations[nid]['sla_period']
+        cancel_msg['budgets'] = self.negotiations[nid]['budgets']
         cancel_msg['price'] = price
-        self.connected_users[slice_id]['transport'].write(json.dumps(cancel_msg))
-        logging.info("Sent Message: {}".format(cancel_msg))
+        self.clients[uid]['transport'].write(json.dumps(cancel_msg))
+        logging.info("Sent Message:{}".format(cancel_msg))
 
         try:
-            self.negotiations.pop(negotiation_id)
+            self.negotiations.pop(nid)
         except:
             pass
-        self.connected_users[slice_id]['cancel_handle'] = None
-        self.connected_users[slice_id]['active_negotiation_id'] = None
-        self.connected_users[slice_id]['sla_end_time'] = 0
+
+        if (self.clients[uid]['cancel_handle']):
+            self.clients[uid]['cancel_handle'].cancel()
+        self.clients[uid]['cancel_handle'] = None
+        self.clients[uid]['active_nid'] = None
+        self.clients[uid]['sla_end_time'] = 0
+        self.clients[uid]['stats'] = {} 
 
     def calculate_dl_latency_metric(self, metrics_db: dict) -> None:
         """
@@ -282,7 +335,7 @@ class CellOrderServerProtocol(asyncio.Protocol):
     def reallocate_resources(self):
 
         now = time.time()
-        for user in self.connected_users:
+        for user in self.clients:
             if (user['sla_end_time'] >= now + self.config['reallocation-period-sec']):
                 self.reallocation_handle = self.loop.call_later(self.config['reallocation-period-sec'], 
                                                                 lambda: self.reallocate_resources())
@@ -321,35 +374,33 @@ class CellOrderServerProtocol(asyncio.Protocol):
                 # It is not feasible to allocate good resources for this UE anyway
                 slice_metrics[s_key]['new_num_rbgs'] = 1
 
-            elif (s_key not in self.connected_users):
+            elif (s_key not in self.clients):
                 # The user client has not established a session yet
                 slice_metrics[s_key]['new_num_rbgs'] = 1
 
-            elif (self.connected_users[s_key]['sla_end_time'] < now or \
-                  self.connected_users[s_key]['active_negotiation_id'] is None):
+            elif (self.clients[s_key]['sla_end_time'] < now or \
+                  self.clients[s_key]['active_nid'] is None):
                 # The user has not negotiated for new a service yet
                 slice_metrics[s_key]['new_num_rbgs'] = 1
 
             else:
-                negotiation_id = self.connected_users[s_key]['active_negotiation_id']
-                service_type = self.negotiations[negotiation_id]['service_type']
+                nid = self.clients[s_key]['active_nid']
+                service_type = self.negotiations[nid]['service_type']
 
                 if (service_type == 'best_effort'):
-                    # Assign RBGs that are left after assigning others
-                    # TODO: Fix allocation
+                    # Force readjust_rbgs_to_capacity() to run which 
+                    # assigns RBGs that are left after assigning others
                     slice_metrics[s_key]['new_num_rbgs'] = constants.MAX_RBG
 
                 elif (service_type == 'latency'):
-                    self.provide_latency_service(slice_metrics, s_key)
+                    self.provide_latency_service(slice_metrics, s_key, nid)
 
                 elif (service_type == 'throughput'):
-                    # TODO: Fix allocation
-                    slice_metrics[s_key]['new_num_rbgs'] = constants.MAX_RBG
+                    self.provide_throughput_service(slice_metrics, s_key, nid)
 
                 else:
                     logging.error('User {} requests an unknown service! ({})'.format(s_key, service_type))
-                    self.connected_users[s_key]['transport'].close()
-                    self.connected_users.pop(s_key)
+                    self.send_cancel(s_key, nid, price=0)
                     slice_metrics[s_key]['new_num_rbgs'] = 1
 
             tot_num_rbg_rqstd += slice_metrics[s_key]['new_num_rbgs']
@@ -361,26 +412,29 @@ class CellOrderServerProtocol(asyncio.Protocol):
         timestamp_ms = int(now * 1000)
         logging.info('ts_ms:' + str(timestamp_ms) + ' slice_metrics:' + str(slice_metrics))
 
+        # Record metrics to decide on feasibility and handle disputes in the future
+        for s_key, s_val in slice_metrics.items():
+            self.clients[s_key]['stats'][now] = s_val
+
         self.write_slice_masks(slice_metrics)
 
-    def provide_latency_service(self, slice_metrics: dict, s_key: int) -> None:
+    def provide_latency_service(self, slice_metrics: dict, s_key: int, nid: int) -> None:
 
-        cur_num_rbgs = slice_metrics[s_key]['cur_slice_mask'].count('1')
-
-        # TODO: Dynamically collect budgets from the negotiations
-        curr_tx_rate_budget_lo = self.config['slice-tx-rate-budget-Mbps'][s_key][0]
-        curr_tx_rate_budget_hi = self.config['slice-tx-rate-budget-Mbps'][s_key][1]
+        curr_tx_rate_budget_lo = self.negotiations[nid]['budgets'][constants.DL_THP_KEYWORD][0]
+        curr_tx_rate_budget_hi = self.negotiations[nid]['budgets'][constants.DL_THP_KEYWORD][1]
         req_n_prbs = mcs_mapper.calculate_n_prbs(curr_tx_rate_budget_hi, 
                                                     round(slice_metrics[s_key][constants.DL_MCS_KEYWORD]))
 
-        curr_lo_delay_budget = self.config['slice-delay-budget-msec'][s_key][0]
-        curr_hi_delay_budget = self.config['slice-delay-budget-msec'][s_key][1]
+        curr_lo_delay_budget = self.negotiations[nid]['budgets'][constants.DL_LAT_KEYWORD][0]
+        curr_hi_delay_budget = self.negotiations[nid]['budgets'][constants.DL_LAT_KEYWORD][1]
+
+        cur_num_rbgs = slice_metrics[s_key]['cur_slice_mask'].count('1')
 
         if (slice_metrics[s_key][constants.DL_LAT_KEYWORD] > curr_hi_delay_budget \
             or (slice_metrics[s_key][constants.DL_THP_KEYWORD] < curr_tx_rate_budget_lo \
                 and slice_metrics[s_key][constants.DL_LAT_KEYWORD] != 0.0)):
             # Allocate more resources to this slice
-            double_n_prbs = mcs_mapper.calculate_n_prbs(2*curr_tx_rate_budget_hi, 
+            double_n_prbs = mcs_mapper.calculate_n_prbs(2 * curr_tx_rate_budget_hi, 
                                                         round(slice_metrics[s_key][constants.DL_MCS_KEYWORD]))
             slice_metrics[s_key]['new_num_rbgs'] = min(max(cur_num_rbgs, req_n_prbs) + 2, double_n_prbs)
         elif slice_metrics[s_key][constants.DL_LAT_KEYWORD] < curr_lo_delay_budget:
@@ -390,9 +444,41 @@ class CellOrderServerProtocol(asyncio.Protocol):
             # Try to maintain the current latency 
             slice_metrics[s_key]['new_num_rbgs'] = req_n_prbs + 1
 
+    def provide_throughput_service(self, slice_metrics: dict, s_key: int, nid: int) -> None:
+
+        curr_tx_rate_budget_lo = self.negotiations[nid]['budgets'][constants.DL_THP_KEYWORD][0]
+        curr_tx_rate_budget_hi = self.negotiations[nid]['budgets'][constants.DL_THP_KEYWORD][1]
+        req_n_prbs = mcs_mapper.calculate_n_prbs(curr_tx_rate_budget_hi, 
+                                                    round(slice_metrics[s_key][constants.DL_MCS_KEYWORD]))
+
+        cur_num_rbgs = slice_metrics[s_key]['cur_slice_mask'].count('1')
+
+        if (slice_metrics[s_key][constants.DL_THP_KEYWORD] < curr_tx_rate_budget_lo \
+            and slice_metrics[s_key][constants.DL_LAT_KEYWORD] != 0.0):
+            # Allocate more resources to this slice
+            double_n_prbs = mcs_mapper.calculate_n_prbs(2 * curr_tx_rate_budget_hi, 
+                                                        round(slice_metrics[s_key][constants.DL_MCS_KEYWORD]))
+            slice_metrics[s_key]['new_num_rbgs'] = min(max(cur_num_rbgs, req_n_prbs) + 1, double_n_prbs)
+        elif slice_metrics[s_key][constants.DL_THP_KEYWORD] > curr_tx_rate_budget_hi:
+            # De-allocate resources from this slice
+            slice_metrics[s_key]['new_num_rbgs'] = max(min(cur_num_rbgs, req_n_prbs) - 1, 1)
+        else:
+            # Try to maintain the current latency 
+            slice_metrics[s_key]['new_num_rbgs'] = req_n_prbs + 1
+
     def readjust_rbgs_to_capacity(self, slice_metrics: dict, tot_num_rbg_rqstd: int) -> None:
 
         logging.info('requested_rbg:{}'.format(tot_num_rbg_rqstd))
+
+        # Isolate best effort slices
+        best_effort_users = []
+        for s_key, s_val in slice_metrics.items():
+            nid = self.clients[s_key]['active_nid']
+            if (self.negotiations[nid]['service_type'] =='best_effort'):
+                best_effort_users.append(s_key)
+                tot_num_rbg_rqstd -= slice_metrics[s_key]['new_num_rbgs']
+                slice_metrics[s_key]['new_num_rbgs'] = 1
+                tot_num_rbg_rqstd += 1
 
         # Decrease the number of requested RBGs one by one starting with the slice that has the most RBGs
         while tot_num_rbg_rqstd > constants.MAX_RBG:
@@ -406,6 +492,14 @@ class CellOrderServerProtocol(asyncio.Protocol):
             tot_num_rbg_rqstd -= slice_metrics[cur_s_key]['new_num_rbgs']
             slice_metrics[cur_s_key]['new_num_rbgs'] = max(slice_metrics[cur_s_key]['new_num_rbgs'] - 1, 1)
             tot_num_rbg_rqstd += slice_metrics[cur_s_key]['new_num_rbgs']
+
+        # Distribute the remaining rbgs to best effort userrs
+        while best_effort_users and tot_num_rbg_rqstd < constants.MAX_RBG:
+            for s_key in best_effort_users:
+                slice_metrics[s_key]['new_num_rbgs'] += 1
+                tot_num_rbg_rqstd += 1
+                if tot_num_rbg_rqstd >= constants.MAX_RBG:
+                    break
 
     def write_slice_masks(self, slice_metrics: dict) -> None:
         """
