@@ -1,18 +1,10 @@
 import argparse
 import ast
-import collections
-import copy
-import csv
-import dill
 import distutils.util
 import json
 import logging
-import math
 import netifaces as ni
 import os.path
-import random
-import re
-import shutil
 import subprocess
 import time
 
@@ -520,7 +512,7 @@ def run_scope(config: dict, scope_config: dict):
             time.sleep(1) # Give OS time to start the cell-order server first
 
             for ue_ip in sorted(srs_col_ip_mapping.values()):
-                cell_order_ue_cmd = 'python3 run_cell_order_client.py'
+                cell_order_ue_cmd = 'python3 run_cell_order_client.py --config-file cell_order.conf'
                 # We will run the client on the same Colosseum node with the server
                 # on behalf of the UE because of how Iperf measurements work
                 cell_order_ue_cmd += ' --server-ip 127.0.0.1'

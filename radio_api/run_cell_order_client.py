@@ -1,5 +1,4 @@
 import argparse
-import json
 import logging
 import os
 import time
@@ -7,28 +6,7 @@ import asyncio
 
 import constants
 import cell_order
-from support_functions import start_iperf_client, kill_process_using_port
-
-MULTI_FLOW_ERR = "Cell-Order has not been implemented for multiple flows between the same end-points yet!"
-
-# Get stats from the iperf output & run the logic for SLA verification
-def cell_order_ue_delay_measurements(iperf_start_time_ms:int, iperf_output_file:str) -> None:
-
-    with open(iperf_output_file,'r') as f:
-        iperf_output = json.load(f)
-        if (not iperf_output):
-            return
-
-    for interval_data in iperf_output['intervals']:
-        assert len(interval_data['streams']) == 1, MULTI_FLOW_ERR
-
-        stream_data = interval_data['streams'][0]
-        assert stream_data['sender'], "Iperf's RTT can only be displayed if sender!"
-
-        ts_ms = int(stream_data['end'] * 1000) + iperf_start_time_ms
-        logging.info('ts_ms:' + str(ts_ms) + ' stream:' + str(stream_data))
-
-        # rtt = stream_data['rtt']
+from support_functions import kill_process_using_port
 
 
 if __name__ == '__main__':
@@ -85,37 +63,4 @@ if __name__ == '__main__':
     loop.run_until_complete(coro)    
 
     loop.run_forever()
-    loop.close()         
-
-
-
-    
-    
-    
-
-    iperf_output_file = '/logs/iperf-ue{}.json'.format(colosseum_node_id)
-    if (os.path.isfile(iperf_output_file)):
-        # remove json file so that program reads file of current execution
-        os.system('rm ' + iperf_output_file)
-
-    start_time = time.time()
-    cur_time = start_time
-    while cur_time + args.sla_period - start_time <= args.t or args.t == 0:
-
-        cur_time = time.time()
-
-        # Run traffic for analysis
-        iperf_start_time_ms = int(cur_time * 1000)
-        start_iperf_client(args.ue_ip, client_port, 
-                           iperf_target_rate=args.iperf_target_rate, 
-                           iperf_udp=args.iperf_udp, 
-                           reversed=False, duration=args.sla_period, loop=False,
-                           json_filename=iperf_output_file)
-
-        # Run the analysis itself
-        cell_order_ue_delay_measurements(iperf_start_time_ms, iperf_output_file)
-
-        if (os.path.isfile(iperf_output_file)):
-            os.system('rm ' + iperf_output_file)
-
-        
+    loop.close()

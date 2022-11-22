@@ -84,9 +84,12 @@ def start_iperf_server(port: int, tmux_session_name: str='',
 
 def kill_process_using_port(port):
     pids = subprocess.run(
-        ['lsof', '-t', f'-i:{port}'], text=True, capture_output=True
+        ['lsof', '-t', '-i:{}'.format(port)], 
+        universal_newlines=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE
     ).stdout.strip().split('\n')
     for pid in pids:
+        if (not pid):
+            continue
         if (subprocess.run(['kill', '-TERM', pid]).returncode != 0):
             subprocess.run(['kill', '-KILL', pid], check=True)
             logging.info('Process {} killed to free port {}'.format(pid, port))
