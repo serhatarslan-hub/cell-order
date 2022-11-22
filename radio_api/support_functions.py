@@ -80,3 +80,13 @@ def start_iperf_server(port: int, tmux_session_name: str='',
         'If you want to run iperf server on the bakground, ' + \
         'set the run_as_deamon parameter to True. ')
         exit(1)
+
+
+def kill_process_using_port(port):
+    pids = subprocess.run(
+        ['lsof', '-t', f'-i:{port}'], text=True, capture_output=True
+    ).stdout.strip().split('\n')
+    for pid in pids:
+        if (subprocess.run(['kill', '-TERM', pid]).returncode != 0):
+            subprocess.run(['kill', '-KILL', pid], check=True)
+            logging.info('Process {} killed to free port {}'.format(pid, port))

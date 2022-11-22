@@ -1,3 +1,5 @@
+import ast
+import subprocess
 import asyncio
 import logging
 import time
@@ -10,6 +12,7 @@ from scope_start import (average_metric, avg_slice_metrics, get_metric_value,
                          get_slice_users, read_metrics, read_slice_mask,
                          read_slice_scheduling, write_slice_scheduling,
                          write_tenant_slicing_mask)
+from support_functions import start_iperf_client, kill_process_using_port
 
 DEFAULT_CELL_ORDER_FIELDS = {
     'msg_type': None,
@@ -26,6 +29,31 @@ DEFAULT_CELL_ORDER_FIELDS = {
     'price': None
 }
 
+# get cell-order parameters from configuration file
+def parse_cell_order_config_file(filename: str) -> dict:
+
+    logging.info('Parsing ' + filename + ' configuration file')
+
+    with open(filename, 'r') as file:
+        config = json.load(file)
+
+    dict_var_keys = ['slice-delay-budget-msec', 'slice-tx-rate-budget-Mbps',
+                     'slice-service-type']
+    float_var_keys = ['duration-sec', 'sla-period-sec', 'sla-grace-period-sec',
+                      'reallocation-period-sec', 'outlier-percentile']
+
+    for param_key, param_val in config.items():
+        # convert to right types
+        if param_val.lower() in ['true', 'false']:
+            config[param_key] = bool(param_val == 'True')
+        elif param_key in dict_var_keys:
+            # Convert some config to python dictionary
+            config[param_key] = ast.literal_eval(param_val)
+        elif param_key in float_var_keys:
+            config[param_key] = float(param_val)
+
+    return config
+
 class CellOrderServerProtocol(asyncio.Protocol):
 
     def __init__(self, loop, config):
@@ -36,6 +64,7 @@ class CellOrderServerProtocol(asyncio.Protocol):
         """
         self.loop = loop
         self.config = config
+
         self.telemetry_lines_to_read = int(4 * self.config['reallocation-period-sec'])
         self.clients = {}
         self.next_nid = 0
@@ -58,11 +87,11 @@ class CellOrderServerProtocol(asyncio.Protocol):
         """
         Determine the user ID for the client which is equivalent to slice ID
         Args:
-            client_port: The port number hich the client uses for its traffic
+            client_port: The port number which the client uses for its traffic
         """
         
         # TODO: Determine user ID (slice ID) with a more elegant way
-        return (client_port - constants.DEFAULT_IPERF_PORT) % 3
+        return (client_port - constants.DEFAULT_CELL_ORDER_PORT) % constants.SLICE_NUM
 
     def data_received(self, data):
 
@@ -247,7 +276,7 @@ class CellOrderServerProtocol(asyncio.Protocol):
         response_msg['service_type'] = request_msg['service_type']
         response_msg['budgets'] = request_msg['budgets']
         response_msg['price'] = price
-        self.clients[uid]['transport'].write(json.dumps(response_msg))
+        self.clients[uid]['transport'].write(json.dumps(response_msg).encode())
         logging.info("Sent Message:{}".format(response_msg))
 
     def send_supply(self, uid: int, msg: dict, 
@@ -287,7 +316,7 @@ class CellOrderServerProtocol(asyncio.Protocol):
         supply_msg['sla_period'] = self.negotiations[nid]['sla_period']
         supply_msg['budgets'] = self.negotiations[nid]['budgets']
         supply_msg['price'] = price
-        self.clients[uid]['transport'].write(json.dumps(supply_msg))
+        self.clients[uid]['transport'].write(json.dumps(supply_msg).encode())
         logging.info("Sent Message:{}".format(supply_msg))
 
     def send_cancel(self, uid: int, nid: int, price: float) -> None:
@@ -301,7 +330,7 @@ class CellOrderServerProtocol(asyncio.Protocol):
         cancel_msg['sla_period'] = self.negotiations[nid]['sla_period']
         cancel_msg['budgets'] = self.negotiations[nid]['budgets']
         cancel_msg['price'] = price
-        self.clients[uid]['transport'].write(json.dumps(cancel_msg))
+        self.clients[uid]['transport'].write(json.dumps(cancel_msg).encode())
         logging.info("Sent Message:{}".format(cancel_msg))
 
         try:
@@ -379,7 +408,7 @@ class CellOrderServerProtocol(asyncio.Protocol):
                 slice_metrics[s_key]['new_num_rbgs'] = 1
 
             elif (self.clients[s_key]['sla_end_time'] < now or \
-                  self.clients[s_key]['active_nid'] is None):
+                  not self.clients[s_key]['active_nid']):
                 # The user has not negotiated for new a service yet
                 slice_metrics[s_key]['new_num_rbgs'] = 1
 
@@ -474,7 +503,7 @@ class CellOrderServerProtocol(asyncio.Protocol):
         best_effort_users = []
         for s_key, s_val in slice_metrics.items():
             nid = self.clients[s_key]['active_nid']
-            if (self.negotiations[nid]['service_type'] =='best_effort'):
+            if (not nid or self.negotiations[nid]['service_type'] =='best_effort'):
                 best_effort_users.append(s_key)
                 tot_num_rbg_rqstd -= slice_metrics[s_key]['new_num_rbgs']
                 slice_metrics[s_key]['new_num_rbgs'] = 1
@@ -522,5 +551,137 @@ class CellOrderServerProtocol(asyncio.Protocol):
                 write_tenant_slicing_mask(config_params, True, s_key)
 
 class CellOrderClientProtocol(asyncio.Protocol):
-    # TODO: Fill in here
-    pass
+    
+    def __init__(self, loop, config, client_ip, iperf_target_rate, iperf_udp):
+        """
+        Args:
+            loop: the associated event loop registered to the OS
+            config: the configuration to run the server with
+            client_ip: the IP address for the UE that is running this client
+            iperf_target_rate: target bitrate in bps for iperf [KMG] (O for unlimited)
+            iperf_udp: whether to use UDP traffic for iperf3
+        """
+        self.loop = loop
+        self.config = config
+        self.client_ip = client_ip
+        self.iperf_target_rate = iperf_target_rate
+        self.iperf_udp = iperf_udp
+
+        port_offset = int(client_ip.split('.')[-1])
+        self.client_port = constants.DEFAULT_CELL_ORDER_PORT + port_offset
+        self.iperf_port = constants.DEFAULT_IPERF_PORT + port_offset
+
+        # TODO: Determine slice ID with a more elegant way
+        self.slice_id = port_offset % constants.SLICE_NUM
+        logging.info('slice_id:' + str(self.slice_id))
+
+        self.active_nid = None
+        self.request_handle = None
+
+    def connection_made(self, transport):
+
+        peername = transport.get_extra_info('peername')
+        logging.info('Connected to {}'.format(peername))
+        self.transport = transport
+
+        self.loop.call_soon(lambda: self.wait_until_iperf_established())
+
+    def wait_until_iperf_established(self):
+        """
+        Run in loop until UE is actually connected. Not negotiated with cell-order
+        """
+        start_iperf_client(self.client_ip, self.iperf_port, 
+                           iperf_target_rate=self.iperf_target_rate, 
+                           iperf_udp=self.iperf_udp,
+                           reversed=False, duration=5, loop=True)
+
+        self.start_time = time.time()
+        self.request_handle = self.loop.call_soon(lambda: self.request_sla())
+
+    def data_received(self, data):
+
+        msg = data.decode().strip()
+        logging.info("Received Message:{}".format(msg))
+
+        cell_order_msg = DEFAULT_CELL_ORDER_FIELDS.copy()
+        try:
+            cell_order_msg.update(json.loads(msg))
+        except Exception as e:
+            print("==> Internal error")
+            print(e)
+            return # TODO: Do we want to ignore the received message here?
+
+        incoming_client_info = (cell_order_msg['client_ip'], cell_order_msg['client_port'])
+        if (incoming_client_info != (self.client_ip, self.client_port)):
+            logging.error("Cell-Order Client received a message for a different client {}!".format(incoming_client_info))
+            return
+
+        if (cell_order_msg['msg_type'] == 'response'):
+            self.handle_response(cell_order_msg)
+
+        elif (cell_order_msg['msg_type'] == 'supply'):
+            self.handle_supply(cell_order_msg)
+
+        elif (cell_order_msg['msg_type'] == 'cancel'):
+            self.handle_cancel(cell_order_msg)
+
+        else:
+            logging.error("Cell-Order Client received a message of unknown type: {}".format(cell_order_msg))
+
+
+    def connection_lost(self, exc):
+
+        logging.info('The server closed the connection, stopping the event loop')
+        kill_process_using_port(self.iperf_port)
+        self.loop.stop()
+
+    def request_sla(self):
+
+        # TODO: Send a request for an SLA and set a retransmission timeout if no negatioation occurs
+        if (self.active_nid):
+            # Already negotiated, no need for a new request
+            self.request_handle = None
+            return
+        
+        request_msg = DEFAULT_CELL_ORDER_FIELDS.copy()
+        request_msg['msg_type'] = 'request'
+        request_msg['client_ip'] = self.client_ip
+        request_msg['client_port'] = self.client_port
+        request_msg['nid'] = -1
+        request_msg['service_type'] = self.config['slice-service-type'][self.slice_id]
+        request_msg['sla_period'] = self.config['sla-period-sec']
+        request_msg['budgets'] = {
+            constants.DL_LAT_KEYWORD: self.config['slice-delay-budget-msec'][self.slice_id], 
+            constants.DL_THP_KEYWORD: self.config['slice-tx-rate-budget-Mbps'][self.slice_id]
+        }
+        request_msg['price'] = 0
+        self.transport.write(json.dumps(request_msg).encode())
+        logging.info("Sent Message:{}".format(request_msg))
+
+        self.request_handle = self.loop.call_later(self.config['sla-grace-period-sec'], 
+                                                   lambda: self.request_sla())
+
+    def handle_response(self, response_msg: dict) -> None:
+        
+        # TODO: IF response is valid, cancel request_handle, and note the active nid
+
+        # TODO: Send consume with the negotiated terms if the price is acceptable
+        pass
+
+    def handle_supply(self, supply_msg: dict) -> None:
+        
+        # TODO: Check the supplied service is what is requested in the first place
+
+        # TODO: Start the iperf traffic
+
+        # TODO: Measure the performance and send consume/dispute accordingly
+        pass
+
+    def handle_cancel(self, cancel_msg: dict) -> None:
+        
+        # TODO: Flush negotiatian related state (ie. active nid)
+
+        # TODO: If there isnt already request handle, send a new request after grace period
+
+        # TODO: Collect refund if any
+        pass

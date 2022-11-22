@@ -1,13 +1,13 @@
 import argparse
-import ast
-import collections
 import json
 import logging
-import os, os.path
+import os
 import time
+import asyncio
 
 import constants
-from support_functions import start_iperf_client
+import cell_order
+from support_functions import start_iperf_client, kill_process_using_port
 
 MULTI_FLOW_ERR = "Cell-Order has not been implemented for multiple flows between the same end-points yet!"
 
@@ -35,27 +35,21 @@ if __name__ == '__main__':
 
     # Define command line arguments
     parser = argparse.ArgumentParser()
-    parser.add_argument('--ue-ip', type=str, required=True, 
+    parser.add_argument('--config-file', type=str, required=True, 
+                        help='Configuration file to parse.')
+    parser.add_argument('--server-ip', type=str, required=True, 
+                        help='IP address of the provider.')
+    parser.add_argument('--client-ip', type=str, required=True, 
                         help='IP address of the UE.')
-    parser.add_argument('--t', type=float, default=600, 
-                        help='Seconds to run for (0 for unlimited)')
-    parser.add_argument('--sla-period', type=float, default=30, 
-                        help='Seconds over which the SLAs are negotiated')
     parser.add_argument('--iperf-target-rate', type=str, 
                         help='target bitrate in bps for iperf [KMG] (O for unlimited)')
     parser.add_argument('--iperf-udp', 
                         help='Use UDP traffic for iperf3', action='store_true')
     args = parser.parse_args()
 
-    sleep_time = 5
-    print('Cell-Order UE will start in ' + str(sleep_time) + ' sseconds.')
-    time.sleep(sleep_time)
-
     # Determine UE id
-    colosseum_node_id = int(args.ue_ip.split('.')[-1]) - 1 
-    iperf_port = constants.DEFAULT_IPERF_PORT + colosseum_node_id + 1
-    # TODO: Determine slice ID with a more elegant way
-    slice_id = (colosseum_node_id + 1) % 3
+    colosseum_node_id = int(args.client_ip.split('.')[-1]) - 1 
+    client_port = constants.DEFAULT_CELL_ORDER_PORT + colosseum_node_id + 1
 
     # configure logger and console output
     log_filename = '/logs/cell-order-ue{}.log'.format(colosseum_node_id)
@@ -67,13 +61,37 @@ if __name__ == '__main__':
     console.setFormatter(formatter)
     logging.getLogger('').addHandler(console)
 
-    logging.info('slice_id:' + str(slice_id))
+    filename = os.path.expanduser('~/radio_api/')
+    filename = filename + args.config_file
 
-    # Run in loop until UE is connected. This will not be considered for cell-order
-    start_iperf_client(args.ue_ip, iperf_port, 
-                       iperf_target_rate=args.iperf_target_rate, 
-                       iperf_udp=args.iperf_udp,
-                       reversed=False, duration=5, loop=True)
+    kill_process_using_port(client_port)
+    time.sleep(1)  # Give OS time to free up the PORT usage
+
+    # parse heuristic config file
+    cell_order_config = cell_order.parse_cell_order_config_file(filename)
+    logging.info('Cell-Order configuration: ' + str(cell_order_config))
+
+    loop = asyncio.get_event_loop()
+
+    cell_order_client = cell_order.CellOrderClientProtocol(loop, 
+                                                           cell_order_config,
+                                                           args.client_ip,
+                                                           args.iperf_target_rate,
+                                                           args.iperf_udp)
+ 
+    coro = loop.create_connection(lambda: cell_order_client, 
+                                  args.server_ip, constants.DEFAULT_CELL_ORDER_PORT, 
+                                  local_addr = ('127.0.0.1', client_port))
+    loop.run_until_complete(coro)    
+
+    loop.run_forever()
+    loop.close()         
+
+
+
+    
+    
+    
 
     iperf_output_file = '/logs/iperf-ue{}.json'.format(colosseum_node_id)
     if (os.path.isfile(iperf_output_file)):
@@ -88,7 +106,7 @@ if __name__ == '__main__':
 
         # Run traffic for analysis
         iperf_start_time_ms = int(cur_time * 1000)
-        start_iperf_client(args.ue_ip, iperf_port, 
+        start_iperf_client(args.ue_ip, client_port, 
                            iperf_target_rate=args.iperf_target_rate, 
                            iperf_udp=args.iperf_udp, 
                            reversed=False, duration=args.sla_period, loop=False,
