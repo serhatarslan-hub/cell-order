@@ -14,6 +14,12 @@ from scope_start import (average_metric, avg_slice_metrics, get_metric_value,
                          write_tenant_slicing_mask)
 from support_functions import start_iperf_client, kill_process_using_port
 
+LAT_BUDGET_WILDCARD = [0, 9999]
+THP_BUDGET_WILDCARD = [0, 0]
+BUDGET_WILDCARD = {
+    constants.DL_LAT_KEYWORD: LAT_BUDGET_WILDCARD, 
+    constants.DL_THP_KEYWORD: THP_BUDGET_WILDCARD
+}
 DEFAULT_CELL_ORDER_FIELDS = {
     'msg_type': None,
     'client_ip': None,
@@ -22,10 +28,7 @@ DEFAULT_CELL_ORDER_FIELDS = {
     'service_type': 'best_effort',
     'start_time': 0,
     'sla_period': 30,
-    'budgets': {
-        constants.DL_LAT_KEYWORD: [0., 5000.], 
-        constants.DL_THP_KEYWORD: [0., 1000.]
-    },
+    'budgets': BUDGET_WILDCARD,
     'price': None
 }
 
@@ -41,7 +44,8 @@ def parse_cell_order_config_file(filename: str) -> dict:
                      'slice-service-type']
     float_var_keys = ['duration-sec', 'sla-period-sec', 'sla-grace-period-sec',
                       'reallocation-period-sec', 'outlier-percentile', 
-                      'max-rtx', 'max-sla-price', 'reallocation-step-coeff']
+                      'max-rtx', 'max-sla-price', 'min-acceptable-cqi',
+                      'reallocation-step-coeff']
 
     for param_key, param_val in config.items():
         # convert to right types
@@ -136,6 +140,60 @@ class CellOrderServerProtocol(asyncio.Protocol):
         else:
             logging.error("Cell-Order Server has not established a session with the client {}!".format(client_name))
 
+    def is_feasible(self, uid: int, request_msg: dict) -> bool:
+
+        # Read the MCS values of users to calculate required number of RBGs each
+        # Read metrics database {imsi->{ts->{metric_name->val}}}
+        metrics_db = read_metrics(lines_num = self.telemetry_lines_to_read)
+        # Get slicing associations {slice_id->(imsi)}
+        slice_users = get_slice_users(metrics_db)
+        # Create slice metrics to sum metrics over slice
+        slice_metrics = dict()
+        metric_keywords_to_ave = [constants.DL_MCS_KEYWORD, constants.DL_CQI_KEYWORD]
+        for metric_keyword in metric_keywords_to_ave:
+            # get metric averages {imsi->metric_mean_val}
+            metric_avg = average_metric(metrics_db, metric_keyword)
+            # average slice metrics into dict {slice_idx->metric_name->metric_mean_val}
+            avg_slice_metrics(slice_metrics, slice_users, metric_avg, metric_keyword)
+
+        tot_reserved_rbg = 0
+        for cur_uid, client_state in self.clients.items():
+            if (cur_uid == uid or client_state['active_nid'] is None):
+                continue
+
+            active_negotiation = self.negotiations[client_state['active_nid']]
+            if (active_negotiation['service_type'] == 'best_effort'):
+                tot_reserved_rbg += 1
+                continue
+
+            agreed_max_thp = active_negotiation['budgets'][constants.DL_THP_KEYWORD][1]
+            cur_cqi = slice_metrics[cur_uid][constants.DL_CQI_KEYWORD]
+            cur_mcs = slice_metrics[cur_uid][constants.DL_MCS_KEYWORD]
+            if (cur_cqi >= self.config['min-acceptable-cqi']):
+                tot_reserved_rbg += mcs_mapper.calculate_n_prbs(agreed_max_thp, round(cur_mcs))
+
+        # Calculate how many RBG would be required for the requester
+        if (request_msg['service_type'] == 'best_effort'):
+            n_requested_rbg = 1
+        else:
+            requested_max_thp = request_msg['budgets'][constants.DL_THP_KEYWORD][1]
+            cur_cqi = slice_metrics[uid][constants.DL_CQI_KEYWORD]
+            cur_mcs = slice_metrics[uid][constants.DL_MCS_KEYWORD]
+            n_requested_rbg = mcs_mapper.calculate_n_prbs(requested_max_thp, round(cur_mcs))
+
+        if (cur_cqi < self.config['min-acceptable-cqi']):
+            logging.info("Service is not feasible because of the " + \
+                         "bad channel conditions. (CQI: {})".format(cur_cqi))
+            return False
+        elif (tot_reserved_rbg + n_requested_rbg > constants.MAX_RBG):
+            n_available_rbg = constants.MAX_RBG - tot_reserved_rbg
+            logging.info("Service is not feasible because the " + \
+                         "physical resources are already booked. " + \
+                         "(Requested: {}, Available: {})".format(n_requested_rbg, n_available_rbg))
+            return False
+        else:
+            return  True 
+
     def handle_request(self, uid: int, request_msg: dict) -> None:
         
         assert request_msg['msg_type'] == 'request'
@@ -165,11 +223,6 @@ class CellOrderServerProtocol(asyncio.Protocol):
             nid = -1
 
         self.send_response(uid, request_msg, nid, price)
-
-    def is_feasible(self, uid: int, request_msg: dict) -> bool:
-
-        # TODO: Determine if the request is feasible
-        return True
 
     def handle_consume(self, uid: int, consume_msg: dict) -> None:
         
@@ -433,7 +486,7 @@ class CellOrderServerProtocol(asyncio.Protocol):
             # get current slicing mask
             slice_metrics[s_key]['cur_slice_mask'] = read_slice_mask(s_key) # string
 
-            if (s_val[constants.DL_CQI_KEYWORD] < 0.5):
+            if (s_val[constants.DL_CQI_KEYWORD] < self.config['min-acceptable-cqi']):
                 # It is not feasible to allocate good resources for this UE anyway
                 slice_metrics[s_key]['new_num_rbgs'] = 1
 
@@ -641,22 +694,31 @@ class CellOrderClientProtocol(asyncio.Protocol):
 
         self.loop.call_soon(lambda: self.wait_until_iperf_established())
 
-    def wait_until_iperf_established(self):
-        """
-        Run in loop until UE is actually connected. Not negotiated with cell-order
-        """
-        start_iperf_client(self.client_ip, self.iperf_port, 
-                           iperf_target_rate=self.iperf_target_rate, 
-                           iperf_udp=self.iperf_udp,
-                           reversed=False, duration=5, loop=True)
+    def connection_lost(self, exc):
 
-        self.client_start_time = time.time() # Negotiated traffic will start now
-        if (self.config['duration-sec'] != 0):
-            self.client_close_time = self.client_start_time + self.config['duration-sec']
+        logging.info('The connection is closed, stopping the event loop')
+        self.loop.stop()
 
-        if (self.request_handle):
-            self.request_handle.cancel()
-        self.request_handle = self.loop.call_soon(lambda: self.request_sla())
+        # Display some statistics before shutting down
+        print("--------------------")
+        print("Client Time: {:.2f} sec".format(time.time() - self.client_start_time))
+        if (self.stats['n_sla'] == 0):
+            success_rate = 0
+        else:
+            success_rate = self.stats['success_cnt'] / self.stats['n_sla'] * 100
+        print("Success Rate: {:.2f}% ({}/{})".format(success_rate, 
+                                                     self.stats['success_cnt'], 
+                                                     self.stats['n_sla']))
+        print("Total Payments: {}".format(self.stats['tot_payment']))
+        rounded_measurements = [[round(e,2) for e in m] for m in self.stats['measurements']]
+        print("Measurements {}:\n\t{}".format(self.stats['measurement_type'],
+                                              rounded_measurements))
+        print("--------------------")
+
+    def stop_client(self) -> None:
+
+        kill_process_using_port(self.iperf_port)
+        self.transport.close() # Calls self.connection_lost(None)
 
     def data_received(self, data):
 
@@ -692,32 +754,56 @@ class CellOrderClientProtocol(asyncio.Protocol):
         else:
             logging.error("Cell-Order Client received a message of unknown type: {}".format(cell_order_msg))
 
+    def budgets_match_service_type(self):
 
-    def connection_lost(self, exc):
-
-        logging.info('The connection is closed, stopping the event loop')
-        self.loop.stop()
-
-        # Display some statistics before shutting down
-        print("--------------------")
-        print("Client Time: {:.2f} sec".format(time.time() - self.client_start_time))
-        if (self.stats['n_sla'] == 0):
-            success_rate = 0
+        service_type = self.config['slice-service-type'][self.slice_id]
+        if (self.negotiated_budgets):
+            budgets = self.negotiated_budgets
         else:
-            success_rate = self.stats['success_cnt'] / self.stats['n_sla'] * 100
-        print("Success Rate: {:.2f}% ({}/{})".format(success_rate, 
-                                                     self.stats['success_cnt'], 
-                                                     self.stats['n_sla']))
-        print("Total Payments: {}".format(self.stats['tot_payment']))
-        rounded_measurements = [[round(e,2) for e in m] for m in self.stats['measurements']]
-        print("Measurements {}:\n\t{}".format(self.stats['measurement_type'],
-                                              rounded_measurements))
-        print("--------------------")
+            budgets = {
+                constants.DL_LAT_KEYWORD: self.config['slice-delay-budget-msec'][self.slice_id], 
+                constants.DL_THP_KEYWORD: self.config['slice-tx-rate-budget-Mbps'][self.slice_id]
+            }
 
-    def stop_client(self) -> None:
+        if (service_type == 'latency'):
+            # Any given budget works
+            return True
+        elif (service_type == 'best_effort' and budgets != BUDGET_WILDCARD):
+            logging.info("Best effort service can not specify requested budget! " + \
+                         "Please check your configuration for budgets to request. " + \
+                         "(Expected: {}, Configured {})".format(BUDGET_WILDCARD, 
+                                                                budgets))
+            return False
+        elif (service_type == 'throughput' \
+              and budgets[constants.DL_LAT_KEYWORD] != LAT_BUDGET_WILDCARD):
+            logging.info("Throughput service can not specify requested latency! " + \
+                         "Please check your configuration for budgets to request. " + \
+                         "(Expected: {}, Configured {})".format(LAT_BUDGET_WILDCARD, 
+                                                                budgets[constants.DL_LAT_KEYWORD]))
+            return False
 
-        kill_process_using_port(self.iperf_port)
-        self.transport.close()
+        return True
+
+    def wait_until_iperf_established(self):
+        """
+        Run in loop until UE is actually connected. Not negotiated with cell-order
+        """
+        if (not self.budgets_match_service_type()):
+            self.stop_client()
+            return
+
+        start_iperf_client(self.client_ip, self.iperf_port, 
+                           iperf_target_rate=self.iperf_target_rate, 
+                           iperf_udp=self.iperf_udp,
+                           reversed=False, duration=5, loop=True)
+
+        self.client_start_time = time.time() # Negotiated traffic will start now
+        if (self.config['duration-sec'] != 0):
+            self.client_close_time = self.client_start_time + self.config['duration-sec']
+
+        if (self.request_handle):
+            self.request_handle.cancel()
+        self.request_handle = self.loop.call_soon(lambda: self.request_sla())
 
     def request_sla(self):
 
