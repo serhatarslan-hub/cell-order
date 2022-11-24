@@ -41,7 +41,7 @@ def parse_cell_order_config_file(filename: str) -> dict:
                      'slice-service-type']
     float_var_keys = ['duration-sec', 'sla-period-sec', 'sla-grace-period-sec',
                       'reallocation-period-sec', 'outlier-percentile', 
-                      'max-rtx', 'max-sla-price']
+                      'max-rtx', 'max-sla-price', 'reallocation-step-coeff']
 
     for param_key, param_val in config.items():
         # convert to right types
@@ -72,7 +72,7 @@ class CellOrderServerProtocol(asyncio.Protocol):
         self.negotiations = {}
         self.reallocation_handle = None
 
-        self.lat_budget_offset_ms = 30 # TODO: Dynamically determine this
+        self.lat_budget_offset_ms = 25 # TODO: Dynamically determine this
 
     def connection_made(self, transport):
 
@@ -98,8 +98,12 @@ class CellOrderServerProtocol(asyncio.Protocol):
 
     def data_received(self, data):
 
-        msg = data.decode().strip()
-        logging.info("Received Message:{}".format(msg))
+        messages = data.decode().strip()
+        for msg in messages.split('\n'):
+            logging.info("Received Message:{}".format(msg))
+            self.loop.call_soon(lambda: self.msg_received(msg))
+
+    def msg_received(self, msg: str) -> None:
 
         cell_order_msg = DEFAULT_CELL_ORDER_FIELDS.copy()
         try:
@@ -195,59 +199,76 @@ class CellOrderServerProtocol(asyncio.Protocol):
         else:
             self.send_cancel(uid, nid, price=expected_payment)
 
-    def get_avg_stats(self, uid: int, nid: int, sla_keyword: str) -> float:
+    def get_avg_stats(self, uid: int, nid: int, sla_keywords: list) -> list:
         stats = self.clients[uid]['stats']
 
         if (not stats):
             logging.error("Average stats calculated without any measurements!")
-            return self.negotiations[nid]['budgets'][sla_keyword][1]
+            return [self.negotiations[nid]['budgets'][sla_keyword][1] for sla_keyword in sla_keywords]
 
         now = time.time()
         time_from_prev_sla = now \
                              - self.negotiations[nid]['sla_period'] \
-                             - self.config['sla-grace-period-sec']
-        sla_stats = []
+                             - self.config['sla-grace-period-sec']             
+        sla_stats = [[] for _ in range(len(sla_keywords))]
         for ts_sec, metrics in stats.items():
             if (ts_sec < time_from_prev_sla):
                 continue
-            sla_stats.append(metrics[sla_keyword])
+            for i in range(len(sla_keywords)):
+                sla_stats[i].append(metrics[sla_keywords[i]])
 
-        if (not sla_stats):
+        if (not sla_stats[0]):
             logging.error("Average stats calculated without any measurements!")
-            return self.negotiations[nid]['budgets'][sla_keyword][1]
+            return [self.negotiations[nid]['budgets'][sla_keyword][1] for sla_keyword in sla_keywords]
 
-        sla_stats = np.array(sla_stats)
+        sla_stats = [np.array(keyword_stats) for keyword_stats in sla_stats]
         outlier_percentile = self.config['outlier-percentile']
-        outlier_filter = np.logical_and(sla_stats <= np.percentile(sla_stats, 100 - outlier_percentile),
-                                        sla_stats >= np.percentile(sla_stats, outlier_percentile))
-        return np.mean(sla_stats[outlier_filter])
+        retval = []
+        for keyword_stats in sla_stats:
+            outlier_filter = \
+                np.logical_and(keyword_stats <= np.percentile(keyword_stats, 
+                                                              100 - outlier_percentile),
+                               keyword_stats >= np.percentile(keyword_stats, 
+                                                              outlier_percentile))
+            retval.append(np.mean(keyword_stats[outlier_filter]))
+        return retval
 
-    def evaluate_dispute(self, uid: int, nid: int):
+    def evaluate_dispute(self, uid: int, nid: int, accepted_payment: float):
 
         service_type = self.negotiations[nid]['service_type']
-        budget_offset = 0
         if (service_type == 'latency'):
-            sla_keyword = constants.DL_LAT_KEYWORD
-            budget_offset = self.lat_budget_offset_ms
+            sla_keywords = [constants.DL_LAT_KEYWORD, constants.DL_THP_KEYWORD]
 
         elif (service_type == 'throughput'):
-            sla_keyword = constants.DL_THP_KEYWORD
+            sla_keywords = [constants.DL_THP_KEYWORD]
 
         else:
             # Either best effort, or un-recognized service type
             return False, 0 # Can not be disputed, no refunds given
 
-        avg_stat = self.get_avg_stats(uid, nid, sla_keyword)
-        budget_lo = self.negotiations[nid]['budgets'][sla_keyword][0] - budget_offset
-        budget_hi = self.negotiations[nid]['budgets'][sla_keyword][1] - budget_offset
-        if (avg_stat >= budget_lo and avg_stat <= budget_hi):
-            # TODO: Are we not okay with latency lower than the lower bound?
-            return False, 0 # Unlawful dispute, no refunds given
+        avg_stats = self.get_avg_stats(uid, nid, sla_keywords) 
+        logging.info("Average {}: {}".format(sla_keywords, avg_stats))
 
-        # TODO: Calculate refund
-        refund = 0
+        for i in range(len(sla_keywords)):
+            lower_bound = self.negotiations[nid]['budgets'][sla_keywords[i]][0]
+            upper_bound = self.negotiations[nid]['budgets'][sla_keywords[i]][1]
+            if (sla_keywords[i] == constants.DL_LAT_KEYWORD):
+                # TODO: Are we not okay with latency lower than the lower bound?
+                lower_bound -= self.lat_budget_offset_ms
+                upper_bound -= self.lat_budget_offset_ms
+            elif (sla_keywords[i] == constants.DL_THP_KEYWORD):
+                upper_bound = np.Inf
 
-        return True, refund
+            if (avg_stats[i] < lower_bound or avg_stats[i] > upper_bound):
+                # Rightful dispute
+                # TODO: Also calculate partial refund
+                partial_refund = self.negotiations[nid]['price']
+                is_disputable = \
+                    accepted_payment >= self.negotiations[nid]['price'] - partial_refund
+
+                return is_disputable, self.negotiations[nid]['price'] - accepted_payment
+
+        return False, 0 # Unlawful dispute, no refunds given
 
     def handle_dispute(self, uid: int, dispute_msg: dict) -> None:
         
@@ -265,13 +286,12 @@ class CellOrderServerProtocol(asyncio.Protocol):
             logging.error("Cell-Order Server received a dispute for a different negotiation: {}".format(negotiator))
             return
 
-        is_disputable, refund = self.evaluate_dispute(uid, nid)
+        is_disputable, refund = self.evaluate_dispute(uid, nid, dispute_msg['price'])
         if (is_disputable):
-            # Tell the client to continue without paying for the next SLA period
-            self.send_supply(uid, dispute_msg, nid, price=0)
+            # Tell the client to continue with the price they accept to pay for the next SLA period
+            self.send_supply(uid, dispute_msg, nid, price=dispute_msg['price'])
         else:
             self.send_cancel(uid, nid, price=refund)
-
 
     def send_response(self, uid: int, request_msg: dict, 
                             nid: int, price: float) -> None:
@@ -285,7 +305,8 @@ class CellOrderServerProtocol(asyncio.Protocol):
         response_msg['sla_period'] = self.config['sla-period-sec']
         response_msg['budgets'] = request_msg['budgets']
         response_msg['price'] = price
-        self.clients[uid]['transport'].write(json.dumps(response_msg).encode())
+        response_str = json.dumps(response_msg) + '\n'
+        self.clients[uid]['transport'].write(response_str.encode())
         logging.info("Sent Message:{}".format(response_msg))
 
     def send_supply(self, uid: int, msg: dict, 
@@ -325,22 +346,27 @@ class CellOrderServerProtocol(asyncio.Protocol):
         supply_msg['sla_period'] = self.negotiations[nid]['sla_period']
         supply_msg['budgets'] = self.negotiations[nid]['budgets']
         supply_msg['price'] = price
-        self.clients[uid]['transport'].write(json.dumps(supply_msg).encode())
+        supply_str = json.dumps(supply_msg) + '\n'
+        self.clients[uid]['transport'].write(supply_str.encode())
         logging.info("Sent Message:{}".format(supply_msg))
 
     def send_cancel(self, uid: int, nid: int, price: float) -> None:
         
-        cancel_msg = DEFAULT_CELL_ORDER_FIELDS.copy()
-        cancel_msg['msg_type'] = 'cancel'
-        cancel_msg['client_ip'] = self.negotiations[nid]['client_ip']
-        cancel_msg['client_port'] = self.negotiations[nid]['client_port']
-        cancel_msg['nid'] = nid
-        cancel_msg['service_type'] = self.negotiations[nid]['service_type']
-        cancel_msg['sla_period'] = self.negotiations[nid]['sla_period']
-        cancel_msg['budgets'] = self.negotiations[nid]['budgets']
-        cancel_msg['price'] = price
-        self.clients[uid]['transport'].write(json.dumps(cancel_msg).encode())
-        logging.info("Sent Message:{}".format(cancel_msg))
+        if (not self.clients[uid]['transport'].is_closing()):
+            cancel_msg = DEFAULT_CELL_ORDER_FIELDS.copy()
+            cancel_msg['msg_type'] = 'cancel'
+            cancel_msg['client_ip'] = self.negotiations[nid]['client_ip']
+            cancel_msg['client_port'] = self.negotiations[nid]['client_port']
+            cancel_msg['nid'] = nid
+            cancel_msg['service_type'] = self.negotiations[nid]['service_type']
+            cancel_msg['sla_period'] = self.negotiations[nid]['sla_period']
+            cancel_msg['budgets'] = self.negotiations[nid]['budgets']
+            cancel_msg['price'] = price
+            cancel_str = json.dumps(cancel_msg) + '\n'
+            self.clients[uid]['transport'].write(cancel_str.encode())
+            logging.info("Sent Message:{}".format(cancel_msg))
+        else:
+            logging.info("Removing client {}! Connection closed.".format(uid))
 
         try:
             self.negotiations.pop(nid)
@@ -358,7 +384,6 @@ class CellOrderServerProtocol(asyncio.Protocol):
         """
         Calculates the latency for each imsi at each timestep in msec
         """
-
         # {imsi->{ts->{metric_name->val}}}
         for imsi, ts_val in metrics_db.items():
             for ts, metrics in ts_val.items():
@@ -373,8 +398,8 @@ class CellOrderServerProtocol(asyncio.Protocol):
     def reallocate_resources(self):
 
         now = time.time()
-        for user in self.clients:
-            if (user['sla_end_time'] >= now + self.config['reallocation-period-sec']):
+        for _, client_state in self.clients.items():
+            if (client_state['sla_end_time'] >= now + self.config['reallocation-period-sec']):
                 self.reallocation_handle = self.loop.call_later(self.config['reallocation-period-sec'], 
                                                                 lambda: self.reallocate_resources())
                 break
@@ -417,7 +442,7 @@ class CellOrderServerProtocol(asyncio.Protocol):
                 slice_metrics[s_key]['new_num_rbgs'] = 1
 
             elif (self.clients[s_key]['sla_end_time'] < now or \
-                  not self.clients[s_key]['active_nid']):
+                  self.clients[s_key]['active_nid'] is None):
                 # The user has not negotiated for new a service yet
                 slice_metrics[s_key]['new_num_rbgs'] = 1
 
@@ -462,6 +487,7 @@ class CellOrderServerProtocol(asyncio.Protocol):
         curr_tx_rate_budget_hi = self.negotiations[nid]['budgets'][constants.DL_THP_KEYWORD][1]
         req_n_prbs = mcs_mapper.calculate_n_prbs(curr_tx_rate_budget_hi, 
                                                  round(slice_metrics[s_key][constants.DL_MCS_KEYWORD]))
+        step = int(float(req_n_prbs) * self.config['reallocation-step-coeff']) + 1
 
         curr_lo_delay_budget = self.negotiations[nid]['budgets'][constants.DL_LAT_KEYWORD][0] - self.lat_budget_offset_ms
         curr_hi_delay_budget = self.negotiations[nid]['budgets'][constants.DL_LAT_KEYWORD][1] - self.lat_budget_offset_ms
@@ -474,10 +500,11 @@ class CellOrderServerProtocol(asyncio.Protocol):
             # Allocate more resources to this slice
             double_n_prbs = mcs_mapper.calculate_n_prbs(2 * curr_tx_rate_budget_hi, 
                                                         round(slice_metrics[s_key][constants.DL_MCS_KEYWORD]))
-            slice_metrics[s_key]['new_num_rbgs'] = min(max(cur_num_rbgs, req_n_prbs) + 2, double_n_prbs)
+            slice_metrics[s_key]['new_num_rbgs'] = min(max(cur_num_rbgs, req_n_prbs) + step, double_n_prbs)
         elif slice_metrics[s_key][constants.DL_LAT_KEYWORD] < curr_lo_delay_budget:
             # De-allocate resources from this slice
-            slice_metrics[s_key]['new_num_rbgs'] = max(min(cur_num_rbgs, req_n_prbs) - 2, 1)
+            # slice_metrics[s_key]['new_num_rbgs'] = max(min(cur_num_rbgs, req_n_prbs) - step, 1)
+            slice_metrics[s_key]['new_num_rbgs'] = max(cur_num_rbgs - step, 1)
         else:
             # Try to maintain the current latency 
             slice_metrics[s_key]['new_num_rbgs'] = req_n_prbs + 1
@@ -488,6 +515,7 @@ class CellOrderServerProtocol(asyncio.Protocol):
         curr_tx_rate_budget_hi = self.negotiations[nid]['budgets'][constants.DL_THP_KEYWORD][1]
         req_n_prbs = mcs_mapper.calculate_n_prbs(curr_tx_rate_budget_hi, 
                                                     round(slice_metrics[s_key][constants.DL_MCS_KEYWORD]))
+        step = int(float(req_n_prbs) * self.config['reallocation-step-coeff']) + 1
 
         cur_num_rbgs = slice_metrics[s_key]['cur_slice_mask'].count('1')
 
@@ -496,13 +524,12 @@ class CellOrderServerProtocol(asyncio.Protocol):
             # Allocate more resources to this slice
             double_n_prbs = mcs_mapper.calculate_n_prbs(2 * curr_tx_rate_budget_hi, 
                                                         round(slice_metrics[s_key][constants.DL_MCS_KEYWORD]))
-            slice_metrics[s_key]['new_num_rbgs'] = min(max(cur_num_rbgs, req_n_prbs) + 1, double_n_prbs)
+            slice_metrics[s_key]['new_num_rbgs'] = min(max(cur_num_rbgs, req_n_prbs) + step, double_n_prbs)
         elif slice_metrics[s_key][constants.DL_THP_KEYWORD] > curr_tx_rate_budget_hi:
             # De-allocate resources from this slice
-            slice_metrics[s_key]['new_num_rbgs'] = max(min(cur_num_rbgs, req_n_prbs) - 1, 1)
+            slice_metrics[s_key]['new_num_rbgs'] = max(min(cur_num_rbgs, req_n_prbs) - step, 1)
         else:
-            # Try to maintain the current latency 
-            slice_metrics[s_key]['new_num_rbgs'] = req_n_prbs + 1
+            slice_metrics[s_key]['new_num_rbgs'] = cur_num_rbgs
 
     def readjust_rbgs_to_capacity(self, slice_metrics: dict, tot_num_rbg_rqstd: int) -> None:
 
@@ -512,7 +539,7 @@ class CellOrderServerProtocol(asyncio.Protocol):
         best_effort_users = []
         for s_key, s_val in slice_metrics.items():
             nid = self.clients[s_key]['active_nid']
-            if (not nid or self.negotiations[nid]['service_type'] =='best_effort'):
+            if (nid is None or self.negotiations[nid]['service_type'] =='best_effort'):
                 best_effort_users.append(s_key)
                 tot_num_rbg_rqstd -= slice_metrics[s_key]['new_num_rbgs']
                 slice_metrics[s_key]['new_num_rbgs'] = 1
@@ -571,6 +598,8 @@ class CellOrderClientProtocol(asyncio.Protocol):
             iperf_udp: whether to use UDP traffic for iperf3
         """
         self.loop = loop
+
+        # State required to run the client
         self.config = config
         self.client_ip = client_ip
         self.iperf_target_rate = iperf_target_rate
@@ -584,8 +613,6 @@ class CellOrderClientProtocol(asyncio.Protocol):
         self.slice_id = port_offset % constants.SLICE_NUM
         logging.info('slice_id:' + str(self.slice_id))
 
-        self.client_close_time = 0
-
         self.active_nid = None
         self.sla_period = 0
         self.negotiated_budgets = {}
@@ -594,6 +621,17 @@ class CellOrderClientProtocol(asyncio.Protocol):
         self.request_rtx_cnt = 0
         self.consume_handle = None
         self.consume_rtx_cnt = 0
+
+        # State to collect statistics about the client
+        self.client_start_time = time.time()
+        self.client_close_time = 0
+        self.stats = {
+            'n_sla': 0,
+            'success_cnt': 0,
+            'tot_payment': 0,
+            'measurement_type': '',
+            'measurements': []
+        }
 
     def connection_made(self, transport):
 
@@ -612,8 +650,9 @@ class CellOrderClientProtocol(asyncio.Protocol):
                            iperf_udp=self.iperf_udp,
                            reversed=False, duration=5, loop=True)
 
+        self.client_start_time = time.time() # Negotiated traffic will start now
         if (self.config['duration-sec'] != 0):
-            self.client_close_time = time.time() + self.config['duration-sec']
+            self.client_close_time = self.client_start_time + self.config['duration-sec']
 
         if (self.request_handle):
             self.request_handle.cancel()
@@ -621,8 +660,12 @@ class CellOrderClientProtocol(asyncio.Protocol):
 
     def data_received(self, data):
 
-        msg = data.decode().strip()
-        logging.info("Received Message:{}".format(msg))
+        messages = data.decode().strip()
+        for msg in messages.split('\n'):
+            logging.info("Received Message:{}".format(msg))
+            self.loop.call_soon(lambda: self.msg_received(msg))
+
+    def msg_received(self, msg: str) -> None:
 
         cell_order_msg = DEFAULT_CELL_ORDER_FIELDS.copy()
         try:
@@ -652,16 +695,36 @@ class CellOrderClientProtocol(asyncio.Protocol):
 
     def connection_lost(self, exc):
 
-        logging.info('The server closed the connection, stopping the event loop')
-        kill_process_using_port(self.iperf_port)
+        logging.info('The connection is closed, stopping the event loop')
         self.loop.stop()
+
+        # Display some statistics before shutting down
+        print("--------------------")
+        print("Client Time: {:.2f} sec".format(time.time() - self.client_start_time))
+        if (self.stats['n_sla'] == 0):
+            success_rate = 0
+        else:
+            success_rate = self.stats['success_cnt'] / self.stats['n_sla'] * 100
+        print("Success Rate: {:.2f}% ({}/{})".format(success_rate, 
+                                                     self.stats['success_cnt'], 
+                                                     self.stats['n_sla']))
+        print("Total Payments: {}".format(self.stats['tot_payment']))
+        rounded_measurements = [[round(e,2) for e in m] for m in self.stats['measurements']]
+        print("Measurements {}:\n\t{}".format(self.stats['measurement_type'],
+                                              rounded_measurements))
+        print("--------------------")
+
+    def stop_client(self) -> None:
+
+        kill_process_using_port(self.iperf_port)
+        self.transport.close()
 
     def request_sla(self):
 
         if (self.request_handle):
             self.request_handle.cancel()
 
-        if (self.active_nid):
+        if (self.active_nid is not None):
             # Already negotiated, no need for a new request
             self.request_handle = None
             return
@@ -671,8 +734,7 @@ class CellOrderClientProtocol(asyncio.Protocol):
             # Request retransmission timeout
             logging.info('Request retransmitted {} times.'.format(self.config['max-rtx']) + \
                          ' Stopping negotiations!')
-            kill_process_using_port(self.iperf_port)
-            self.loop.stop()
+            self.stop_client()
             return
         
         request_msg = DEFAULT_CELL_ORDER_FIELDS.copy()
@@ -687,7 +749,8 @@ class CellOrderClientProtocol(asyncio.Protocol):
             constants.DL_THP_KEYWORD: self.config['slice-tx-rate-budget-Mbps'][self.slice_id]
         }
         request_msg['price'] = 0
-        self.transport.write(json.dumps(request_msg).encode())
+        request_str = json.dumps(request_msg) + '\n'
+        self.transport.write(request_str.encode())
         logging.info("Sent Message:{}".format(request_msg))
 
         self.request_handle = self.loop.call_later(self.config['sla-grace-period-sec'], 
@@ -695,7 +758,7 @@ class CellOrderClientProtocol(asyncio.Protocol):
 
     def sla_as_requested(self, msg: dict) -> bool:
 
-        if (msg['service_type'] == -1):
+        if (msg['nid'] == -1):
             logging.info("The request has been denied by the server.")
             return False
 
@@ -725,7 +788,7 @@ class CellOrderClientProtocol(asyncio.Protocol):
 
         return True
 
-    def flush_state_and_restart(self):
+    def flush_state_and_restart(self, restart_delay: float) -> None:
 
         self.active_nid = None
         self.sla_period = 0
@@ -733,7 +796,7 @@ class CellOrderClientProtocol(asyncio.Protocol):
         self.sla_price = self.config['max-sla-price']
         if (self.request_handle):
             self.request_handle.cancel()
-        self.request_handle = self.loop.call_later(self.config['sla-period-sec'], 
+        self.request_handle = self.loop.call_later(restart_delay, 
                                                     lambda: self.request_sla())
         self.request_rtx_cnt = 0
         if (self.consume_handle):
@@ -742,14 +805,14 @@ class CellOrderClientProtocol(asyncio.Protocol):
         self.consume_rtx_cnt = 0
 
         logging.info("The state for client is flushed. " + \
-            "Will restart in {} sec.".format(self.config['sla-period-sec']))
+            "Will restart in {} sec.".format(restart_delay))
 
     def handle_response(self, response_msg: dict) -> None:
 
         assert response_msg['msg_type'] == 'response'
         
         if (not self.sla_as_requested(response_msg)):
-            self.flush_state_and_restart()
+            self.flush_state_and_restart(self.config['sla-period-sec'])
             return
 
         self.active_nid = response_msg['nid']
@@ -771,6 +834,7 @@ class CellOrderClientProtocol(asyncio.Protocol):
             logging.error("Cell-Order Client received a supply " + \
                           "for an unknown negotiation: {} ".format(supply_msg['nid']) + \
                           "(expected: {})".format(self.active_nid))
+            return
 
         if (supply_msg['start_time'] < time.time() - supply_msg['sla_period']):
             # This is an old supply message, ignore it
@@ -782,28 +846,34 @@ class CellOrderClientProtocol(asyncio.Protocol):
         self.consume_rtx_cnt = 0
         
         if (not self.sla_as_requested(supply_msg)):
-            self.flush_state_and_restart()
+            self.flush_state_and_restart(self.config['sla-period-sec'])
             return
 
-        # TODO: Collect refund if any
-        # refund = self.sla_price - supply_msg['price']
+        self.stats['tot_payment'] += supply_msg['price'] # Agreed upon payment
 
-        self.start_traffic_and_measurements()
+        self.loop.call_soon(lambda: self.start_traffic_and_measurements())
 
     def handle_cancel(self, cancel_msg: dict) -> None:
 
         assert cancel_msg['msg_type'] == 'cancel'
 
-        # TODO: Collect refund if any
-        # refund = cancel_msg['price']
-        
-        self.flush_state_and_restart()
+        if (cancel_msg['nid'] != self.active_nid):
+            logging.error("Cell-Order Client received a supply " + \
+                          "for an unknown negotiation: {} ".format(cancel_msg['nid']) + \
+                          "(expected: {})".format(self.active_nid))
+            return
 
-    def get_avg_stats(self, iperf_output: dict, sla_keyword: str) -> float:
+        refund = cancel_msg['price']
+        self.stats['tot_payment'] -= refund
+
+        restart_delay = self.config['sla-period-sec'] if refund == 0 else 0
+        self.flush_state_and_restart(restart_delay)
+
+    def get_avg_stats(self, iperf_output: dict, sla_keywords: list) -> list:
 
         iperf_start_time_ms = iperf_output['start']['timestamp']['timesecs'] * 1000
 
-        sla_stats = []
+        sla_stats = [[] for _ in range(len(sla_keywords))]
         for interval_data in iperf_output['intervals']:
             assert len(interval_data['streams']) == 1 
 
@@ -816,17 +886,25 @@ class CellOrderClientProtocol(asyncio.Protocol):
             ts_ms = int(stream_data['end'] * 1000) + iperf_start_time_ms
             logging.info('ts_ms:' + str(ts_ms) + ' stream:' + str(stream_data))
 
-            sla_stats.append(stream_data[sla_keyword])
+            print(sla_keywords)
+            for i in range(len(sla_keywords)):
+                sla_stats[i].append(stream_data[sla_keywords[i]])
 
-        if (not sla_stats):
+        if (not sla_stats[0]):
             logging.error("Clients stats calculated without any measurements!")
-            return self.negotiated_budgets[sla_keyword][1]
+            return [self.negotiated_budgets[sla_keyword][1] for sla_keyword in sla_keywords]
 
-        sla_stats = np.array(sla_stats)
+        sla_stats = [np.array(keyword_stats) for keyword_stats in sla_stats]
         outlier_percentile = self.config['outlier-percentile']
-        outlier_filter = np.logical_and(sla_stats <= np.percentile(sla_stats, 100 - outlier_percentile),
-                                        sla_stats >= np.percentile(sla_stats, outlier_percentile))
-        return np.mean(sla_stats[outlier_filter])
+        retval = []
+        for keyword_stats in sla_stats:
+            outlier_filter = \
+                np.logical_and(keyword_stats <= np.percentile(keyword_stats, 
+                                                              100 - outlier_percentile),
+                               keyword_stats >= np.percentile(keyword_stats, 
+                                                              outlier_percentile))
+            retval.append(np.mean(keyword_stats[outlier_filter]))
+        return retval
 
     def get_price_to_dispute(self, iperf_output_file: str) -> float:
         """
@@ -837,10 +915,10 @@ class CellOrderClientProtocol(asyncio.Protocol):
         """
         service_type = self.config['slice-service-type'][self.slice_id]
         if (service_type == 'latency'):
-            sla_keyword = constants.DL_LAT_KEYWORD
+            sla_keywords = [constants.DL_LAT_KEYWORD, constants.DL_THP_KEYWORD]
 
         elif (service_type == 'throughput'):
-            sla_keyword = constants.DL_THP_KEYWORD
+            sla_keywords = [constants.DL_THP_KEYWORD]
 
         else:
             # Either best effort, or un-recognized service type
@@ -849,18 +927,30 @@ class CellOrderClientProtocol(asyncio.Protocol):
         with open(iperf_output_file, 'r') as f:
             iperf_output = json.load(f)
             if (not iperf_output):
+                logging.info("Client couldn't reconcile measurements. Will not dispute.")
                 return 0
 
-        avg_stat = self.get_avg_stats(iperf_output, sla_keyword)
-        if (avg_stat >= self.negotiated_budgets[sla_keyword][0] and \
-            avg_stat <= self.negotiated_budgets[sla_keyword][1]):
-            # TODO: Are we not okay with latency lower than the lower bound?
-            return 0 # No need to dispute
+        avg_stats = self.get_avg_stats(iperf_output, sla_keywords)
+        logging.info("Average {}: {}".format(sla_keywords, avg_stats))
+        # Record stats
+        self.stats['measurement_type'] = sla_keywords
+        self.stats['measurements'].append(avg_stats)
 
-        # TODO: Calculate partial dispute
-        partial_dispute = self.sla_price
+        for i in range(len(sla_keywords)):
+            lower_bound = self.negotiated_budgets[sla_keywords[i]][0]
+            upper_bound = self.negotiated_budgets[sla_keywords[i]][1]
+            if (sla_keywords[i] == constants.DL_LAT_KEYWORD):
+                # TODO: Are we not okay with latency lower than the lower bound?
+                pass
+            elif (sla_keywords[i] == constants.DL_THP_KEYWORD):
+                upper_bound = np.Inf
 
-        return partial_dispute
+            if (avg_stats[i] < lower_bound or avg_stats[i] > upper_bound):
+                # TODO: Calculate partial dispute
+                partial_dispute = self.sla_price
+                return partial_dispute
+
+        return 0 # No need to dispute
 
     def start_traffic_and_measurements(self) -> None:
 
@@ -875,14 +965,18 @@ class CellOrderClientProtocol(asyncio.Protocol):
                            reversed=False, duration=self.sla_period, loop=False,
                            json_filename=iperf_output_file)
 
-        self.send_consume_or_dispute(disputed_price=self.get_price_to_dispute(iperf_output_file))
+        disputed_price=self.get_price_to_dispute(iperf_output_file)
+        # Record stats
+        self.stats['n_sla'] += 1
+        self.stats['success_cnt'] += (disputed_price == 0)
+
+        self.send_consume_or_dispute(disputed_price)
 
     def send_consume_or_dispute(self, disputed_price: float) -> None:
 
         now = time.time()
         if (self.client_close_time != 0 and now > self.client_close_time):
-            kill_process_using_port(self.iperf_port)
-            self.loop.stop()
+            self.stop_client()
             return
 
         self.consume_rtx_cnt += 1
@@ -890,11 +984,11 @@ class CellOrderClientProtocol(asyncio.Protocol):
             # Consume retransmission timeout
             logging.info('Consume retransmitted {} times.'.format(self.config['max-rtx']) + \
                          ' Restarting negotiations!')
-            self.flush_state_and_restart()
+            self.flush_state_and_restart(self.config['sla-period-sec'])
             return
         
         consume_msg = DEFAULT_CELL_ORDER_FIELDS.copy()
-        consume_msg['msg_type'] = 'cosnume' if disputed_price == 0 else 'dispute'
+        consume_msg['msg_type'] = 'consume' if disputed_price == 0 else 'dispute'
         consume_msg['client_ip'] = self.transport.get_extra_info('sockname')[0]
         consume_msg['client_port'] = self.transport.get_extra_info('sockname')[1]
         consume_msg['nid'] = self.active_nid
@@ -903,7 +997,8 @@ class CellOrderClientProtocol(asyncio.Protocol):
         consume_msg['sla_period'] = self.sla_period
         consume_msg['budgets'] = self.negotiated_budgets
         consume_msg['price'] = self.sla_price - disputed_price
-        self.transport.write(json.dumps(consume_msg).encode())
+        consume_str = json.dumps(consume_msg) + '\n'
+        self.transport.write(consume_str.encode())
         logging.info("Sent Message:{}".format(consume_msg))
 
         if (self.consume_handle):
