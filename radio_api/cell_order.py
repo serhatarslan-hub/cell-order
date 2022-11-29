@@ -1,5 +1,6 @@
 import ast
 import os
+import subprocess
 import asyncio
 import logging
 import time
@@ -540,7 +541,7 @@ class CellOrderServerProtocol(asyncio.Protocol):
         curr_tx_rate_budget_hi = self.negotiations[nid]['budgets'][constants.DL_THP_KEYWORD][1]
         req_n_prbs = mcs_mapper.calculate_n_prbs(curr_tx_rate_budget_hi, 
                                                  round(slice_metrics[s_key][constants.DL_MCS_KEYWORD]))
-        step = int(float(req_n_prbs) * self.config['reallocation-step-coeff']) + 1
+        step = 1 + int(float(req_n_prbs) * self.config['reallocation-step-coeff'])
 
         curr_lo_delay_budget = self.negotiations[nid]['budgets'][constants.DL_LAT_KEYWORD][0] - self.lat_budget_offset_ms
         curr_hi_delay_budget = self.negotiations[nid]['budgets'][constants.DL_LAT_KEYWORD][1] - self.lat_budget_offset_ms
@@ -568,7 +569,7 @@ class CellOrderServerProtocol(asyncio.Protocol):
         curr_tx_rate_budget_hi = self.negotiations[nid]['budgets'][constants.DL_THP_KEYWORD][1]
         req_n_prbs = mcs_mapper.calculate_n_prbs(curr_tx_rate_budget_hi, 
                                                     round(slice_metrics[s_key][constants.DL_MCS_KEYWORD]))
-        step = int(float(req_n_prbs) * self.config['reallocation-step-coeff']) + 1
+        step = 1 + int(float(req_n_prbs) * self.config['reallocation-step-coeff'])
 
         cur_num_rbgs = slice_metrics[s_key]['cur_slice_mask'].count('1')
 
@@ -580,7 +581,7 @@ class CellOrderServerProtocol(asyncio.Protocol):
             slice_metrics[s_key]['new_num_rbgs'] = min(max(cur_num_rbgs, req_n_prbs) + step, double_n_prbs)
         elif slice_metrics[s_key][constants.DL_THP_KEYWORD] > curr_tx_rate_budget_hi:
             # De-allocate resources from this slice
-            slice_metrics[s_key]['new_num_rbgs'] = max(min(cur_num_rbgs, req_n_prbs) - step, 1)
+            slice_metrics[s_key]['new_num_rbgs'] = max(cur_num_rbgs - step, 1)
         else:
             slice_metrics[s_key]['new_num_rbgs'] = cur_num_rbgs
 
@@ -641,12 +642,13 @@ class CellOrderServerProtocol(asyncio.Protocol):
 
 class CellOrderClientProtocol(asyncio.Protocol):
     
-    def __init__(self, loop, config, client_ip, iperf_target_rate, iperf_udp):
+    def __init__(self, loop, config, client_ip, dst_ip, iperf_target_rate, iperf_udp):
         """
         Args:
             loop: the associated event loop registered to the OS
             config: the configuration to run the server with
             client_ip: the IP address for the UE that is running this client
+            dst_ip: the IP address for the remote server that traffic will come from
             iperf_target_rate: target bitrate in bps for iperf [KMG] (O for unlimited)
             iperf_udp: whether to use UDP traffic for iperf3
         """
@@ -655,6 +657,7 @@ class CellOrderClientProtocol(asyncio.Protocol):
         # State required to run the client
         self.config = config
         self.client_ip = client_ip
+        self.dst_ip = dst_ip
         self.iperf_target_rate = iperf_target_rate
         self.iperf_udp = iperf_udp
 
@@ -796,6 +799,21 @@ class CellOrderClientProtocol(asyncio.Protocol):
                            iperf_target_rate=self.iperf_target_rate, 
                            iperf_udp=self.iperf_udp,
                            reversed=False, duration=5, loop=True)
+        # logging.info("Waiting for the connection to be established ...")
+        # function_call = "start_iperf_client("
+        # function_call += "server_ip='{}', ".format(self.client_ip)
+        # function_call += "port={}, ".format(self.iperf_port)
+        # function_call += "iperf_target_rate='{}', ".format(self.iperf_target_rate)
+        # function_call += "iperf_udp={}, ".format(self.iperf_udp)
+        # function_call += "reversed=False, duration=5, loop=True)"
+        # program = "from support_functions import start_iperf_client; {}".format(function_call)
+        # cmd = 'cd /root/radio_api; python3 -c "{}"'.format(program)
+        # ssh_cmd = ['ssh', self.dst_ip, cmd]
+        # error_output  = subprocess.Popen(ssh_cmd, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE).stderr.read()
+        # if (error_output):
+        #     logging.error(error_output)
+        # else:
+        #     logging.info("... Client ready to negotiate!")
 
         self.client_start_time = time.time() # Negotiated traffic will start now
         if (self.config['duration-sec'] != 0):
@@ -992,7 +1010,8 @@ class CellOrderClientProtocol(asyncio.Protocol):
             retval.append(np.mean(keyword_stats[outlier_filter]))
         return retval
 
-    def get_price_to_dispute(self, iperf_output_file: str) -> float:
+    def get_price_to_dispute(self, iperf_output_file: str='', 
+                                   iperf_output_dict: dict=None) -> float:
         """
         Evaluate the service received and compare against the negotiated SLA.
         Return 0 if the service is satisfactory.
@@ -1010,11 +1029,17 @@ class CellOrderClientProtocol(asyncio.Protocol):
             # Either best effort, or un-recognized service type
             return 0 # Can not be disputed, no refunds given
         
-        with open(iperf_output_file, 'r') as f:
-            iperf_output = json.load(f)
-            if (not iperf_output):
-                logging.info("Client couldn't reconcile measurements. Will not dispute.")
-                return 0
+        if (iperf_output_file != ''):
+            with open(iperf_output_file, 'r') as f:
+                iperf_output = json.load(f)
+                if (not iperf_output):
+                    logging.info("Client couldn't reconcile measurements. Will not dispute.")
+                    return 0
+        elif (iperf_output_dict):
+            iperf_output = iperf_output_dict
+        else:
+            logging.error("get_price_to_dispute() was called without any arguments. Can not dispute!")
+            return 0
 
         avg_stats = self.get_avg_stats(iperf_output, sla_keywords)
         logging.info("Average {}: {}".format(sla_keywords, avg_stats))
@@ -1052,6 +1077,27 @@ class CellOrderClientProtocol(asyncio.Protocol):
                            json_filename=iperf_output_file)
 
         disputed_price=self.get_price_to_dispute(iperf_output_file)
+
+        # logging.info("Starting iperf traffic from the remote host ...")
+        # function_call = "start_iperf_client("
+        # function_call += "server_ip='{}', ".format(self.client_ip)
+        # function_call += "port={}, ".format(self.iperf_port)
+        # function_call += "iperf_target_rate='{}', ".format(self.iperf_target_rate)
+        # function_call += "iperf_udp={}, ".format(self.iperf_udp)
+        # function_call += "duration={}, ".format(self.sla_period)
+        # function_call += "reversed=False, loop=False, json=True)"
+        # program = "from support_functions import start_iperf_client; {}".format(function_call)
+        # cmd = 'cd /root/radio_api; python3 -c "{}"'.format(program)
+        # ssh_cmd = ['ssh', self.dst_ip, cmd]
+        # ssh  = subprocess.Popen(ssh_cmd, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        # error_output = ssh.stderr.read()
+        # iperf_output_dict = json.loads(ssh.stdout.read())
+        # if (error_output):
+        #     logging.error(error_output)
+        #     disputed_price = 0
+        # else:
+        #     disputed_price = self.get_price_to_dispute(iperf_output_dict=iperf_output_dict)
+
         # Record stats
         self.stats['n_sla'] += 1
         self.stats['success_cnt'] += (disputed_price == 0)

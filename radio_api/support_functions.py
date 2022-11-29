@@ -29,11 +29,11 @@ def run_tmux_command(cmd: str, session_name: str) -> None:
 def start_iperf_client(server_ip: str, port: int, tmux_session_name: str='',  
                        iperf_target_rate: str='0', iperf_udp: bool=False, 
                        reversed: bool=True, duration: int=600, loop: bool=True,
-                       json_filename: str='') -> None:
+                       json: bool=False, json_filename: str='') -> None:
     
     # In order to be able to measure RTTs precisely, iperf needs to be 
     # configured to measure 1 packet worth data delivery
-    iperf_block_length = 1460
+    iperf_block_length = 1448
 
     iperf_cmd = 'iperf3 -c {} -p {} -t {} --length {}'.format(server_ip, port, duration, iperf_block_length)
 
@@ -48,6 +48,8 @@ def start_iperf_client(server_ip: str, port: int, tmux_session_name: str='',
 
     if (json_filename != ''):
         iperf_cmd += ' --json --logfile ' + json_filename
+    elif (json):
+        iperf_cmd += ' --json'
 
     if (loop):
         # wrap command in while loop to repeat it if it fails to start

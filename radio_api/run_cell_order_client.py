@@ -54,6 +54,7 @@ if __name__ == '__main__':
     cell_order_client = cell_order.CellOrderClientProtocol(loop, 
                                                            cell_order_config,
                                                            args.client_ip,
+                                                           args.server_ip,
                                                            args.iperf_target_rate,
                                                            args.iperf_udp)
  
