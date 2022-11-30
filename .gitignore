@@ -65,3 +65,5 @@ radio_code/scope_config/metrics/csv/
 *.pyo
 .ipynb_checkpoints
 */.ipynb_checkpoints/*
+
+/data/zoom*
