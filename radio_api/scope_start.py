@@ -507,19 +507,21 @@ def run_scope(config: dict, scope_config: dict):
         if config['cell-order']:
             # Create a tmux window but don't start running cell-order until UEs are connected
             cell_order_cmd = 'python3 run_cell_order_server.py --config-file cell_order.conf'
+            cell_order_ue_cmd += ' --server-ip {}'.format(srslte_bs_ip)
             run_tmux_command(cell_order_cmd, tmux_session_name)
 
-            time.sleep(1) # Give OS time to start the cell-order server first
-            for ue_ip in sorted(srs_col_ip_mapping.values()):
-                cell_order_ue_cmd = 'python3 run_cell_order_client.py --config-file cell_order.conf'
-                # We will run the client on the same Colosseum node with the server
-                # on behalf of the UE because of how Iperf measurements work
-                cell_order_ue_cmd += ' --server-ip 127.0.0.1'
-                cell_order_ue_cmd += ' --client-ip {}'.format(ue_ip)
-                cell_order_ue_cmd += ' --iperf-target-rate {}'.format(config['iperf-target-rate'])
-                if (config['iperf-udp']):
-                    cell_order_ue_cmd += ' --iperf-udp'
-                run_tmux_command(cell_order_ue_cmd, tmux_session_name)
+            # TODO: Delete the commented-out code below
+            # time.sleep(1) # Give OS time to start the cell-order server first
+            # for ue_ip in sorted(srs_col_ip_mapping.values()):
+            #     cell_order_ue_cmd = 'python3 run_cell_order_client.py --config-file cell_order.conf'
+            #     # We will run the client on the same Colosseum node with the server
+            #     # on behalf of the UE because of how Iperf measurements work
+            #     cell_order_ue_cmd += ' --server-ip 127.0.0.1'
+            #     cell_order_ue_cmd += ' --client-ip {}'.format(ue_ip)
+            #     cell_order_ue_cmd += ' --iperf-target-rate {}'.format(config['iperf-target-rate'])
+            #     if (config['iperf-udp']):
+            #         cell_order_ue_cmd += ' --iperf-udp'
+            #     run_tmux_command(cell_order_ue_cmd, tmux_session_name)
 
         elif config['iperf']:
             for ue_ip in sorted(srs_col_ip_mapping.values()):
@@ -602,16 +604,14 @@ def run_scope(config: dict, scope_config: dict):
             start_iperf_server(port, tmux_session_name=tmux_session_name, 
                                run_as_deamon=False)
 
-        # if config['cell-order']:
-        #     cell_order_ue_cmd = 'python3 run_cell_order_client.py --config-file cell_order.conf'
-        #     # We will run the client on the same Colosseum node with the server
-        #     # on behalf of the UE because of how Iperf measurements work
-        #     cell_order_ue_cmd += ' --server-ip {}'.format(srslte_bs_ip)
-        #     cell_order_ue_cmd += ' --client-ip {}'.format(my_srslte_ip)
-        #     cell_order_ue_cmd += ' --iperf-target-rate {}'.format(config['iperf-target-rate'])
-        #     if (config['iperf-udp']):
-        #         cell_order_ue_cmd += ' --iperf-udp'
-        #     run_tmux_command(cell_order_ue_cmd, tmux_session_name)
+        if config['cell-order']:
+            cell_order_ue_cmd = 'python3 run_cell_order_client.py --config-file cell_order.conf'
+            cell_order_ue_cmd += ' --server-ip {}'.format(srslte_bs_ip)
+            cell_order_ue_cmd += ' --client-ip {}'.format(my_srslte_ip)
+            cell_order_ue_cmd += ' --iperf-target-rate {}'.format(config['iperf-target-rate'])
+            if (config['iperf-udp']):
+                cell_order_ue_cmd += ' --iperf-udp'
+            run_tmux_command(cell_order_ue_cmd, tmux_session_name)
 
 
 if __name__ == '__main__':

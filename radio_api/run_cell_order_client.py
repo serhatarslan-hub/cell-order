@@ -60,7 +60,7 @@ if __name__ == '__main__':
  
     coro = loop.create_connection(lambda: cell_order_client, 
                                   args.server_ip, constants.DEFAULT_CELL_ORDER_PORT, 
-                                  local_addr = ('127.0.0.1', client_port))
+                                  local_addr = (args.client_ip, client_port))
     loop.run_until_complete(coro)    
 
     try:

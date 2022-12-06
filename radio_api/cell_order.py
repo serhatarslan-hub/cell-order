@@ -150,6 +150,8 @@ class CellOrderServerProtocol(asyncio.Protocol):
         slice_users = get_slice_users(metrics_db)
         # Create slice metrics to sum metrics over slice
         slice_metrics = dict()
+        for key, val in slice_users.items():
+            slice_metrics[key] = {constants.NUM_SLICE_USERS_KEYWORD: len(val)}
         metric_keywords_to_ave = [constants.DL_MCS_KEYWORD, constants.DL_CQI_KEYWORD]
         for metric_keyword in metric_keywords_to_ave:
             # get metric averages {imsi->metric_mean_val}
@@ -531,7 +533,8 @@ class CellOrderServerProtocol(asyncio.Protocol):
 
         # Record metrics to decide on feasibility and handle disputes in the future
         for s_key, s_val in slice_metrics.items():
-            self.clients[s_key]['stats'][now] = s_val
+            if (s_key in self.clients):
+                self.clients[s_key]['stats'][now] = s_val
 
         self.write_slice_masks(slice_metrics)
 
@@ -583,7 +586,7 @@ class CellOrderServerProtocol(asyncio.Protocol):
             # De-allocate resources from this slice
             slice_metrics[s_key]['new_num_rbgs'] = max(cur_num_rbgs - step, 1)
         else:
-            slice_metrics[s_key]['new_num_rbgs'] = cur_num_rbgs
+            slice_metrics[s_key]['new_num_rbgs'] = req_n_prbs
 
     def readjust_rbgs_to_capacity(self, slice_metrics: dict, tot_num_rbg_rqstd: int) -> None:
 
@@ -592,8 +595,14 @@ class CellOrderServerProtocol(asyncio.Protocol):
         # Isolate best effort slices
         best_effort_users = []
         for s_key, s_val in slice_metrics.items():
-            nid = self.clients[s_key]['active_nid']
-            if (nid is None or self.negotiations[nid]['service_type'] =='best_effort'):
+            nid = None
+            is_passive_user = True
+            if (s_key in self.clients):
+                nid = self.clients[s_key]['active_nid']
+                if (nid != None and self.negotiations[nid]['service_type'] !='best_effort'):
+                    is_passive_user = False
+            
+            if (is_passive_user):
                 best_effort_users.append(s_key)
                 tot_num_rbg_rqstd -= slice_metrics[s_key]['new_num_rbgs']
                 slice_metrics[s_key]['new_num_rbgs'] = 1
@@ -795,25 +804,26 @@ class CellOrderClientProtocol(asyncio.Protocol):
             self.stop_client()
             return
 
-        start_iperf_client(self.client_ip, self.iperf_port, 
-                           iperf_target_rate=self.iperf_target_rate, 
-                           iperf_udp=self.iperf_udp,
-                           reversed=False, duration=5, loop=True)
-        # logging.info("Waiting for the connection to be established ...")
-        # function_call = "start_iperf_client("
-        # function_call += "server_ip='{}', ".format(self.client_ip)
-        # function_call += "port={}, ".format(self.iperf_port)
-        # function_call += "iperf_target_rate='{}', ".format(self.iperf_target_rate)
-        # function_call += "iperf_udp={}, ".format(self.iperf_udp)
-        # function_call += "reversed=False, duration=5, loop=True)"
-        # program = "from support_functions import start_iperf_client; {}".format(function_call)
-        # cmd = 'cd /root/radio_api; python3 -c "{}"'.format(program)
-        # ssh_cmd = ['ssh', self.dst_ip, cmd]
-        # error_output  = subprocess.Popen(ssh_cmd, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE).stderr.read()
-        # if (error_output):
-        #     logging.error(error_output)
-        # else:
-        #     logging.info("... Client ready to negotiate!")
+        # TODO: Delete the commented-out code below
+        # start_iperf_client(self.client_ip, self.iperf_port, 
+        #                    iperf_target_rate=self.iperf_target_rate, 
+        #                    iperf_udp=self.iperf_udp,
+        #                    reversed=False, duration=5, loop=True)
+        logging.info("Waiting for the connection to be established ...")
+        function_call = "start_iperf_client("
+        function_call += "server_ip='{}', ".format(self.client_ip)
+        function_call += "port={}, ".format(self.iperf_port)
+        function_call += "iperf_target_rate='{}', ".format(self.iperf_target_rate)
+        function_call += "iperf_udp={}, ".format(self.iperf_udp)
+        function_call += "reversed=False, duration=5, loop=True)"
+        program = "from support_functions import start_iperf_client; {}".format(function_call)
+        cmd = 'cd /root/radio_api; python3 -c "{}"'.format(program)
+        ssh_cmd = ['ssh', self.dst_ip, cmd]
+        error_output  = subprocess.Popen(ssh_cmd, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE).stderr.read()
+        if (error_output):
+            logging.error(error_output.decode())
+        else:
+            logging.info("... Client ready to negotiate!")
 
         self.client_start_time = time.time() # Negotiated traffic will start now
         if (self.config['duration-sec'] != 0):
@@ -1065,38 +1075,37 @@ class CellOrderClientProtocol(asyncio.Protocol):
 
     def start_traffic_and_measurements(self) -> None:
 
-        iperf_output_file = '/logs/iperf-ue{}.json'.format(self.iperf_port)
-        if (os.path.isfile(iperf_output_file)):
-            # remove json file so that program reads file of current execution
-            os.system('rm ' + iperf_output_file)
+        # TODO: Delete the commented-out code below
+        # iperf_output_file = '/logs/iperf-ue{}.json'.format(self.iperf_port)
+        # if (os.path.isfile(iperf_output_file)):
+        #     # remove json file so that program reads file of current execution
+        #     os.system('rm ' + iperf_output_file)
+        # start_iperf_client(self.client_ip, self.iperf_port,
+        #                    iperf_target_rate=self.iperf_target_rate, 
+        #                    iperf_udp=self.iperf_udp,
+        #                    reversed=False, duration=self.sla_period, loop=False,
+        #                    json_filename=iperf_output_file)
+        # disputed_price=self.get_price_to_dispute(iperf_output_file)
 
-        start_iperf_client(self.client_ip, self.iperf_port,
-                           iperf_target_rate=self.iperf_target_rate, 
-                           iperf_udp=self.iperf_udp,
-                           reversed=False, duration=self.sla_period, loop=False,
-                           json_filename=iperf_output_file)
-
-        disputed_price=self.get_price_to_dispute(iperf_output_file)
-
-        # logging.info("Starting iperf traffic from the remote host ...")
-        # function_call = "start_iperf_client("
-        # function_call += "server_ip='{}', ".format(self.client_ip)
-        # function_call += "port={}, ".format(self.iperf_port)
-        # function_call += "iperf_target_rate='{}', ".format(self.iperf_target_rate)
-        # function_call += "iperf_udp={}, ".format(self.iperf_udp)
-        # function_call += "duration={}, ".format(self.sla_period)
-        # function_call += "reversed=False, loop=False, json=True)"
-        # program = "from support_functions import start_iperf_client; {}".format(function_call)
-        # cmd = 'cd /root/radio_api; python3 -c "{}"'.format(program)
-        # ssh_cmd = ['ssh', self.dst_ip, cmd]
-        # ssh  = subprocess.Popen(ssh_cmd, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        # error_output = ssh.stderr.read()
-        # iperf_output_dict = json.loads(ssh.stdout.read())
-        # if (error_output):
-        #     logging.error(error_output)
-        #     disputed_price = 0
-        # else:
-        #     disputed_price = self.get_price_to_dispute(iperf_output_dict=iperf_output_dict)
+        logging.info("Starting iperf traffic from the remote host ...")
+        function_call = "start_iperf_client("
+        function_call += "server_ip='{}', ".format(self.client_ip)
+        function_call += "port={}, ".format(self.iperf_port)
+        function_call += "iperf_target_rate='{}', ".format(self.iperf_target_rate)
+        function_call += "iperf_udp={}, ".format(self.iperf_udp)
+        function_call += "duration={}, ".format(self.sla_period)
+        function_call += "reversed=False, loop=False, json=True)"
+        program = "from support_functions import start_iperf_client; {}".format(function_call)
+        cmd = 'cd /root/radio_api; python3 -c "{}"'.format(program)
+        ssh_cmd = ['ssh', self.dst_ip, cmd]
+        ssh  = subprocess.Popen(ssh_cmd, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        error_output = ssh.stderr.read()
+        iperf_output_dict = json.loads(ssh.stdout.read().decode())
+        if (error_output):
+            logging.error(error_output.decode())
+            disputed_price = 0
+        else:
+            disputed_price = self.get_price_to_dispute(iperf_output_dict=iperf_output_dict)
 
         # Record stats
         self.stats['n_sla'] += 1

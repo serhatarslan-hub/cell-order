@@ -15,6 +15,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--config-file', type=str, required=True, 
                         help='Configuration file to parse.')
+    parser.add_argument('--server-ip', type=str, required=True, 
+                        help='IP address of the provider.')
     args = parser.parse_args()
 
     # configure logger and console output
@@ -42,7 +44,7 @@ if __name__ == '__main__':
                                                            config = cell_order_config)
 
     coro = loop.create_server(lambda: cell_order_server, 
-                              '127.0.0.1', constants.DEFAULT_CELL_ORDER_PORT)
+                              args.server_ip, constants.DEFAULT_CELL_ORDER_PORT)
     server = loop.run_until_complete(coro)
 
     # Serve requests until Ctrl+C is pressed
