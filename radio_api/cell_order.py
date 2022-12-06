@@ -506,7 +506,7 @@ class CellOrderServerProtocol(asyncio.Protocol):
                 nid = self.clients[s_key]['active_nid']
                 service_type = self.negotiations[nid]['service_type']
 
-                if (service_type == 'best_effort'):
+                if (service_type == 'best-effort'):
                     # Force readjust_rbgs_to_capacity() to run which 
                     # assigns RBGs that are left after assigning others
                     slice_metrics[s_key]['new_num_rbgs'] = constants.MAX_RBG
@@ -803,12 +803,7 @@ class CellOrderClientProtocol(asyncio.Protocol):
         if (not self.budgets_match_service_type()):
             self.stop_client()
             return
-
-        # TODO: Delete the commented-out code below
-        # start_iperf_client(self.client_ip, self.iperf_port, 
-        #                    iperf_target_rate=self.iperf_target_rate, 
-        #                    iperf_udp=self.iperf_udp,
-        #                    reversed=False, duration=5, loop=True)
+            
         logging.info("Waiting for the connection to be established ...")
         function_call = "start_iperf_client("
         function_call += "server_ip='{}', ".format(self.client_ip)
@@ -831,9 +826,9 @@ class CellOrderClientProtocol(asyncio.Protocol):
 
         if (self.request_handle):
             self.request_handle.cancel()
-        self.request_handle = self.loop.call_soon(lambda: self.request_sla())
+        self.request_handle = self.loop.call_soon(lambda: self.send_request())
 
-    def request_sla(self):
+    def send_request(self):
 
         if (self.request_handle):
             self.request_handle.cancel()
@@ -868,7 +863,7 @@ class CellOrderClientProtocol(asyncio.Protocol):
         logging.info("Sent Message:{}".format(request_msg))
 
         self.request_handle = self.loop.call_later(self.config['sla-grace-period-sec'], 
-                                                   lambda: self.request_sla())
+                                                   lambda: self.send_request())
 
     def sla_as_requested(self, msg: dict) -> bool:
 
@@ -911,7 +906,7 @@ class CellOrderClientProtocol(asyncio.Protocol):
         if (self.request_handle):
             self.request_handle.cancel()
         self.request_handle = self.loop.call_later(restart_delay, 
-                                                    lambda: self.request_sla())
+                                                    lambda: self.send_request())
         self.request_rtx_cnt = 0
         if (self.consume_handle):
             self.consume_handle.cancel()
@@ -1074,18 +1069,6 @@ class CellOrderClientProtocol(asyncio.Protocol):
         return 0 # No need to dispute
 
     def start_traffic_and_measurements(self) -> None:
-
-        # TODO: Delete the commented-out code below
-        # iperf_output_file = '/logs/iperf-ue{}.json'.format(self.iperf_port)
-        # if (os.path.isfile(iperf_output_file)):
-        #     # remove json file so that program reads file of current execution
-        #     os.system('rm ' + iperf_output_file)
-        # start_iperf_client(self.client_ip, self.iperf_port,
-        #                    iperf_target_rate=self.iperf_target_rate, 
-        #                    iperf_udp=self.iperf_udp,
-        #                    reversed=False, duration=self.sla_period, loop=False,
-        #                    json_filename=iperf_output_file)
-        # disputed_price=self.get_price_to_dispute(iperf_output_file)
 
         logging.info("Starting iperf traffic from the remote host ...")
         function_call = "start_iperf_client("
