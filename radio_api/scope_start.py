@@ -574,9 +574,9 @@ def run_scope(config: dict, scope_config: dict):
             logging.info('Packet capture via tcpdump disabled')
 
         if config['iperf']:
-            # sleep_time = 10
-            # logging.info('iPerf option detected, sleeping ' + str(sleep_time) + 's')
-            # time.sleep(sleep_time)
+            sleep_time = 10
+            logging.info('iPerf option detected, sleeping ' + str(sleep_time) + 's')
+            time.sleep(sleep_time)
             
             # derive port offset from my srsLTE IP
             port_offset = int(my_srslte_ip.split('.')[-1])
@@ -592,6 +592,10 @@ def run_scope(config: dict, scope_config: dict):
                                run_as_deamon=False)
 
         if config['cell-order']:
+            sleep_time = 10
+            logging.info('Cell-Order option detected, sleeping ' + str(sleep_time) + 's')
+            time.sleep(sleep_time)
+            
             cell_order_ue_cmd = 'python3 run_cell_order_client.py --config-file cell_order.conf'
             cell_order_ue_cmd += ' --server-ip {}'.format(srslte_bs_ip)
             cell_order_ue_cmd += ' --client-ip {}'.format(my_srslte_ip)
