@@ -818,7 +818,7 @@ class CellOrderClientProtocol(asyncio.Protocol):
         function_call += "reversed=False, duration=5, loop=True)"
         program = "from support_functions import start_iperf_client; {}".format(function_call)
         cmd = 'cd /root/radio_api; python3 -c "{}"'.format(program)
-        ssh_cmd = ['ssh', self.dst_ip, cmd]
+        ssh_cmd = ['ssh', '-o', 'StrictHostKeyChecking=no', self.dst_ip, cmd]
         error_output  = subprocess.Popen(ssh_cmd, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE).stderr.read()
         if (error_output):
             logging.error(error_output.decode())
@@ -1097,7 +1097,7 @@ class CellOrderClientProtocol(asyncio.Protocol):
         function_call += "reversed=False, loop=False, json=True)"
         program = "from support_functions import start_iperf_client; {}".format(function_call)
         cmd = 'cd /root/radio_api; python3 -c "{}"'.format(program)
-        ssh_cmd = ['ssh', self.dst_ip, cmd]
+        ssh_cmd = ['ssh', '-o', 'StrictHostKeyChecking=no', self.dst_ip, cmd]
         ssh  = subprocess.Popen(ssh_cmd, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         error_output = ssh.stderr.read()
         iperf_output_dict = json.loads(ssh.stdout.read().decode())
