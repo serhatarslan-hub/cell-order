@@ -77,7 +77,7 @@ class CellOrderServerProtocol(asyncio.Protocol):
         self.negotiations = {}
         self.reallocation_handle = None
 
-        self.lat_budget_offset_ms = 25 # TODO: Dynamically determine this
+        self.lat_budget_offset_ms = 28 # TODO: Dynamically determine this
 
     def connection_made(self, transport):
 
@@ -192,7 +192,7 @@ class CellOrderServerProtocol(asyncio.Protocol):
             n_available_rbg = constants.MAX_RBG - tot_reserved_rbg
             logging.info("Service is not feasible because the " + \
                          "physical resources are already booked. " + \
-                         "(Requested: {}, Available: {})".format(n_requested_rbg, n_available_rbg))
+                         "(Requested: {}, Available: {}, MCS: {})".format(n_requested_rbg, n_available_rbg, cur_mcs))
             return False
         else:
             return  True 
@@ -234,6 +234,7 @@ class CellOrderServerProtocol(asyncio.Protocol):
         nid = consume_msg['nid']
         if (nid not in self.negotiations.keys()):
             logging.error("Cell-Order Server cannot find the negotiation for consume msg: {}".format(consume_msg))
+            self.send_cancel(uid, nid, price = self.negotiations[nid]['price'])
             return
 
         negotiator = (self.negotiations[nid]['client_ip'],
@@ -332,7 +333,7 @@ class CellOrderServerProtocol(asyncio.Protocol):
 
         nid = dispute_msg['nid']
         if (nid not in self.negotiations.keys()):
-            logging.error("Cell-Order Server cannot find the negotiation for dispute msg: {}".format(dispute_msg))
+            logging.error("Cell-Order Server cannot find the negotiation for dispute msg!")
             return
 
         negotiator = (self.negotiations[nid]['client_ip'],
@@ -343,7 +344,7 @@ class CellOrderServerProtocol(asyncio.Protocol):
             return
 
         is_disputable, refund = self.evaluate_dispute(uid, nid, dispute_msg['price'])
-        if (is_disputable):
+        if (is_disputable and self.is_feasible(uid, self.negotiations[nid])):
             # Tell the client to continue with the price they accept to pay for the next SLA period
             self.send_supply(uid, dispute_msg, nid, price=dispute_msg['price'])
         else:
@@ -808,8 +809,6 @@ class CellOrderClientProtocol(asyncio.Protocol):
         function_call = "start_iperf_client("
         function_call += "server_ip='{}', ".format(self.client_ip)
         function_call += "port={}, ".format(self.iperf_port)
-        function_call += "iperf_target_rate='{}', ".format(self.iperf_target_rate)
-        function_call += "iperf_udp={}, ".format(self.iperf_udp)
         function_call += "reversed=False, duration=5, loop=True)"
         program = "from support_functions import start_iperf_client; {}".format(function_call)
         cmd = 'cd /root/radio_api; python3 -c "{}"'.format(program)
@@ -903,10 +902,6 @@ class CellOrderClientProtocol(asyncio.Protocol):
         self.sla_period = 0
         self.negotiated_budgets = {}
         self.sla_price = self.config['max-sla-price']
-        if (self.request_handle):
-            self.request_handle.cancel()
-        self.request_handle = self.loop.call_later(restart_delay, 
-                                                    lambda: self.send_request())
         self.request_rtx_cnt = 0
         if (self.consume_handle):
             self.consume_handle.cancel()
@@ -914,7 +909,28 @@ class CellOrderClientProtocol(asyncio.Protocol):
         self.consume_rtx_cnt = 0
 
         logging.info("The state for client is flushed. " + \
-            "Will restart in {} sec.".format(restart_delay))
+            "Will re-negotiate in {} sec.".format(restart_delay))
+        if (self.request_handle):
+            self.request_handle.cancel()
+        self.request_handle = self.loop.call_later(restart_delay, 
+                                                    lambda: self.send_request())
+
+        if (restart_delay != 0):
+            logging.info("Running best-effort traffic until re-negoatiating ...")
+            function_call = "start_iperf_client("
+            function_call += "server_ip='{}', ".format(self.client_ip)
+            function_call += "port={}, ".format(self.iperf_port)
+            function_call += "iperf_target_rate='{}', ".format(self.iperf_target_rate)
+            function_call += "iperf_udp={}, ".format(self.iperf_udp)
+            function_call += "reversed=False, duration={}, loop=True)".format(restart_delay)
+            program = "from support_functions import start_iperf_client; {}".format(function_call)
+            cmd = 'cd /root/radio_api; python3 -c "{}"'.format(program)
+            ssh_cmd = ['ssh', '-o', 'StrictHostKeyChecking=no', self.dst_ip, cmd]
+            error_output  = subprocess.Popen(ssh_cmd, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE).stderr.read()
+            if (error_output):
+                logging.error(error_output.decode())
+            else:
+                logging.info("... Client ready to re-negotiate!")
 
     def handle_response(self, response_msg: dict) -> None:
 
@@ -938,6 +954,10 @@ class CellOrderClientProtocol(asyncio.Protocol):
     def handle_supply(self, supply_msg: dict) -> None:
 
         assert supply_msg['msg_type'] == 'supply'
+
+        if (self.client_close_time != 0 and time.time() > self.client_close_time):
+            self.stop_client()
+            return
 
         if (supply_msg['nid'] != self.active_nid):
             logging.error("Cell-Order Client received a supply " + \
@@ -967,13 +987,17 @@ class CellOrderClientProtocol(asyncio.Protocol):
         assert cancel_msg['msg_type'] == 'cancel'
 
         if (cancel_msg['nid'] != self.active_nid):
-            logging.error("Cell-Order Client received a supply " + \
+            logging.error("Cell-Order Client received a cancel " + \
                           "for an unknown negotiation: {} ".format(cancel_msg['nid']) + \
                           "(expected: {})".format(self.active_nid))
             return
 
         refund = cancel_msg['price']
         self.stats['tot_payment'] -= refund
+
+        if (self.client_close_time != 0 and time.time() > self.client_close_time):
+            self.stop_client()
+            return
 
         restart_delay = self.config['sla-period-sec'] if refund == 0 else 0
         self.flush_state_and_restart(restart_delay)
@@ -1056,8 +1080,7 @@ class CellOrderClientProtocol(asyncio.Protocol):
             lower_bound = self.negotiated_budgets[sla_keywords[i]][0]
             upper_bound = self.negotiated_budgets[sla_keywords[i]][1]
             if (sla_keywords[i] == constants.DL_LAT_KEYWORD):
-                # TODO: Are we not okay with latency lower than the lower bound?
-                pass
+                lower_bound = 0 # okay for latency lower than the lower bound
             elif (sla_keywords[i] == constants.DL_THP_KEYWORD):
                 upper_bound = np.Inf
 
@@ -1099,7 +1122,8 @@ class CellOrderClientProtocol(asyncio.Protocol):
     def send_consume_or_dispute(self, disputed_price: float) -> None:
 
         now = time.time()
-        if (self.client_close_time != 0 and now > self.client_close_time):
+        if (self.client_close_time != 0 and now > self.client_close_time \
+            and disputed_price == 0):
             self.stop_client()
             return
 
