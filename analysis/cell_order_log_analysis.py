@@ -2,21 +2,37 @@ import argparse
 import numpy as np
 import re
 import ast
+from datetime import datetime
 
 CELL_ORDER_LOG_PATTERN = ".*ts_ms:(?P<ts>\d*) slice_metrics:(?P<metrics_dict>.*)"
 CELL_ORDER_CONF_PATTERN = ".*Cell-Order configuration: ((?P<conf_dict>{.*}))"
 CELL_ORDER_UE_LOG_PATTERN = ".*ts_ms:(?P<ts>\d*) stream:(?P<stream_dict>.*)"
 CELL_ORDER_UE_SLICE_PATTERN = ".*slice_id:(?P<slice_id>.*)"
+CELL_ORDER_MSG_PATTERN = "(?P<timestamp>.*) INFO.*Sent Message:(?P<msg_dict>{.*})"
+CELL_ORDER_UE_MSG_PATTERN = "(?P<timestamp>.*) INFO.*Received Message:(?P<msg_dict>{.*})"
 
 def read_cell_order_log(filename, ts_start=None):
     retval = {}
+    budgets = {}
     with open(filename,'r') as f:
         for line in f:
             if ('ts_ms' not in line):
                 if ('slice-delay-budget-msec' in line):
                     conf = re.match(CELL_ORDER_CONF_PATTERN, line)
                     conf_dict = ast.literal_eval(conf.group('conf_dict'))
-                    slice_delay_budget_msec = conf_dict['slice-delay-budget-msec']
+                    budgets['slice_delay_budget_msec'] = conf_dict['slice-delay-budget-msec']
+                elif ('Sent Message' in line):
+                    msg_log = re.match(CELL_ORDER_MSG_PATTERN, line)
+                    msg_dict = ast.literal_eval(msg_log.group('msg_dict'))
+                    if (msg_dict['msg_type'] == 'supply'):
+                        utc_time = datetime.strptime(msg_log.group('timestamp'), "%Y-%m-%d %H:%M:%S,%f")
+                        epoch_time = (utc_time - datetime(1970, 1, 1)).total_seconds()
+                        if ('supply_times' not in list(budgets)):
+                            budgets['supply_times'] = {}
+                        user_id = (msg_dict['client_ip'], msg_dict['client_port'])
+                        if (user_id not in list(budgets['supply_times'])):
+                            budgets['supply_times'][user_id] = []
+                        budgets['supply_times'][user_id].append(epoch_time)
                 continue
 
             log = re.match(CELL_ORDER_LOG_PATTERN, line)
@@ -54,7 +70,7 @@ def read_cell_order_log(filename, ts_start=None):
             retval[s_idx][metric_type] = np.array(metric_vals)
 
     print("Data for {} seconds has been extracted".format(max(retval[s_idx]['raw_ts_sec'])))
-    return retval, slice_delay_budget_msec, ts_start
+    return retval, budgets, ts_start
 
 def read_cell_order_ue_log(filename, ts_start=None):
     retval = {'raw_ts_sec':[],
@@ -63,7 +79,8 @@ def read_cell_order_ue_log(filename, ts_start=None):
               'raw_bytes':[],
               'raw_rtt_msec':[],
               'raw_rttvar_msec':[],
-              'raw_n_rtx':[]}
+              'raw_n_rtx':[],
+              'supply_times':[]}
 
     with open(filename,'r') as f:
         for line in f:
@@ -71,6 +88,13 @@ def read_cell_order_ue_log(filename, ts_start=None):
                 if ('slice_id' in line):
                     slice_id_log = re.match(CELL_ORDER_UE_SLICE_PATTERN, line)
                     slice_id = int(slice_id_log.group('slice_id'))
+                elif ('Received Message' in line):
+                    msg_log = re.match(CELL_ORDER_UE_MSG_PATTERN, line)
+                    msg_dict = ast.literal_eval(msg_log.group('msg_dict'))
+                    if (msg_dict['msg_type'] == 'supply'):
+                        utc_time = datetime.strptime(msg_log.group('timestamp'), "%Y-%m-%d %H:%M:%S,%f")
+                        epoch_time = (utc_time - datetime(1970, 1, 1)).total_seconds()
+                        retval['supply_times'].append(epoch_time)
                 continue
 
             log = re.match(CELL_ORDER_UE_LOG_PATTERN, line)

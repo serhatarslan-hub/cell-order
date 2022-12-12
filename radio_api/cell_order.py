@@ -910,8 +910,6 @@ class CellOrderClientProtocol(asyncio.Protocol):
 
         logging.info("The state for client is flushed. " + \
             "Will re-negotiate in {} sec.".format(restart_delay))
-        if (self.request_handle):
-            self.request_handle.cancel()
         self.request_handle = self.loop.call_later(restart_delay, 
                                                     lambda: self.send_request())
 
