@@ -21,6 +21,7 @@ def read_cell_order_log(filename, ts_start=None):
                     conf = re.match(CELL_ORDER_CONF_PATTERN, line)
                     conf_dict = ast.literal_eval(conf.group('conf_dict'))
                     budgets['slice_delay_budget_msec'] = conf_dict['slice-delay-budget-msec']
+                    budgets['slice_tx_rate_budget_mbps'] = conf_dict['slice-tx-rate-budget-Mbps']
                 elif ('Sent Message' in line):
                     msg_log = re.match(CELL_ORDER_MSG_PATTERN, line)
                     msg_dict = ast.literal_eval(msg_log.group('msg_dict'))
