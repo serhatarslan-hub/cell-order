@@ -935,7 +935,7 @@ class CellOrderClientProtocol(asyncio.Protocol):
         assert response_msg['msg_type'] == 'response'
         
         if (not self.sla_as_requested(response_msg)):
-            self.flush_state_and_restart(self.config['sla-period-sec'])
+            self.flush_state_and_restart(self.config['sla-grace-period-sec'])
             return
 
         self.active_nid = response_msg['nid']
@@ -973,7 +973,7 @@ class CellOrderClientProtocol(asyncio.Protocol):
         self.consume_rtx_cnt = 0
         
         if (not self.sla_as_requested(supply_msg)):
-            self.flush_state_and_restart(self.config['sla-period-sec'])
+            self.flush_state_and_restart(self.config['sla-grace-period-sec'])
             return
 
         self.stats['tot_payment'] += supply_msg['price'] # Agreed upon payment
@@ -997,7 +997,7 @@ class CellOrderClientProtocol(asyncio.Protocol):
             self.stop_client()
             return
 
-        restart_delay = self.config['sla-period-sec'] if refund == 0 else 0
+        restart_delay = self.config['sla-grace-period-sec'] if refund == 0 else 0
         self.flush_state_and_restart(restart_delay)
 
     def get_avg_stats(self, iperf_output: dict, sla_keywords: list) -> list:
@@ -1017,7 +1017,6 @@ class CellOrderClientProtocol(asyncio.Protocol):
             ts_ms = int(stream_data['end'] * 1000) + iperf_start_time_ms
             logging.info('ts_ms:' + str(ts_ms) + ' stream:' + str(stream_data))
 
-            print(sla_keywords)
             for i in range(len(sla_keywords)):
                 sla_stats[i].append(stream_data[sla_keywords[i]])
 
@@ -1130,7 +1129,7 @@ class CellOrderClientProtocol(asyncio.Protocol):
             # Consume retransmission timeout
             logging.info('Consume retransmitted {} times.'.format(self.config['max-rtx']) + \
                          ' Restarting negotiations!')
-            self.flush_state_and_restart(self.config['sla-period-sec'])
+            self.flush_state_and_restart(self.config['sla-grace-period-sec'])
             return
         
         consume_msg = DEFAULT_CELL_ORDER_FIELDS.copy()
