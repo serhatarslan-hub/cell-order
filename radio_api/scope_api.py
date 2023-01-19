@@ -338,7 +338,8 @@ def write_tenant_slicing_mask(config_params: dict, full_mask: bool=False, slice_
     out_file = path + filename
 
     if config_params['network_slicing_enabled']:
-        logging.info('Writing slicing masks')
+        # logging.info('Writing slicing masks')
+        pass
     else:
         logging.info('Network slicing disabled. Not writing slicing masks')
         return
@@ -364,7 +365,7 @@ def write_full_slice_mask(slice_idx: int, slice_mask: str, rows_to_write: int, o
 
     # write mask on file
     with open(filename, 'w') as f:
-        logging.info('Slicing mask tenant ' + str(slice_idx) + ': ' + slice_mask)
+        # logging.info('Slicing mask tenant ' + str(slice_idx) + ': ' + slice_mask)
         for r_idx in range(rows_to_write):
             f.write(slice_mask + '\n')
 
@@ -957,6 +958,42 @@ def set_power(ue_imsi: str, scaling_factor: int) -> None:
     path = 'config/ue_config_power_multiplier_slice_' + str(ue_slice) + '.txt'
     write_config_param_single(ue_rnti, scaling_factor, path)
 
+
+
+# average specified user metric
+def average_metric(metrics_dict: collections.OrderedDict(), metric_name: 'str') -> dict:
+
+    out_dict = dict()
+
+    # extract passed metric {imsi->ts->metric_name->metric_val}
+    metrics = get_metric_value(metrics_dict, metric_name)
+
+    for imsi_key, metrics_val in metrics.items():
+        tmp_list = list()
+
+        for _, val in metrics_val.items():
+            tmp_list.append(float(val[metric_name]))
+
+        mean = sum(tmp_list) / len(tmp_list)
+
+        out_dict[imsi_key] = mean
+
+    return out_dict
+
+
+# average metrics over slice
+# this function modifies the passed slice_metrics
+def avg_slice_metrics(slice_metrics: dict, slice_users: dict, metric_dict: dict, metric_name: str) -> None:
+
+    for s_key, s_val in slice_users.items():
+        tmp_metrics = list()
+        for imsi in s_val:
+            tmp_metrics.append(metric_dict[imsi])
+
+        mean = sum(tmp_metrics) / len(tmp_metrics)
+
+        # insert in passed dictionary
+        slice_metrics[s_key][metric_name] = mean
 
 # copy default/colosseum rr.conf and sib.conf
 def copy_rr_sib_drb_conf(generic_testbed: bool) -> None:

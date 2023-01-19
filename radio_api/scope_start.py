@@ -1,24 +1,16 @@
 import argparse
 import ast
-import collections
-import copy
-import csv
-import dill
 import distutils.util
 import json
 import logging
-import math
 import netifaces as ni
 import os.path
-import random
-import re
-import shutil
 import subprocess
 import time
 
 import constants
 from scope_api import *
-from support_functions import run_tmux_command
+from support_functions import run_tmux_command, start_iperf_client, start_iperf_server
 
 # get list of nodes in active reservation using colosseumcli rf radiomap
 # NOTE: scenarios must have started already
@@ -272,13 +264,13 @@ def print_configuration(config: dict) -> None:
 
 
 # get configuration parameters from file
-def get_config_params(config: dict) -> dict:
+def get_scope_config(config: dict) -> dict:
 
     max_tenants = 10
 
     logging.info('Getting configuration parameters...')
 
-    config_params = dict()
+    scope_config = dict()
 
     # convert config file parameters in the right format
     param_dict = {'colosseum-testbed': 'colosseum_testbed',
@@ -317,18 +309,18 @@ def get_config_params(config: dict) -> dict:
             else:
                 passed_value = config[param_key]
 
-            config_params[param_value] = passed_value
+            scope_config[param_value] = passed_value
             parameter_found = True
         except KeyError:
             # add parameter for running on Colosseum
             if param_key == 'colosseum-testbed':
-                config_params[param_value] = True
+                scope_config[param_value] = True
                 parameter_found = True
             elif param_key in ['slice-allocation', 'bs-config', 'ue-config']:
-                config_params[param_value] = dict()
+                scope_config[param_value] = dict()
                 parameter_found = True
             elif param_key == 'custom-ue-slice':
-                config_params[param_value] = False
+                scope_config[param_value] = False
                 parameter_found = True
             else:
                 parameter_found = False
@@ -336,11 +328,11 @@ def get_config_params(config: dict) -> dict:
         if parameter_found:
             # add number of spaces needed
             print_param = add_tabs(param_value, longest_word)
-            logging.info(param_key + ' ' + str(config_params[param_value]))
+            logging.info(param_key + ' ' + str(scope_config[param_value]))
         else:
             logging.warning('Parameter ' + param_key + ' not found. Using default value')
 
-    return config_params
+    return scope_config
 
 
 # add the right number of spaces for printing purposes
@@ -439,45 +431,8 @@ def is_node_bs(bs_ue_num: int, use_colosseumcli: bool) -> tuple:
     return is_bs, my_ip, my_node_id, nodes_ip, bs_ue_num
 
 
-# start iperf client in reverse mode
-def start_iperf_client(tmux_session_name: str, server_ip: str, client_ip: str) -> None:
-
-    default_port = 5201
-
-    # derive port offset from my srsLTE IP
-    port_offset = int(client_ip.split('.')[-1])
-    port = default_port + port_offset
-
-    # iperf_cmd = 'iperf3 -c ' + server_ip + ' -p ' + str(port) + ' -u -b 5M -t 600 -R'
-    iperf_cmd = 'iperf3 -c ' + server_ip + ' -p ' + str(port) + ' -t 600 -R'
-
-    # wrap command in while loop to repeat it if it fails to start
-    # (e.g., if ue is not yet connected to the bs)
-    loop_cmd = 'while ! %s; do sleep 5; done' % (iperf_cmd)
-
-    logging.info('Starting iperf3 client toward: ' + iperf_cmd)
-    run_tmux_command(loop_cmd, tmux_session_name)
-
-
-# start iperf server in background
-def start_iperf_server(client_ip) -> None:
-
-    default_port = 5201
-
-    for c_ip in client_ip:
-        # derive port offset from client srsLTE IP
-        port_offset = int(c_ip.split('.')[-1])
-        port = default_port + port_offset
-        logging.info('Starting iperf3 server in background on port ' + str(port))
-
-        iperf_cmd = 'iperf3 -s -p ' + str(port) + ' -D'
-        os.system(iperf_cmd)
-
-
 # write scope configuration, srsLTE parameters and start cellular applicaitons
-def run_scope(bs_ue_num: int, iperf: bool, use_colosseumcli: bool,
-    capture_pkts: bool, config_params: dict, write_config_parameters: bool,
-    generic_testbed: bool, node_is_bs: bool, ue_id: int):
+def run_scope(config: dict, scope_config: dict):
 
     # define name of the tmux session in which commands are run
     tmux_session_name = 'scope'
@@ -490,21 +445,21 @@ def run_scope(bs_ue_num: int, iperf: bool, use_colosseumcli: bool,
     os.system('kill -9 `pidof iperf3`')
     os.system('tmux kill-session -t ' + tmux_session_name)
     os.system('tmux kill-session -t tcpdump')
-
+    
     # copy right configuation files for rr and sib
     copy_rr_sib_drb_conf(generic_testbed)
 
-    if generic_testbed:
-        is_bs = node_is_bs
+    if config['generic-testbed']:
+        is_bs = config['node-is-bs']
 
         if is_bs:
             my_node_id = 1  # base station is always node 1
         else:
-            my_node_id = ue_id + 1
+            my_node_id = config['ue-id'] + 1
 
         logging.info('my node ID: ' + str(my_node_id))
     else:
-        is_bs, my_ip, my_node_id, nodes_ip, bs_ue_num = is_node_bs(bs_ue_num, use_colosseumcli)
+        is_bs, my_ip, my_node_id, nodes_ip, bs_ue_num = is_node_bs(config['users-bs'], config['colosseumcli'])
 
     # default srsLTE base station IP from the BS perspective
     srslte_bs_ip = '172.16.0.1'
@@ -519,21 +474,23 @@ def run_scope(bs_ue_num: int, iperf: bool, use_colosseumcli: bool,
         os.system('rm ' + enb_log_file)
 
         # write srsenb configuration
-        if generic_testbed:
-            config_params['bs_config']['time_adv_nsamples'] = 'auto'
+        write_srslte_config(srslte_config_dir, scope_config['bs_config'], True)
+        
+        if config['generic-testbed']:
+            scope_config['bs_config']['time_adv_nsamples'] = 'auto'
         else:
-            config_params['bs_config']['time_adv_nsamples'] = 'colosseum'
-        write_srslte_config(srslte_config_dir, config_params['bs_config'], True)
-
+            scope_config['bs_config']['time_adv_nsamples'] = 'colosseum'
+            
         # write configuration parameters on file
-        if write_config_parameters:
-            if generic_testbed:
-                config_params['colosseum_testbed'] = '0'
+        if config['write-config-parameters']:
+            if config['generic-testbed']:
+                scope_config['colosseum_testbed'] = '0'
             else:
-                config_params['colosseum_testbed'] = '1'
-            write_config_params(config_params)
-            write_tenant_slicing_mask(config_params)
-            write_slice_scheduling(config_params)
+                scope_config['colosseum_testbed'] = '1'
+            
+            write_config_params(scope_config)
+            write_tenant_slicing_mask(scope_config)
+            write_slice_scheduling(scope_config)
         else:
             logging.info('Not writing configuration parameters on file')
 
@@ -555,8 +512,8 @@ def run_scope(bs_ue_num: int, iperf: bool, use_colosseumcli: bool,
             logging.info('My srsLTE IP ' + srslte_bs_ip)
 
         logging.info('ue/imsi mapping ' + str(srs_imsi_id_mapping))
-        if write_config_parameters:
-            write_imsi_slice(config_params, srs_imsi_id_mapping)
+        if config['write-config-parameters']:
+            write_imsi_slice(scope_config, srs_imsi_id_mapping)
 
         # start srsLTE EPC app to create the srs_spgw_sgi virtual interface
         start_srslte(tmux_session_name, srslte_config_dir, 'epc', epc_log_file)
@@ -567,7 +524,7 @@ def run_scope(bs_ue_num: int, iperf: bool, use_colosseumcli: bool,
         # start srsLTE eNB in the same tmux session as before but in a separate window
         start_srslte(tmux_session_name, srslte_config_dir, 'enb', enb_log_file)
 
-        if capture_pkts:
+        if config['capture-pkts']:
             # capture packets on pcap file
             if not generic_testbed:
                 capture_pcap('tr0', 'enb')
@@ -575,12 +532,26 @@ def run_scope(bs_ue_num: int, iperf: bool, use_colosseumcli: bool,
         else:
             logging.info('Packet capture via tcpdump disabled')
 
-        # start iperf clients
-        if iperf:
-            if generic_testbed:
-                logging.info('Not running on Colosseum. Skipping instantiation of iPerf3 server.')
-            else:
-                start_iperf_server(srs_col_ip_mapping.values())
+        if config['cell-order']:
+            # Create a tmux window but don't start running cell-order until UEs are connected
+            cell_order_cmd = 'python3 run_cell_order_server.py --config-file cell_order.conf'
+            cell_order_cmd += ' --server-ip {}'.format(srslte_bs_ip)
+            run_tmux_command(cell_order_cmd, tmux_session_name)
+
+        elif config['iperf']:
+            for ue_ip in sorted(srs_col_ip_mapping.values()):
+                # derive port offset from the UE IP
+                port_offset = int(ue_ip.split('.')[-1])
+                port = constants.DEFAULT_IPERF_PORT + port_offset
+
+                # start_iperf_server(port)
+
+                # start iperf clients in loop to run traffic towards UEs when connected
+                start_iperf_client(ue_ip, port, 
+                                   tmux_session_name=tmux_session_name, 
+                                   iperf_target_rate=config['iperf-target-rate'], 
+                                   iperf_udp=config['iperf-udp'],
+                                   reversed=False)
 
     else:
         logging.info('Starting user configuration...')
@@ -618,32 +589,53 @@ def run_scope(bs_ue_num: int, iperf: bool, use_colosseumcli: bool,
         setup_srsue_config(my_node_id, srslte_config_dir)
 
         # write srsue configuration
-        if generic_testbed:
-            config_params['ue_config']['time_adv_nsamples'] = 'auto'
+        if config['generic-testbed']:
+            scope_config['ue_config']['time_adv_nsamples'] = 'auto'
         else:
-            config_params['ue_config']['time_adv_nsamples'] = 'colosseum'
-        write_srslte_config(srslte_config_dir, config_params['ue_config'], False)
+            scope_config['ue_config']['time_adv_nsamples'] = 'colosseum'
+        write_srslte_config(srslte_config_dir, scope_config['ue_config'], False)
 
         # start srsLTE UE in tmux session
         start_srslte(tmux_session_name, srslte_config_dir, 'ue', ue_log_file)
 
-        if capture_pkts:
+        if config['capture-pkts']:
             # capture packets on pcap file
-            if not iperf and not generic_testbed:
+            if not config['iperf'] and not config['generic-testbed']:
                 capture_pcap('tr0', 'ue')
             capture_pcap(srslte_iface, 'ue')
         else:
             logging.info('Packet capture via tcpdump disabled')
 
-        if iperf:
-            if generic_testbed:
-                logging.info('Not running on Colosseum. Skipping instantiation of iPerf3 client.')
-            else:
-                sleep_time = 10
-                logging.info('iPerf option detected, sleeping ' + str(sleep_time) + 's')
-                time.sleep(sleep_time)
+        if config['iperf']:
+            sleep_time = 10
+            logging.info('iPerf option detected, sleeping ' + str(sleep_time) + 's')
+            time.sleep(sleep_time)
+            
+            # derive port offset from my srsLTE IP
+            port_offset = int(my_srslte_ip.split('.')[-1])
+            port = constants.DEFAULT_IPERF_PORT + port_offset
 
-                start_iperf_client(tmux_session_name, srslte_bs_ip, my_srslte_ip)
+            # start_iperf_client(srslte_bs_ip, port, 
+            #                    tmux_session_name=tmux_session_name, 
+            #                    iperf_target_rate=config['iperf-target-rate'], 
+            #                    iperf_udp=config['iperf-udp'])
+
+            # start iperf server in tmux session
+            start_iperf_server(port, tmux_session_name=tmux_session_name, 
+                               run_as_deamon=False)
+
+        if config['cell-order']:
+            sleep_time = 10
+            logging.info('Cell-Order option detected, sleeping ' + str(sleep_time) + 's')
+            time.sleep(sleep_time)
+            
+            cell_order_ue_cmd = 'python3 run_cell_order_client.py --config-file cell_order.conf'
+            cell_order_ue_cmd += ' --server-ip {}'.format(srslte_bs_ip)
+            cell_order_ue_cmd += ' --client-ip {}'.format(my_srslte_ip)
+            cell_order_ue_cmd += ' --iperf-target-rate {}'.format(config['iperf-target-rate'])
+            if (config['iperf-udp']):
+                cell_order_ue_cmd += ' --iperf-udp'
+            run_tmux_command(cell_order_ue_cmd, tmux_session_name)
 
 
 if __name__ == '__main__':
@@ -660,7 +652,10 @@ if __name__ == '__main__':
      and tun_srsue interfaces and dump them on .pcap files through tcpdump', action='store_true')
     parser.add_argument('--config-file', type=str, default='', help='json-formatted configuration file file to parse.\
         The other arguments are ignored if config file is passed')
-    parser.add_argument('--iperf', help='Generate traffic through iperf3, downlink only. Only used if running on Colosseum', action='store_true')
+    parser.add_argument('--cell-order', help='Run Cell-Order logic', action='store_true')
+    parser.add_argument('--iperf', help='Generate traffic through iperf3, downlink only', action='store_true')
+    parser.add_argument('--iperf-target-rate', type=str, help='target bitrate in bps for iperf [KMG] (O for unlimited)')
+    parser.add_argument('--iperf-udp', help='Use UDP traffic for iperf3', action='store_true')
     parser.add_argument('--users-bs', type=int, default=3, help='Maximum number of users per base station')
     parser.add_argument('--colcli', help='Use colosseumcli APIs to get list of active nodes.\
         This parameter is specific to Colosseum and it is only available in interactive mode', action='store_true')
@@ -726,10 +721,13 @@ if __name__ == '__main__':
         # insert values in config dictionary
         config = {'capture-pkts': args.capture_pkts,
                   'colosseumcli': args.colcli,
+                  'cell-order': args.cell_order,
                   'generic-testbed': args.generic_testbed,
                   'node-is-bs': args.node_is_bs,
                   'ue-id': args.ue_id,
                   'iperf': args.iperf,
+                  'iperf-target-rate': args.iperf_target_rate,
+                  'iperf-udp': args.iperf_udp,
                   'users-bs': args.users_bs,
                   'write-config-parameters': args.write_config_parameters,
                   'network-slicing': args.network_slicing,
@@ -801,6 +799,27 @@ if __name__ == '__main__':
         if config.get('iperf') is None:
             config['iperf'] = False
 
+        if config.get('cell-order') is None:
+            config['cell-order'] = False
+
+        if args.cell_order:
+            config['cell-order'] = args.cell_order
+            logging.info('Overriding cell-order option to {}'.format(args.cell_order))
+
+        if args.iperf_target_rate:
+            config['iperf-target-rate'] = args.iperf_target_rate
+            logging.info('Overriding iperf target rate to ' + args.iperf_target_rate)
+
+        if config.get('iperf-target-rate') is None:
+            config['iperf-target-rate'] = '0'
+
+        if config.get('iperf-udp') is None:
+            config['iperf-udp'] = False
+
+        if args.iperf_udp:
+            config['iperf-udp'] = args.iperf_udp
+            logging.info('Overriding iperf udp option to {}'.format(args.iperf_udp))
+            
         if config.get('users-bs') is None:
             config['users-bs'] = 3
 
@@ -811,26 +830,22 @@ if __name__ == '__main__':
             config['colosseumcli'] = False
 
     print_configuration(config)
-    config_params = get_config_params(config)
+    scope_config = get_scope_config(config)
 
     # copy legacy parameters into new bs-config and ue-config dictionaries
-    if config_params['bs_config'].get('dl_freq') is None:
-        config_params['bs_config']['dl_freq'] = config['dl-freq']
-    if config_params['bs_config'].get('ul_freq') is None:
-        config_params['bs_config']['ul_freq'] = config['ul-freq']
-    if config_params['bs_config'].get('n_prb') is None:
-        config_params['bs_config']['n_prb'] = config['dl-prb']
+    if scope_config['bs_config'].get('dl_freq') is None:
+        scope_config['bs_config']['dl_freq'] = config['dl-freq']
+    if scope_config['bs_config'].get('ul_freq') is None:
+        scope_config['bs_config']['ul_freq'] = config['ul-freq']
+    if scope_config['bs_config'].get('n_prb') is None:
+        scope_config['bs_config']['n_prb'] = config['dl-prb']
 
-    if config_params['ue_config'].get('dl_freq') is None:
-        config_params['ue_config']['dl_freq'] = config['dl-freq']
-    if config_params['ue_config'].get('ul_freq') is None:
-        config_params['ue_config']['ul_freq'] = config['ul-freq']
+    if scope_config['ue_config'].get('dl_freq') is None:
+        scope_config['ue_config']['dl_freq'] = config['dl-freq']
+    if scope_config['ue_config'].get('ul_freq') is None:
+        scope_config['ue_config']['ul_freq'] = config['ul-freq']
 
-    run_scope(config['users-bs'], config['iperf'],
-        config['colosseumcli'], config['capture-pkts'],
-        config_params, config['write-config-parameters'],
-        config['generic-testbed'], config['node-is-bs'],
-        config['ue-id'])
+    run_scope(config, scope_config)
 
     # set LTE transceiver state to active
     time.sleep(2)
