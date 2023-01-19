@@ -23,7 +23,7 @@
 #define SRSENB_CC_WORKER_H
 
 #include <string.h>
-
+#include <complex.h>
 #include "phy_common.h"
 
 #define LOG_EXECTIME

@@ -42,7 +42,7 @@ Quick start on Colosseum with base configuration:
 - Main SCOPE API scripts:
     - `constants.py`: Constant parameters used by the remaining scripts
     - `scope_api.py`: APIs to interact with cellular base station
-    - `scope_start.py`: Quick start script for running on Colosseum testbed: Parse configuration file, configure and start cellular applications (i.e., base station and core network, or user). If using the quick start script outside Colosseum some pieces might require minor adaptation, e.g., manually supplying the node list instead of leveraging the automatic node discovery 
+    - `scope_start.py`: Quick start script for running on Colosseum testbed: Parse configuration file, configure and start cellular applications (i.e., base station and core network, or user). If using the quick start script outside Colosseum some pieces might require minor adaptation, e.g., manually supplying the node list instead of leveraging the automatic node discovery. Note that this script generates runtime logs in the `/logs` directory. If running it on your local machine, please make sure that such directory exists, and that your user can write inside it
     - `support_functions.py`: Additional support functions
 - Exemplary scripts (to be run at the base station):
     - `heuristic.py`: Read performance metrics from dataset and implement arbitrary heuristic policy. In this example, read downlink buffer and throughput relative to served users from performance dataset. Then assign more resources to slices if buffers are above threshold (policy slice 0), and throughput is above threshold (policy for slice 2). If more users are served in a single slice, also change the slice scheduling policy from round-robin to waterfilling.
@@ -87,7 +87,6 @@ The `radio_code` directory contains a modified version of <a href="https://githu
 - `srsLTE`: This is a modified version of srsLTE with the 5G-oriented functionalities enabled by SCOPE (see Section 3 of [[1]](#1))
 - `scope_config`: Configuration files used by SCOPE base station. A template version of these files is stored in `../srsLTE/config_files/scope_config`
     - `scope_cfg.txt`: Global configuration file to enable/disable SCOPE functionalities. All parameters are disabled if not found in the file. Loaded parameters:
-    - `remove_experiment_data.sh`: Removes collected data from old runs
         - `colosseum_testbed`: Enables Colosseum-specific configuration of radio parameters
         - `force_dl_modulation`/`force_ul_modulation`: Enables forcing of downlink/uplink modulation for selected users. The actual modulation can be specified in `slicing/ue_imsi_modulation_dl.txt`/`ue_imsi_modulation_ul.txt`
         - `global_scheduling_policy`: Specifies scheduling policy for the whole network.<sup>[2](#footnote2)</sup> Available choices are:
@@ -95,6 +94,7 @@ The `radio_code` directory contains a modified version of <a href="https://githu
             - `1`: Waterfilling scheduling policy
             - `2`: Proportionally fair scheduling policy
         - `network_slicing_enabled`: Enables network slicing loading slicing-related configuration files in the `slicing` directory
+    - `remove_experiment_data.sh`: Removes collected data from old runs
     - `config`: This directory gets populated at run time with user-related parameters (e.g., downlink power scaling factor)
     - `metrics/csv`: CSV files on user performance are automatically logged in this directory at run time
     - `slicing`: Contains slicing- and user- related configuration files:
@@ -135,6 +135,12 @@ The available distances between users and base stations are: `close`, users are 
 | POWDER  | far            | static      | 8         | 4      | 40          | 600          | 1027        | :heavy_check_mark:          |
 
 Due to space limitations, only a selection of these scenarios is currently available on Colosseum. The remaining scenarios can be built and installed upon request.
+
+## Running on Testbeds External to Colosseum
+The command line option `--generic-testbed` should facilitate running SCOPE outside the Colosseum environment.
+
+## Troubleshooting
+- Command-line options are not applied: Sometimes it may look like the CLI options are not applied. These options are overridden by the configuration file, if passed.
 
 ## References
 <a id="1">[1]</a> 

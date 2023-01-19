@@ -18,6 +18,6 @@ echo "[`date`] Removing old srsLTE data" >> /logs/run.log
 ${SCOPE_CONFIG}remove_experiment_data.sh
 
 echo "[`date`] Starting srsLTE applications" >> /logs/run.log
-python3 ${SCRIPT_DIR}/scope_start.py --config-file radio.conf
+python3 ${SCRIPT_DIR}/scope_start.py --config-file radio_generic.conf
 
 exit 0
