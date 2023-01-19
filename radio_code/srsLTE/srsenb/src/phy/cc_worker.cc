@@ -30,6 +30,9 @@
 #include <srsenb/hdr/metrics_functions.h>
 #include <srsenb/hdr/global_variables.h>
 
+#include <stdio.h>
+#include <complex.h>
+
 #define Error(fmt, ...)                                                                                                \
   if (SRSLTE_DEBUG_ENABLED)                                                                                            \
   log_h->error(fmt, ##__VA_ARGS__)
@@ -621,8 +624,11 @@ int cc_worker::encode_pdsch(stack_interface_phy_lte::dl_sched_grant_t* grants, u
       if (rnti_is_user) {
           double norm_avg = 0;
           for (int j = 0; j < 20; ++j) {
-              cf_t cpx_num = enb_dl.pdsch.symbols[0][j];
-              double cpx_norm = pow(creal(cpx_num), 2) + pow(cimag(cpx_num), 2);
+	      //Removed by Ali, mixing C and C++. Does not compile  
+              //cf_t cpx_num = enb_dl.pdsch.symbols[0][j];
+	      //double cpx_norm = pow(creal(cpx_num), 2) + pow(cimag(cpx_num), 2);
+	      complex<float> cpx_num = enb_dl.pdsch.symbols[0][j];
+	      double cpx_norm = pow(real(cpx_num), 2) + pow(imag(cpx_num), 2);
               norm_avg += cpx_norm;
           }
 

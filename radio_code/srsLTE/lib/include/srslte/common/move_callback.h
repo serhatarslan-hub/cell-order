@@ -25,6 +25,9 @@
 #include <cstddef>
 #include <functional>
 #include <type_traits>
+#include <stdio.h>
+#include <cstdint>
+#include <cstdlib>
 
 #if defined(__cpp_exceptions) && (1 == __cpp_exceptions)
 #define THROW_BAD_FUNCTION_CALL(const char* cause) throw std::bad_function_call{};

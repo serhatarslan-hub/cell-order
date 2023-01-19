@@ -143,7 +143,8 @@ typedef struct {
 
 SRSLTE_API int srslte_cqi_size(srslte_cqi_cfg_t* cfg);
 
-SRSLTE_API int srslte_cqi_value_pack(srslte_cqi_cfg_t* cfg, srslte_cqi_value_t* value, uint8_t* buff);
+//SRSLTE_API int srslte_cqi_value_pack(srslte_cqi_cfg_t* cfg, srslte_cqi_value_t* value, uint8_t* buff);
+SRSLTE_API int srslte_cqi_value_pack(srslte_cqi_cfg_t* cfg, srslte_cqi_value_t* value, uint8_t buff[SRSLTE_CQI_MAX_BITS]);
 
 SRSLTE_API int
 srslte_cqi_value_unpack(srslte_cqi_cfg_t* cfg, uint8_t buff[SRSLTE_CQI_MAX_BITS], srslte_cqi_value_t* value);

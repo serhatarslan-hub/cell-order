@@ -481,7 +481,7 @@ def run_scope(bs_ue_num: int, iperf: bool, use_colosseumcli: bool,
 
     # define name of the tmux session in which commands are run
     tmux_session_name = 'scope'
-    srslte_config_dir = os.path.expanduser('~/radio_code/srslte_config/')
+    srslte_config_dir = os.path.expanduser('~/colosseum-scope/radio_code/srslte_config/')
 
     # kill existing tmux sessions at startup
     os.system('kill -9 `pidof srsepc`')
@@ -648,8 +648,8 @@ def run_scope(bs_ue_num: int, iperf: bool, use_colosseumcli: bool,
 
 if __name__ == '__main__':
 
-    ul_freq_default = 980000000  # Hz
-    dl_freq_default = 1020000000  # Hz
+    ul_freq_default = 2535000000  # Hz
+    dl_freq_default = 2655000000  # Hz
     n_prb_default = 50
 
     prb_values = [6, 15, 25, 50, 75, 100]
