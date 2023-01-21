@@ -631,6 +631,7 @@ def run_scope(config: dict, scope_config: dict):
             cell_order_ue_cmd = 'python3 run_cell_order_client.py --config-file cell_order.conf'
             cell_order_ue_cmd += ' --server-ip {}'.format(srslte_bs_ip)
             cell_order_ue_cmd += ' --client-ip {}'.format(my_srslte_ip)
+            cell_order_ue_cmd += ' --dst-ip {}'.format(srslte_bs_ip)
             cell_order_ue_cmd += ' --iperf-target-rate {}'.format(config['iperf-target-rate'])
             if (config['iperf-udp']):
                 cell_order_ue_cmd += ' --iperf-udp'

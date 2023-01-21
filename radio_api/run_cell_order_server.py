@@ -5,7 +5,7 @@ import asyncio
 import time
 
 import constants
-import cell_order
+import cell_order, cell_order_server
 from support_functions import kill_process_using_port
 
 
@@ -40,8 +40,8 @@ if __name__ == '__main__':
 
     loop = asyncio.get_event_loop()
 
-    cell_order_server = cell_order.CellOrderServerProtocol(loop = loop, 
-                                                           config = cell_order_config)
+    cell_order_server = cell_order_server.CellOrderServerProtocol(loop = loop, 
+                                                                  config = cell_order_config)
 
     coro = loop.create_server(lambda: cell_order_server, 
                               args.server_ip, constants.DEFAULT_CELL_ORDER_PORT)

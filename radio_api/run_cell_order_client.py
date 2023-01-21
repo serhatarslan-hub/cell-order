@@ -5,7 +5,7 @@ import time
 import asyncio
 
 import constants
-import cell_order
+import cell_order, cell_order_client
 from support_functions import kill_process_using_port
 
 
@@ -19,6 +19,8 @@ if __name__ == '__main__':
                         help='IP address of the provider.')
     parser.add_argument('--client-ip', type=str, required=True, 
                         help='IP address of the UE.')
+    parser.add_argument('--dst-ip', type=str, required=True, 
+                        help='IP address that the user wants to communicate with.')
     parser.add_argument('--iperf-target-rate', type=str, 
                         help='target bitrate in bps for iperf [KMG] (O for unlimited)')
     parser.add_argument('--iperf-udp', 
@@ -51,10 +53,10 @@ if __name__ == '__main__':
 
     loop = asyncio.get_event_loop()
 
-    cell_order_client = cell_order.CellOrderClientProtocol(loop, 
+    cell_order_client = cell_order_client.CellOrderClientProtocol(loop, 
                                                            cell_order_config,
                                                            args.client_ip,
-                                                           args.server_ip,
+                                                           args.dst_ip,
                                                            args.iperf_target_rate,
                                                            args.iperf_udp)
  
