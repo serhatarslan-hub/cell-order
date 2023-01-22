@@ -1,5 +1,7 @@
 import subprocess
 import asyncio
+import asyncssh
+import nest_asyncio
 import logging
 import time
 import json
@@ -9,6 +11,11 @@ import constants
 import cell_order
 from support_functions import kill_process_using_port
 
+nest_asyncio.apply() # Needed to create ssh coroutines within the client's event loop
+
+# TODO: Find a better way to connect to the remote when starting iperf traffic
+REMOTE_UNAME = 'FILL_IN_THE_USERNAME_OF_YOUR_REMOTE'
+REMOTE_PASSWORD = 'FILL_IN_THE_PASSWORD_OF_YOUR_REMOTE'
 
 class CellOrderClientProtocol(asyncio.Protocol):
     
@@ -127,6 +134,26 @@ class CellOrderClientProtocol(asyncio.Protocol):
         else:
             logging.error("Cell-Order Client received a message of unknown type: {}".format(cell_order_msg))
 
+    async def run_ssh_for_iperf_from_remote(self, iperf_server_ip: str, 
+                                                  iperf_server_port: int,
+                                                  iperf_target_rate: str,
+                                                  iperf_udp: bool,
+                                                  iperf_duration: float):
+
+        logging.info("Starting iperf traffic from the remote host ...")
+        function_call = "start_iperf_client("
+        function_call += "server_ip='{}', ".format(iperf_server_ip)
+        function_call += "port={}, ".format(iperf_server_port)
+        function_call += "iperf_target_rate='{}', ".format(iperf_target_rate)
+        function_call += "iperf_udp={}, ".format(iperf_udp)
+        function_call += "duration={}, ".format(iperf_duration)
+        function_call += "reversed=False, loop=False, json=True)"
+        program = "from support_functions import start_iperf_client; {}".format(function_call)
+        cmd = 'cd /root/radio_api; python3 -c "{}"'.format(program)
+
+        async with asyncssh.connect(self.dst_ip, username=REMOTE_UNAME, password=REMOTE_PASSWORD) as conn:
+            return await conn.run(cmd, check=True)
+
     def budgets_match_service_type(self):
 
         service_type = self.config['slice-service-type'][self.slice_id]
@@ -165,17 +192,20 @@ class CellOrderClientProtocol(asyncio.Protocol):
             self.stop_client()
             return
             
-        logging.info("Waiting for the connection to be established ...")
-        function_call = "start_iperf_client("
-        function_call += "server_ip='{}', ".format(self.client_ip)
-        function_call += "port={}, ".format(self.iperf_port)
-        function_call += "reversed=False, duration=5, loop=True)"
-        program = "from support_functions import start_iperf_client; {}".format(function_call)
-        cmd = 'cd /root/radio_api; python3 -c "{}"'.format(program)
-        ssh_cmd = ['ssh', '-o', 'StrictHostKeyChecking=no', self.dst_ip, cmd]
-        error_output  = subprocess.Popen(ssh_cmd, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE).stderr.read()
+        ssh_loop = asyncio.new_event_loop()
+        try:
+            error_output = ssh_loop.run_until_complete(
+                self.run_ssh_for_iperf_from_remote(self.client_ip, self.iperf_port,
+                                                   iperf_target_rate = '', iperf_udp = False,
+                                                   iperf_duration = 5)).stderr.strip()
+        except (OSError, asyncssh.Error) as exc:
+            logging.error('SSH connection failed: ' + str(exc))
+            self.stop_client()
+        finally:
+            ssh_loop.close()
+
         if (error_output):
-            logging.error(error_output.decode())
+            logging.error(error_output)
         else:
             logging.info("... Client ready to negotiate!")
 
@@ -185,7 +215,8 @@ class CellOrderClientProtocol(asyncio.Protocol):
 
         if (self.request_handle):
             self.request_handle.cancel()
-        self.request_handle = self.loop.call_soon(lambda: self.send_request())
+        if (not self.loop.closed()):
+            self.request_handle = self.loop.call_soon(lambda: self.send_request())
 
     def send_request(self):
 
@@ -274,20 +305,22 @@ class CellOrderClientProtocol(asyncio.Protocol):
                                                     lambda: self.send_request())
 
         if (restart_delay != 0):
-            logging.info("Running best-effort traffic until re-negoatiating ...")
-            function_call = "start_iperf_client("
-            function_call += "server_ip='{}', ".format(self.client_ip)
-            function_call += "port={}, ".format(self.iperf_port)
-            function_call += "iperf_target_rate='{}', ".format(self.iperf_target_rate)
-            function_call += "iperf_udp={}, ".format(self.iperf_udp)
-            function_call += "reversed=False, duration={}, loop=True)".format(restart_delay)
-            program = "from support_functions import start_iperf_client; {}".format(function_call)
-            cmd = 'cd /root/radio_api; python3 -c "{}"'.format(program)
-            ssh_cmd = ['ssh', '-o', 'StrictHostKeyChecking=no', self.dst_ip, cmd]
-            error_output  = subprocess.Popen(ssh_cmd, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE).stderr.read()
+            ssh_loop = asyncio.new_event_loop()
+            try:
+                error_output = ssh_loop.run_until_complete(
+                    self.run_ssh_for_iperf_from_remote(self.client_ip, self.iperf_port,
+                                                       iperf_target_rate = self.iperf_target_rate, 
+                                                       iperf_udp = self.iperf_udp,
+                                                       iperf_duration = restart_delay)).stderr.strip()
+            except (OSError, asyncssh.Error) as exc:
+                logging.error('SSH connection failed: ' + str(exc))
+                self.stop_client()
+            finally:
+                ssh_loop.close()
+            
             if (error_output):
-                logging.error(error_output.decode())
-            else:
+                logging.error(error_output)
+            elif (not self.loop.closed()):
                 logging.info("... Client ready to re-negotiate!")
 
     def handle_response(self, response_msg: dict) -> None:
@@ -450,31 +483,33 @@ class CellOrderClientProtocol(asyncio.Protocol):
 
     def start_traffic_and_measurements(self) -> None:
 
-        logging.info("Starting iperf traffic from the remote host ...")
-        function_call = "start_iperf_client("
-        function_call += "server_ip='{}', ".format(self.client_ip)
-        function_call += "port={}, ".format(self.iperf_port)
-        function_call += "iperf_target_rate='{}', ".format(self.iperf_target_rate)
-        function_call += "iperf_udp={}, ".format(self.iperf_udp)
-        function_call += "duration={}, ".format(self.sla_period)
-        function_call += "reversed=False, loop=False, json=True)"
-        program = "from support_functions import start_iperf_client; {}".format(function_call)
-        cmd = 'cd /root/radio_api; python3 -c "{}"'.format(program)
-        ssh_cmd = ['ssh', '-o', 'StrictHostKeyChecking=no', self.dst_ip, cmd]
-        ssh  = subprocess.Popen(ssh_cmd, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        error_output = ssh.stderr.read()
-        iperf_output_dict = json.loads(ssh.stdout.read().decode())
+        ssh_loop = asyncio.new_event_loop()
+        try:
+            ssh_output = ssh_loop.run_until_complete(
+                self.run_ssh_for_iperf_from_remote(self.client_ip, self.iperf_port,
+                                                   iperf_target_rate = self.iperf_target_rate, 
+                                                   iperf_udp = self.iperf_udp,
+                                                   iperf_duration = self.sla_period))
+        except (OSError, asyncssh.Error) as exc:
+            logging.error('SSH connection failed: ' + str(exc))
+            self.stop_client()
+        finally:
+            ssh_loop.close()
+        
+        error_output = ssh_output.stderr.strip()
         if (error_output):
-            logging.error(error_output.decode())
+            logging.error(error_output)
             disputed_price = 0
         else:
+            iperf_output_dict = json.loads(ssh_output.stdout.strip())
             disputed_price = self.get_price_to_dispute(iperf_output_dict=iperf_output_dict)
 
         # Record stats
         self.stats['n_sla'] += 1
         self.stats['success_cnt'] += (disputed_price == 0)
 
-        self.send_consume_or_dispute(disputed_price)
+        if (not self.loop.closed()):
+            self.send_consume_or_dispute(disputed_price)
 
     def send_consume_or_dispute(self, disputed_price: float) -> None:
 
