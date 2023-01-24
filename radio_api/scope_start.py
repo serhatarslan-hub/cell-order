@@ -435,7 +435,7 @@ def is_node_bs(bs_ue_num: int, use_colosseumcli: bool) -> tuple:
 def run_scope(config: dict, scope_config: dict):
     # define name of the tmux session in which commands are run
     tmux_session_name = 'scope'
-    srslte_config_dir = os.path.expanduser('~/colosseum-scope/radio_code/srslte_config/')
+    srslte_config_dir = os.path.expanduser('../radio_code/srslte_config/')
 
     # kill existing tmux sessions at startup
     os.system('kill -9 `pidof srsepc`')

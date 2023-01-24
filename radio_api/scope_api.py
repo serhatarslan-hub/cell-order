@@ -121,8 +121,11 @@ def start_srslte(tmux_session_name: str, srslte_config_dir: str, node_type: str,
 
     # configuration file path
     srslte_config_file = node_type + '.conf'
-    srslte_cmd = 'cd ' + srslte_config_dir + ' && srs' + node_type + ' ' +\
+    #srslte_cmd = 'cd ' + srslte_config_dir + ' && srs' + node_type + ' ' +\
+    #    srslte_config_dir + srslte_config_file
+    srslte_cmd = 'srs' + node_type + ' ' +\
         srslte_config_dir + srslte_config_file
+
 
     if len(log_path) > 0:
         logging.info('Logging output in ' + log_path)

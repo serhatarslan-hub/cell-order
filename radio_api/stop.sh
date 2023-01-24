@@ -21,9 +21,6 @@ SCOPE_CONFIG=$(cat ${SCRIPT_DIR}/constants.py | grep "SCOPE_CONFIG" | awk -F"'" 
 echo "[`date`] SCRIPT_DIR ${SCRIPT_DIR}" >> /logs/run.log
 echo "[`date`] SCOPE_CONFIG ${SCOPE_CONFIG}" >> /logs/run.log
 
-# copy radio.conf and colosseum_config.ini to /logs/
-cp ${SCRIPT_DIR}/radio.conf /logs/
-cp ${SCRIPT_DIR}/colosseum_config.ini /logs/
 
 # copy srsLTE metrics and log files
 cp /tmp/epc.log /logs/

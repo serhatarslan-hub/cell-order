@@ -28,8 +28,8 @@ if __name__ == '__main__':
     console.setFormatter(formatter)
     logging.getLogger('').addHandler(console)
 
-    filename = os.path.expanduser('~/radio_api/')
-    filename = filename + args.config_file
+    #filename = os.path.expanduser('../radio_api/')
+    filename = args.config_file
 
     kill_process_using_port(constants.DEFAULT_CELL_ORDER_PORT)
     time.sleep(1)  # Give OS time to free up the PORT usage
