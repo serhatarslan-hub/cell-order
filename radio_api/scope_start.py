@@ -537,7 +537,8 @@ def run_scope(config: dict, scope_config: dict):
             cell_order_cmd += ' --server-ip {}'.format(srslte_bs_ip)
             run_tmux_command(cell_order_cmd, tmux_session_name)
 
-        elif config['iperf']:
+        elif config['iperf'] and not config['generic-testbed']:
+            # Generic testbeds cannot know the IPs of the UEs before they are connected
             for ue_ip in sorted(srs_col_ip_mapping.values()):
                 # derive port offset from the UE IP
                 port_offset = int(ue_ip.split('.')[-1])
@@ -583,6 +584,13 @@ def run_scope(config: dict, scope_config: dict):
             # else replace IP currently assigned to bs_tr0 key
             srs_col_ip_mapping[bs_tr0] = srslte_bs_ip
             logging.info(srs_col_ip_mapping)
+        else:
+            # TODO: A less hacky way of determining the UE IP would be better
+            srslte_bs_ip_octets = srslte_bs_ip.split('.')
+            my_srslte_ip = '{}.{}.{}.{}'.format(srslte_bs_ip_octets[0], 
+                                                srslte_bs_ip_octets[1], 
+                                                srslte_bs_ip_octets[2], 
+                                                srslte_bs_ip_octets[3] + my_node_id)
 
         # configure srsLTE UE config file based on my ID and user database
         setup_srsue_config(my_node_id, srslte_config_dir)
