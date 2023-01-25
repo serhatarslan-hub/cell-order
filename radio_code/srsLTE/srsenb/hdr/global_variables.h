@@ -16,7 +16,7 @@
 #define MAX_USER_RNTI 65535 - 1
 
 // path for SCOPE configuration files
-#define SCOPE_CONFIG_DIR "/root/radio_code/scope_config/"
+#define SCOPE_CONFIG_DIR "../scope_config/"
 
 // save tenant slicing masks
 typedef struct {
