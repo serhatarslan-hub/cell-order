@@ -19,11 +19,12 @@ REMOTE_PASSWORD = 'sardar'
 
 class CellOrderClientProtocol(asyncio.Protocol):
     
-    def __init__(self, loop, config, client_ip, dst_ip, iperf_target_rate, iperf_udp):
+    def __init__(self, loop, config, client_public_ip, client_ip, dst_ip, iperf_target_rate, iperf_udp):
         """
         Args:
             loop: the associated event loop registered to the OS
             config: the configuration to run the server with
+            client_public_ip: the public IP address for the UE that is running this client
             client_ip: the IP address for the UE that is running this client
             dst_ip: the IP address for the remote server that traffic will come from
             iperf_target_rate: target bitrate in bps for iperf [KMG] (O for unlimited)
@@ -35,6 +36,7 @@ class CellOrderClientProtocol(asyncio.Protocol):
         self.config = config
         self.client_ip = client_ip
         self.dst_ip = dst_ip
+        self.client_public_ip = client_public_ip
         self.iperf_target_rate = iperf_target_rate
         self.iperf_udp = iperf_udp
 
@@ -195,7 +197,7 @@ class CellOrderClientProtocol(asyncio.Protocol):
         ssh_loop = asyncio.new_event_loop()
         try:
             error_output = ssh_loop.run_until_complete(
-                self.run_ssh_for_iperf_from_remote(self.client_ip, self.iperf_port,
+                self.run_ssh_for_iperf_from_remote(self.client_public_ip, self.iperf_port,
                                                    iperf_target_rate = '', iperf_udp = False,
                                                    iperf_duration = 5)).stderr.strip()
         except (OSError, asyncssh.Error) as exc:
@@ -310,7 +312,7 @@ class CellOrderClientProtocol(asyncio.Protocol):
             ssh_loop = asyncio.new_event_loop()
             try:
                 error_output = ssh_loop.run_until_complete(
-                    self.run_ssh_for_iperf_from_remote(self.client_ip, self.iperf_port,
+                    self.run_ssh_for_iperf_from_remote(self.client_public_ip, self.iperf_port,
                                                        iperf_target_rate = self.iperf_target_rate, 
                                                        iperf_udp = self.iperf_udp,
                                                        iperf_duration = restart_delay)).stderr.strip()
@@ -488,7 +490,7 @@ class CellOrderClientProtocol(asyncio.Protocol):
         ssh_loop = asyncio.new_event_loop()
         try:
             ssh_output = ssh_loop.run_until_complete(
-                self.run_ssh_for_iperf_from_remote(self.client_ip, self.iperf_port,
+                self.run_ssh_for_iperf_from_remote(self.client_public_ip, self.iperf_port,
                                                    iperf_target_rate = self.iperf_target_rate, 
                                                    iperf_udp = self.iperf_udp,
                                                    iperf_duration = self.sla_period))

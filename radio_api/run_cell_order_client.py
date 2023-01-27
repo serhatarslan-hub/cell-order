@@ -54,11 +54,12 @@ if __name__ == '__main__':
     loop = asyncio.get_event_loop()
 
     cell_order_client = cell_order_client.CellOrderClientProtocol(loop, 
-                                                           cell_order_config,
-                                                           args.client_ip,
-                                                           args.dst_ip,
-                                                           args.iperf_target_rate,
-                                                           args.iperf_udp)
+                                                                  cell_order_config,
+                                                                  args.server_ip,
+                                                                  args.client_ip,
+                                                                  args.dst_ip,
+                                                                  args.iperf_target_rate,
+                                                                  args.iperf_udp)
  
     coro = loop.create_connection(lambda: cell_order_client, 
                                   args.server_ip, constants.DEFAULT_CELL_ORDER_PORT, 
