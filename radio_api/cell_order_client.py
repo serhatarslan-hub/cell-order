@@ -14,8 +14,8 @@ from support_functions import kill_process_using_port
 nest_asyncio.apply() # Needed to create ssh coroutines within the client's event loop
 
 # TODO: Find a better way to connect to the remote when starting iperf traffic
-REMOTE_UNAME = 'FILL_IN_THE_USERNAME_OF_YOUR_REMOTE'
-REMOTE_PASSWORD = 'FILL_IN_THE_PASSWORD_OF_YOUR_REMOTE'
+REMOTE_UNAME = 'ali'
+REMOTE_PASSWORD = 'sardar'
 
 class CellOrderClientProtocol(asyncio.Protocol):
     
@@ -149,9 +149,9 @@ class CellOrderClientProtocol(asyncio.Protocol):
         function_call += "duration={}, ".format(iperf_duration)
         function_call += "reversed=False, loop=False, json=True)"
         program = "from support_functions import start_iperf_client; {}".format(function_call)
-        cmd = 'cd /root/radio_api; python3 -c "{}"'.format(program)
+        cmd = 'cd /home/ali/cell-order/radio_api; python3 -c "{}"'.format(program)
 
-        async with asyncssh.connect(self.dst_ip, username=REMOTE_UNAME, password=REMOTE_PASSWORD) as conn:
+        async with asyncssh.connect(self.dst_ip, username=REMOTE_UNAME, password=REMOTE_PASSWORD, known_hosts=None) as conn:
             return await conn.run(cmd, check=True)
 
     def budgets_match_service_type(self):
@@ -215,7 +215,7 @@ class CellOrderClientProtocol(asyncio.Protocol):
 
         if (self.request_handle):
             self.request_handle.cancel()
-        if (not self.loop.closed()):
+        if (not self.loop.is_closed()):
             self.request_handle = self.loop.call_soon(lambda: self.send_request())
 
     def send_request(self):
@@ -508,7 +508,7 @@ class CellOrderClientProtocol(asyncio.Protocol):
         self.stats['n_sla'] += 1
         self.stats['success_cnt'] += (disputed_price == 0)
 
-        if (not self.loop.closed()):
+        if (not self.loop.is_closed()):
             self.send_consume_or_dispute(disputed_price)
 
     def send_consume_or_dispute(self, disputed_price: float) -> None:

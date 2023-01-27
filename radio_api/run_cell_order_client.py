@@ -32,7 +32,7 @@ if __name__ == '__main__':
     client_port = constants.DEFAULT_CELL_ORDER_PORT + colosseum_node_id + 1
 
     # configure logger and console output
-    log_filename = '/logs/cell-order-ue{}.log'.format(colosseum_node_id)
+    log_filename = 'cell-order-ue{}.log'.format(colosseum_node_id)
     logging.basicConfig(level=logging.DEBUG, filename=log_filename, filemode='a+',
                         format='%(asctime)-15s %(levelname)-8s %(message)s')
     formatter = logging.Formatter('%(asctime)-15s %(levelname)-8s %(message)s')
@@ -41,8 +41,8 @@ if __name__ == '__main__':
     console.setFormatter(formatter)
     logging.getLogger('').addHandler(console)
 
-    filename = os.path.expanduser('~/radio_api/')
-    filename = filename + args.config_file
+    #filename = os.path.expanduser('~/radio_api/')
+    filename = args.config_file
 
     kill_process_using_port(client_port)
     time.sleep(1)  # Give OS time to free up the PORT usage
