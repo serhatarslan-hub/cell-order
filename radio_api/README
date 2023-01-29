@@ -1,0 +1,8 @@
+Running srsLTE over the air
+
+Disable CPU scaling to avoid performance issue
+echo "performance" | sudo tee /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor
+
+Setting port forwarding for the experiment
+sudo iptables -t nat -A PREROUTING -i enp0s31f6 -p tcp --dport 5205 -j DNAT --to-destination 172.16.0.4
+sudo iptables -t nat -A PREROUTING -i enp0s31f6 -p tcp --dport 5204 -j DNAT --to-destination 172.16.0.3
