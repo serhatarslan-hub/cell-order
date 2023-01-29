@@ -163,7 +163,7 @@ class CellOrderClientProtocol(asyncio.Protocol):
             budgets = self.negotiated_budgets
         else:
             budgets = {
-                constants.DL_LAT_KEYWORD: self.config['slice-delay-budget-msec'][self.slice_id], 
+                constants.LAT_KEYWORD: self.config['slice-delay-budget-msec'][self.slice_id], 
                 constants.DL_THP_KEYWORD: self.config['slice-tx-rate-budget-Mbps'][self.slice_id]
             }
 
@@ -177,11 +177,11 @@ class CellOrderClientProtocol(asyncio.Protocol):
                                                                 budgets))
             return False
         elif (service_type == 'throughput' \
-              and budgets[constants.DL_LAT_KEYWORD] != cell_order.LAT_BUDGET_WILDCARD):
+              and budgets[constants.LAT_KEYWORD] != cell_order.LAT_BUDGET_WILDCARD):
             logging.info("Throughput service can not specify requested latency! " + \
                          "Please check your configuration for budgets to request. " + \
                          "(Expected: {}, Configured {})".format(cell_order.LAT_BUDGET_WILDCARD, 
-                                                                budgets[constants.DL_LAT_KEYWORD]))
+                                                                budgets[constants.LAT_KEYWORD]))
             return False
 
         return True
@@ -246,7 +246,7 @@ class CellOrderClientProtocol(asyncio.Protocol):
         request_msg['service_type'] = self.config['slice-service-type'][self.slice_id]
         request_msg['sla_period'] = 0
         request_msg['budgets'] = {
-            constants.DL_LAT_KEYWORD: self.config['slice-delay-budget-msec'][self.slice_id], 
+            constants.LAT_KEYWORD: self.config['slice-delay-budget-msec'][self.slice_id], 
             constants.DL_THP_KEYWORD: self.config['slice-tx-rate-budget-Mbps'][self.slice_id]
         }
         request_msg['price'] = 0
@@ -274,9 +274,9 @@ class CellOrderClientProtocol(asyncio.Protocol):
             return False
 
         if (msg['service_type'] == 'latency' \
-            and (msg['budgets'][constants.DL_LAT_KEYWORD] != \
+            and (msg['budgets'][constants.LAT_KEYWORD] != \
                     self.config['slice-delay-budget-msec'][self.slice_id])):
-            logging.info("The responded latency budget ({}) ".format(msg['budgets'][constants.DL_LAT_KEYWORD]) +\
+            logging.info("The responded latency budget ({}) ".format(msg['budgets'][constants.LAT_KEYWORD]) +\
                 "is not as requested ({})!".format(self.config['slice-delay-budget-msec'][self.slice_id]))
             return False
 
@@ -408,7 +408,7 @@ class CellOrderClientProtocol(asyncio.Protocol):
             stream_data = interval_data['streams'][0]
             assert stream_data['sender'], "Iperf's RTT can only be displayed if sender!"
 
-            stream_data[constants.DL_LAT_KEYWORD] = float(stream_data['rtt']) / 1e3
+            stream_data[constants.LAT_KEYWORD] = float(stream_data['rtt']) / 1e3
             stream_data[constants.DL_THP_KEYWORD] = float(stream_data['bits_per_second']) / 1e6
 
             ts_ms = int(stream_data['end'] * 1000) + iperf_start_time_ms
@@ -443,7 +443,7 @@ class CellOrderClientProtocol(asyncio.Protocol):
         """
         service_type = self.config['slice-service-type'][self.slice_id]
         if (service_type == 'latency'):
-            sla_keywords = [constants.DL_LAT_KEYWORD, constants.DL_THP_KEYWORD]
+            sla_keywords = [constants.LAT_KEYWORD, constants.DL_THP_KEYWORD]
 
         elif (service_type == 'throughput'):
             sla_keywords = [constants.DL_THP_KEYWORD]
@@ -473,7 +473,7 @@ class CellOrderClientProtocol(asyncio.Protocol):
         for i in range(len(sla_keywords)):
             lower_bound = self.negotiated_budgets[sla_keywords[i]][0]
             upper_bound = self.negotiated_budgets[sla_keywords[i]][1]
-            if (sla_keywords[i] == constants.DL_LAT_KEYWORD):
+            if (sla_keywords[i] == constants.LAT_KEYWORD):
                 lower_bound = 0 # okay for latency lower than the lower bound
             elif (sla_keywords[i] == constants.DL_THP_KEYWORD):
                 upper_bound = np.Inf
