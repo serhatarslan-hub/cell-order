@@ -534,7 +534,7 @@ def run_scope(config: dict, scope_config: dict):
         if config['cell-order']:
             # Create a tmux window but don't start running cell-order until UEs are connected
             cell_order_cmd = 'python3 run_cell_order_server.py --config-file cell_order.conf'
-            cell_order_cmd += ' --server-ip {}'.format(srslte_bs_ip)
+            cell_order_cmd += ' --server-ip {}'.format(config['provider-public-ip'])
             run_tmux_command(cell_order_cmd, tmux_session_name)
 
         elif config['iperf'] and not config['generic-testbed']:
@@ -637,9 +637,9 @@ def run_scope(config: dict, scope_config: dict):
             time.sleep(sleep_time)
             
             cell_order_ue_cmd = 'python3 run_cell_order_client.py --config-file cell_order.conf'
-            cell_order_ue_cmd += ' --server-ip {}'.format(srslte_bs_ip)
+            cell_order_ue_cmd += ' --server-ip {}'.format(config['provider-public-ip'])
             cell_order_ue_cmd += ' --client-ip {}'.format(my_srslte_ip)
-            cell_order_ue_cmd += ' --dst-ip {}'.format(srslte_bs_ip)
+            cell_order_ue_cmd += ' --dst-ip {}'.format(config['provider-public-ip'])
             cell_order_ue_cmd += ' --iperf-target-rate {}'.format(config['iperf-target-rate'])
             if (config['iperf-udp']):
                 cell_order_ue_cmd += ' --iperf-udp'
@@ -661,6 +661,8 @@ if __name__ == '__main__':
     parser.add_argument('--config-file', type=str, default='', help='json-formatted configuration file file to parse.\
         The other arguments are ignored if config file is passed')
     parser.add_argument('--cell-order', help='Run Cell-Order logic', action='store_true')
+    parser.add_argument('--provider-public-ip', type=str, default='172.16.0.1', 
+        help='Public domain name or the IP address for reaching out to the provider from the Internet.')
     parser.add_argument('--iperf', help='Generate traffic through iperf3, downlink only', action='store_true')
     parser.add_argument('--iperf-target-rate', type=str, help='target bitrate in bps for iperf [KMG] (O for unlimited)')
     parser.add_argument('--iperf-udp', help='Use UDP traffic for iperf3', action='store_true')
@@ -730,6 +732,7 @@ if __name__ == '__main__':
         config = {'capture-pkts': args.capture_pkts,
                   'colosseumcli': args.colcli,
                   'cell-order': args.cell_order,
+                  'provider-public-ip': args.provider_public_ip,
                   'generic-testbed': args.generic_testbed,
                   'node-is-bs': args.node_is_bs,
                   'ue-id': args.ue_id,
@@ -814,6 +817,9 @@ if __name__ == '__main__':
         if args.cell_order:
             config['cell-order'] = args.cell_order
             logging.info('Overriding cell-order option to {}'.format(args.cell_order))
+
+        if config.get('provider-public-ip') is None:
+            config['provider-piblic-ip'] = args.provider_public_ip
 
         if args.iperf_target_rate:
             config['iperf-target-rate'] = args.iperf_target_rate
