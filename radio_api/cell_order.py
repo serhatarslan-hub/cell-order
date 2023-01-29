@@ -294,7 +294,7 @@ class CellOrderServerProtocol(asyncio.Protocol):
 
         service_type = self.negotiations[nid]['service_type']
         if (service_type == 'latency'):
-            sla_keywords = [constants.DL_LAT_KEYWORD, constants.DL_THP_KEYWORD]
+            sla_keywords = [constants.LAT_KEYWORD, constants.DL_THP_KEYWORD]
 
         elif (service_type == 'throughput'):
             sla_keywords = [constants.DL_THP_KEYWORD]
@@ -309,7 +309,7 @@ class CellOrderServerProtocol(asyncio.Protocol):
         for i in range(len(sla_keywords)):
             lower_bound = self.negotiations[nid]['budgets'][sla_keywords[i]][0]
             upper_bound = self.negotiations[nid]['budgets'][sla_keywords[i]][1]
-            if (sla_keywords[i] == constants.DL_LAT_KEYWORD):
+            if (sla_keywords[i] == constants.LAT_KEYWORD):
                 # TODO: Are we not okay with latency lower than the lower bound?
                 lower_bound -= self.lat_budget_offset_ms
                 upper_bound -= self.lat_budget_offset_ms
@@ -437,20 +437,30 @@ class CellOrderServerProtocol(asyncio.Protocol):
         self.clients[uid]['sla_end_time'] = 0
         self.clients[uid]['stats'] = {} 
 
-    def calculate_dl_latency_metric(self, metrics_db: dict) -> None:
+    def calculate_latency_metric(self, metrics_db: dict) -> None:
         """
-        Calculates the latency for each imsi at each timestep in msec
+        Calculates the latency for each imsi at each timestep for both UL/DL in msec
         """
         # {imsi->{ts->{metric_name->val}}}
         for imsi, ts_val in metrics_db.items():
             for ts, metrics in ts_val.items():
-                queue_size_bits = float(metrics[constants.DL_BUFFER_KEYWORD]) * 8.
+                dl_queue_size_bits = float(metrics[constants.DL_BUFFER_KEYWORD]) * 8.
                 tx_rate_kbps = float(metrics[constants.DL_THP_KEYWORD]) * 1e3
                 if (tx_rate_kbps > 0):
-                    metrics_db[imsi][ts][constants.DL_LAT_KEYWORD] = \
-                        (queue_size_bits / tx_rate_kbps) # in msec
+                    dl_latency = (dl_queue_size_bits / tx_rate_kbps) # in msec
                 else:
-                    metrics_db[imsi][ts][constants.DL_LAT_KEYWORD] = 0.
+                    dl_latency = 0.
+
+                ul_queue_size_bits = float(metrics[constants.UL_BUFFER_KEYWORD]) * 8.
+                rx_rate_kbps = float(metrics[constants.UL_THP_KEYWORD]) * 1e3
+                if (rx_rate_kbps > 0):
+                    ul_latency = (ul_queue_size_bits / rx_rate_kbps) # in msec
+                else:
+                    ul_latency = 0.
+                
+                metrics_db[imsi][ts][constants.DL_LAT_KEYWORD] = dl_latency
+                metrics_db[imsi][ts][constants.UL_LAT_KEYWORD] = ul_latency
+                metrics_db[imsi][ts][constants.LAT_KEYWORD] = dl_latency + ul_latency
 
     def reallocate_resources(self):
 
@@ -465,7 +475,7 @@ class CellOrderServerProtocol(asyncio.Protocol):
         # Read metrics database {imsi->{ts->{metric_name->val}}}
         metrics_db = read_metrics(lines_num = self.telemetry_lines_to_read)
         # Add the latency in milliseconds into the metrics_db
-        self.calculate_dl_latency_metric(metrics_db)
+        self.calculate_latency_metric(metrics_db)
         # Get slicing associations {slice_id->(imsi)}
         slice_users = get_slice_users(metrics_db)
 
@@ -473,8 +483,7 @@ class CellOrderServerProtocol(asyncio.Protocol):
         slice_metrics = dict()
         for key, val in slice_users.items():
             slice_metrics[key] = {constants.NUM_SLICE_USERS_KEYWORD: len(val)}
-        metric_keywords_to_ave = [constants.DL_LAT_KEYWORD, 
-                                  constants.DL_BUFFER_KEYWORD, 
+        metric_keywords_to_ave = [constants.LAT_KEYWORD, 
                                   constants.DL_THP_KEYWORD, 
                                   constants.DL_MCS_KEYWORD, 
                                   constants.DL_CQI_KEYWORD]
@@ -547,19 +556,19 @@ class CellOrderServerProtocol(asyncio.Protocol):
                                                  round(slice_metrics[s_key][constants.DL_MCS_KEYWORD]))
         step = 1 + int(float(req_n_prbs) * self.config['reallocation-step-coeff'])
 
-        curr_lo_delay_budget = self.negotiations[nid]['budgets'][constants.DL_LAT_KEYWORD][0] - self.lat_budget_offset_ms
-        curr_hi_delay_budget = self.negotiations[nid]['budgets'][constants.DL_LAT_KEYWORD][1] - self.lat_budget_offset_ms
+        curr_lo_delay_budget = self.negotiations[nid]['budgets'][constants.LAT_KEYWORD][0] - self.lat_budget_offset_ms
+        curr_hi_delay_budget = self.negotiations[nid]['budgets'][constants.LAT_KEYWORD][1] - self.lat_budget_offset_ms
 
         cur_num_rbgs = slice_metrics[s_key]['cur_slice_mask'].count('1')
 
-        if (slice_metrics[s_key][constants.DL_LAT_KEYWORD] > curr_hi_delay_budget \
+        if (slice_metrics[s_key][constants.LAT_KEYWORD] > curr_hi_delay_budget \
             or (slice_metrics[s_key][constants.DL_THP_KEYWORD] < curr_tx_rate_budget_lo \
-                and slice_metrics[s_key][constants.DL_LAT_KEYWORD] != 0.0)):
+                and slice_metrics[s_key][constants.LAT_KEYWORD] != 0.0)):
             # Allocate more resources to this slice
             double_n_prbs = mcs_mapper.calculate_n_prbs(2 * curr_tx_rate_budget_hi, 
                                                         round(slice_metrics[s_key][constants.DL_MCS_KEYWORD]))
             slice_metrics[s_key]['new_num_rbgs'] = min(max(cur_num_rbgs, req_n_prbs) + step, double_n_prbs)
-        elif slice_metrics[s_key][constants.DL_LAT_KEYWORD] < curr_lo_delay_budget:
+        elif slice_metrics[s_key][constants.LAT_KEYWORD] < curr_lo_delay_budget:
             # De-allocate resources from this slice
             # slice_metrics[s_key]['new_num_rbgs'] = max(min(cur_num_rbgs, req_n_prbs) - step, 1)
             slice_metrics[s_key]['new_num_rbgs'] = max(cur_num_rbgs - step, 1)
@@ -578,7 +587,7 @@ class CellOrderServerProtocol(asyncio.Protocol):
         cur_num_rbgs = slice_metrics[s_key]['cur_slice_mask'].count('1')
 
         if (slice_metrics[s_key][constants.DL_THP_KEYWORD] < curr_tx_rate_budget_lo \
-            and slice_metrics[s_key][constants.DL_LAT_KEYWORD] != 0.0):
+            and slice_metrics[s_key][constants.LAT_KEYWORD] != 0.0):
             # Allocate more resources to this slice
             double_n_prbs = mcs_mapper.calculate_n_prbs(2 * curr_tx_rate_budget_hi, 
                                                         round(slice_metrics[s_key][constants.DL_MCS_KEYWORD]))
