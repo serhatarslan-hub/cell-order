@@ -55,12 +55,24 @@ def read_cell_order_log(filename, ts_start=None):
                                      'raw_mcs': [],
                                      'raw_cqi': []}
 
+                latency_key = 'dl_latency [msec]'
+                if ('rtt [msec]' in metrics.keys()):
+                    latency_key = 'rtt [msec]'
+                elif ('dl_latency [msec]' in metrics.keys()):
+                    latency_key = 'dl_latency [msec]'
+                else:
+                    for key in metrics.keys():
+                        if '[msec]' in key:
+                            latency_key = key
+                            break
+
                 retval[s_idx]['raw_ts_sec'].append( ts - ts_start )
-                retval[s_idx]['raw_lat_msec'].append( float(metrics['dl_latency [msec]']) )
+                retval[s_idx]['raw_lat_msec'].append( float(metrics[latency_key]) )
                 # retval[s_idx]['raw_n_rbgs'].append( int(metrics['new_num_rbgs']) )
                 retval[s_idx]['raw_n_rbgs'].append( int(metrics['cur_slice_mask'].count('1')) )
                 retval[s_idx]['raw_tx_mbps'].append( float(metrics['tx_brate downlink [Mbps]']) )
-                retval[s_idx]['raw_buf_bytes'].append( float(metrics['dl_buffer [bytes]']) )
+                if ('dl_buffer [bytes]' in metrics.keys()):
+                    retval[s_idx]['raw_buf_bytes'].append( float(metrics['dl_buffer [bytes]']) )
                 if ('dl_mcs' in metrics.keys()):
                     retval[s_idx]['raw_mcs'].append( float(metrics['dl_mcs']) )
                 if ('dl_cqi' in metrics.keys()):
