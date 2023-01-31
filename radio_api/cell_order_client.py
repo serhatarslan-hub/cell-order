@@ -324,7 +324,7 @@ class CellOrderClientProtocol(asyncio.Protocol):
             
             if (error_output):
                 logging.error(error_output)
-            elif (not self.loop.closed()):
+            elif (not self.loop.is_closed()):
                 logging.info("... Client ready to re-negotiate!")
 
     def handle_response(self, response_msg: dict) -> None:
