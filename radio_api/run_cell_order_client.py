@@ -19,6 +19,8 @@ if __name__ == '__main__':
                         help='IP address of the provider.')
     parser.add_argument('--client-ip', type=str, required=True, 
                         help='IP address of the UE.')
+    parser.add_argument('--client-public-ip', type=str, required=True, 
+                        help='The public IP address of the UE.')
     parser.add_argument('--dst-ip', type=str, required=True, 
                         help='IP address that the user wants to communicate with.')
     parser.add_argument('--iperf-target-rate', type=str, 
@@ -55,7 +57,7 @@ if __name__ == '__main__':
 
     cell_order_client = cell_order_client.CellOrderClientProtocol(loop, 
                                                                   cell_order_config,
-                                                                  args.server_ip,
+                                                                  args.client_public_ip,
                                                                   args.client_ip,
                                                                   args.dst_ip,
                                                                   args.iperf_target_rate,
