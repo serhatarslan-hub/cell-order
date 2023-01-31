@@ -408,7 +408,9 @@ class CellOrderClientProtocol(asyncio.Protocol):
             stream_data = interval_data['streams'][0]
             assert stream_data['sender'], "Iperf's RTT can only be displayed if sender!"
 
-            stream_data[constants.LAT_KEYWORD] = float(stream_data['rtt']) / 1e3
+            if ('rtt' in stream_data.keys()):
+                # UDP-based traffic doesn't collect RTT data
+                stream_data[constants.LAT_KEYWORD] = float(stream_data['rtt']) / 1e3
             stream_data[constants.DL_THP_KEYWORD] = float(stream_data['bits_per_second']) / 1e6
 
             ts_ms = int(stream_data['end'] * 1000) + iperf_start_time_ms
