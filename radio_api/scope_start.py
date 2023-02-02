@@ -467,6 +467,7 @@ def run_scope(config: dict, scope_config: dict):
         if config['write-config-parameters']:
             write_config_params(scope_config)
             write_tenant_slicing_mask(scope_config)
+            write_tenant_slicing_mask(scope_config, ul=True)
             write_slice_scheduling(scope_config)
         else:
             logging.info('Not writing configuration parameters on file')
