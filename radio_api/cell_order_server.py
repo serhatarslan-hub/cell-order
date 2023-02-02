@@ -126,7 +126,7 @@ class CellOrderServerProtocol(asyncio.Protocol):
             cur_cqi = slice_metrics[cur_uid][constants.DL_CQI_KEYWORD]
             cur_mcs = slice_metrics[cur_uid][constants.DL_MCS_KEYWORD]
             if (cur_cqi >= self.config['min-acceptable-cqi']):
-                tot_reserved_rbg += mcs_mapper.calculate_n_prbs(agreed_max_thp, round(cur_mcs))
+                tot_reserved_rbg += mcs_mapper.calculate_n_rbgs(agreed_max_thp, round(cur_mcs))
 
         # Calculate how many RBG would be required for the requester
         if (request_msg['service_type'] == 'best_effort'):
@@ -135,7 +135,7 @@ class CellOrderServerProtocol(asyncio.Protocol):
             requested_max_thp = request_msg['budgets'][constants.DL_THP_KEYWORD][1]
             cur_cqi = slice_metrics[uid][constants.DL_CQI_KEYWORD]
             cur_mcs = slice_metrics[uid][constants.DL_MCS_KEYWORD]
-            n_requested_rbg = mcs_mapper.calculate_n_prbs(requested_max_thp, round(cur_mcs))
+            n_requested_rbg = mcs_mapper.calculate_n_rbgs(requested_max_thp, round(cur_mcs))
 
         if (cur_cqi < self.config['min-acceptable-cqi']):
             logging.info("Service is not feasible because of the " + \
@@ -505,7 +505,7 @@ class CellOrderServerProtocol(asyncio.Protocol):
 
         curr_tx_rate_budget_lo = self.negotiations[nid]['budgets'][constants.DL_THP_KEYWORD][0]
         curr_tx_rate_budget_hi = self.negotiations[nid]['budgets'][constants.DL_THP_KEYWORD][1]
-        req_n_prbs = mcs_mapper.calculate_n_prbs(curr_tx_rate_budget_hi, 
+        req_n_prbs = mcs_mapper.calculate_n_rbgs(curr_tx_rate_budget_hi, 
                                                  round(slice_metrics[s_key][constants.DL_MCS_KEYWORD]))
         step = 1 + int(float(req_n_prbs) * self.config['reallocation-step-coeff'])
 
@@ -518,7 +518,7 @@ class CellOrderServerProtocol(asyncio.Protocol):
             or (slice_metrics[s_key][constants.DL_THP_KEYWORD] < curr_tx_rate_budget_lo \
                 and slice_metrics[s_key][constants.LAT_KEYWORD] != 0.0)):
             # Allocate more resources to this slice
-            double_n_prbs = mcs_mapper.calculate_n_prbs(2 * curr_tx_rate_budget_hi, 
+            double_n_prbs = mcs_mapper.calculate_n_rbgs(2 * curr_tx_rate_budget_hi, 
                                                         round(slice_metrics[s_key][constants.DL_MCS_KEYWORD]))
             slice_metrics[s_key]['new_num_rbgs'] = min(max(cur_num_rbgs, req_n_prbs) + step, double_n_prbs)
         elif slice_metrics[s_key][constants.LAT_KEYWORD] < curr_lo_delay_budget:
@@ -533,7 +533,7 @@ class CellOrderServerProtocol(asyncio.Protocol):
 
         curr_tx_rate_budget_lo = self.negotiations[nid]['budgets'][constants.DL_THP_KEYWORD][0]
         curr_tx_rate_budget_hi = self.negotiations[nid]['budgets'][constants.DL_THP_KEYWORD][1]
-        req_n_prbs = mcs_mapper.calculate_n_prbs(curr_tx_rate_budget_hi, 
+        req_n_prbs = mcs_mapper.calculate_n_rbgs(curr_tx_rate_budget_hi, 
                                                     round(slice_metrics[s_key][constants.DL_MCS_KEYWORD]))
         step = 1 + int(float(req_n_prbs) * self.config['reallocation-step-coeff'])
 
@@ -542,7 +542,7 @@ class CellOrderServerProtocol(asyncio.Protocol):
         if (slice_metrics[s_key][constants.DL_THP_KEYWORD] < curr_tx_rate_budget_lo \
             and slice_metrics[s_key][constants.LAT_KEYWORD] != 0.0):
             # Allocate more resources to this slice
-            double_n_prbs = mcs_mapper.calculate_n_prbs(2 * curr_tx_rate_budget_hi, 
+            double_n_prbs = mcs_mapper.calculate_n_rbgs(2 * curr_tx_rate_budget_hi, 
                                                         round(slice_metrics[s_key][constants.DL_MCS_KEYWORD]))
             slice_metrics[s_key]['new_num_rbgs'] = min(max(cur_num_rbgs, req_n_prbs) + step, double_n_prbs)
         elif slice_metrics[s_key][constants.DL_THP_KEYWORD] > curr_tx_rate_budget_hi:
@@ -598,7 +598,7 @@ class CellOrderServerProtocol(asyncio.Protocol):
         """
 
         next_rbg_idx_l = 0
-        next_rbg_idx_r = constants.MAX_RBG
+        next_rbg_idx_r = constants.MAX_RBG - 1 # Don't use the final RBG for safety
         mask_towards_right = True
         for s_key, s_val in slice_metrics.items():
             if (mask_towards_right):

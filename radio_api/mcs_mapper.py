@@ -1,6 +1,7 @@
 # This small script includes helper functions to map MCS values such as 
 # calculating the expected throughput based on the measured MCS and the 
 # allocated number of PRBs
+import math
 
 MAX_MCS = 28
 MAX_N_PRB = 110
@@ -37,7 +38,7 @@ TBS_TABLE = [[16,32,56,88,120,152,176,208,224,256,288,328,344,376,392,424,456,48
 MCS_TO_TBS_IDX = [0,1,2,3,4,5,6,7,8,9,9,10,11,12,13,14,15,15,16,17,18,19,20,21,22,23,24,25,26]
 
 # MCS to THP formula from https://www.rfwireless-world.com/Tutorials/LTE-throughput.html
-def calculate_thp_mbps(mcs: int, n_prbs: int, n_mimo: int = 1) -> float:
+def calculate_thp_mbps(mcs: int, n_prbs: float, n_mimo: int = 1) -> float:
 
     assert mcs <= MAX_MCS, "The MCS value cannot be larger than 31!"
     assert n_prbs <= MAX_N_PRB, "Number of allocated PRBs cannot be larger than 110!"
@@ -47,7 +48,7 @@ def calculate_thp_mbps(mcs: int, n_prbs: int, n_mimo: int = 1) -> float:
     return float(tbs * n_mimo) / 1e3
 
 # Estimates minimum number of PRBs needed to achieve the requested throughput
-def calculate_n_prbs(req_thp: float, mcs: int, n_mimo: int = 3) -> int:
+def calculate_n_prbs(req_thp: float, mcs: int, n_mimo: int = 1) -> int:
 
     assert mcs <= MAX_MCS, "The MCS value cannot be larger than 31! ({} was given)".format(mcs)
 
@@ -58,3 +59,8 @@ def calculate_n_prbs(req_thp: float, mcs: int, n_mimo: int = 3) -> int:
             break
     
     return n_prb
+
+def calculate_n_rbgs(req_thp: float, mcs: int, n_mimo: int = 1, 
+                     n_prb_per_rbg: float = 3) -> int:
+
+    return math.ceil(float(calculate_n_prbs(req_thp, mcs, n_mimo)) / n_prb_per_rbg)
