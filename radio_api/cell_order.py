@@ -644,12 +644,21 @@ class CellOrderServerProtocol(asyncio.Protocol):
         Write slice masks for each slice on file
         """
 
-        rbg_idx_to_start = 0
+        next_rbg_idx_l = 0
+        next_rbg_idx_r = constants.MAX_RBG
+        mask_towards_right = True
         for s_key, s_val in slice_metrics.items():
-            new_mask = '0' * rbg_idx_to_start
-            new_mask += '1' * s_val['new_num_rbgs']
-            rbg_idx_to_start = len(new_mask)
-            new_mask += '0' * (constants.MAX_RBG - rbg_idx_to_start)
+            if (mask_towards_right):
+                new_mask = '0' * next_rbg_idx_l
+                new_mask += '1' * s_val['new_num_rbgs']
+                next_rbg_idx_l += s_val['new_num_rbgs']
+                new_mask += '0' * (constants.MAX_RBG - next_rbg_idx_l)
+            else:
+                next_rbg_idx_r -= s_val['new_num_rbgs']
+                new_mask = '0' * next_rbg_idx_r
+                new_mask += '1' * s_val['new_num_rbgs']
+                new_mask += '0' * (constants.MAX_RBG - len(new_mask))
+            mask_towards_right = not mask_towards_right
 
             if (new_mask != s_val['cur_slice_mask']):
                 # assemble config parameters dictionary and write mask
