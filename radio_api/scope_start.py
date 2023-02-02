@@ -649,8 +649,8 @@ def run_scope(config: dict, scope_config: dict):
 
 if __name__ == '__main__':
 
-    ul_freq_default = 2535000000  # Hz
-    dl_freq_default = 2655000000  # Hz
+    #ul_freq_default = 2535000000  # Hz
+    #dl_freq_default = 2655000000  # Hz
     n_prb_default = 50
 
     prb_values = [6, 15, 25, 50, 75, 100]
@@ -686,12 +686,12 @@ if __name__ == '__main__':
     parser.add_argument('--custom-ue-slice', help='Use UE-slice associations passed in the configuration file', action='store_true')
 
     # the following three can be embedded into bs-config/ue-config. Leave for legacy config files
-    parser.add_argument('--dl-freq', type=int, default=dl_freq_default, help='Downlink frequency [Hz].')
-    parser.add_argument('--ul-freq', type=int, default=ul_freq_default, help='Uplink frequency [Hz].')
+    #parser.add_argument('--dl-freq', type=int, default=dl_freq_default, help='Downlink frequency [Hz].')
+    #parser.add_argument('--ul-freq', type=int, default=ul_freq_default, help='Uplink frequency [Hz].')
     parser.add_argument('--dl-prb', type=int, default=n_prb_default, choices=prb_values, help='Downlink PRBs.')
 
     parser.add_argument('--bs-config', type=str, help='BS configuration file to override srsLTE options. \
-        Format as json, e.g., {\'n_prb\': 50, \'dl_freq\': 980000000, \'ul_freq\': 1020000000}.')
+        Format as json, e.g., {\'n_prb\': 50}.')
     parser.add_argument('--ue-config', type=str, help='UE configuration file to override srsLTE options. \
         Format as json (see bs-config).')
 
@@ -748,8 +748,8 @@ if __name__ == '__main__':
                   'tenant-number': args.tenant_number,
                   'slice-allocation': args.slice_allocation,
                   'custom-ue-slice': args.custom_ue_slice,
-                  'dl-freq': args.dl_freq,
-                  'ul-freq': args.ul_freq,
+                  #'dl-freq': args.dl_freq,
+                  #'ul-freq': args.ul_freq,
                   'dl-prb': args.dl_prb,
                   'force-dl-modulation': args.force_dl_modulation,
                   'force-ul-modulation': args.force_ul_modulation,
@@ -799,6 +799,7 @@ if __name__ == '__main__':
             else:
                 logging.info('Setting BS to ' + str(config['dl-prb']) + ' PRBs.')
 
+        '''
         if config.get('dl-freq') is None:
             config['dl-freq'] = dl_freq_default
         else:
@@ -808,7 +809,7 @@ if __name__ == '__main__':
             config['ul-freq'] = ul_freq_default
         else:
             config['ul-freq'] = int(config['ul-freq'])
-
+        '''
         if config.get('iperf') is None:
             config['iperf'] = False
 
@@ -849,17 +850,17 @@ if __name__ == '__main__':
     scope_config = get_scope_config(config)
 
     # copy legacy parameters into new bs-config and ue-config dictionaries
-    if scope_config['bs_config'].get('dl_freq') is None:
-        scope_config['bs_config']['dl_freq'] = config['dl-freq']
-    if scope_config['bs_config'].get('ul_freq') is None:
-        scope_config['bs_config']['ul_freq'] = config['ul-freq']
+    #if scope_config['bs_config'].get('dl_freq') is None:
+    #    scope_config['bs_config']['dl_freq'] = config['dl-freq']
+    #if scope_config['bs_config'].get('ul_freq') is None:
+    #    scope_config['bs_config']['ul_freq'] = config['ul-freq']
     if scope_config['bs_config'].get('n_prb') is None:
         scope_config['bs_config']['n_prb'] = config['dl-prb']
 
-    if scope_config['ue_config'].get('dl_freq') is None:
-        scope_config['ue_config']['dl_freq'] = config['dl-freq']
-    if scope_config['ue_config'].get('ul_freq') is None:
-        scope_config['ue_config']['ul_freq'] = config['ul-freq']
+    #if scope_config['ue_config'].get('dl_freq') is None:
+    #    scope_config['ue_config']['dl_freq'] = config['dl-freq']
+    #if scope_config['ue_config'].get('ul_freq') is None:
+    #    scope_config['ue_config']['ul_freq'] = config['ul-freq']
 
     run_scope(config, scope_config)
 
