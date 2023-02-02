@@ -38,7 +38,7 @@ TBS_TABLE = [[16,32,56,88,120,152,176,208,224,256,288,328,344,376,392,424,456,48
 MCS_TO_TBS_IDX = [0,1,2,3,4,5,6,7,8,9,9,10,11,12,13,14,15,15,16,17,18,19,20,21,22,23,24,25,26]
 
 # MCS to THP formula from https://www.rfwireless-world.com/Tutorials/LTE-throughput.html
-def calculate_thp_mbps(mcs: int, n_prbs: float, n_mimo: int = 1) -> float:
+def calculate_thp_mbps(mcs: int, n_prbs: int, n_mimo: int = 1) -> float:
 
     assert mcs <= MAX_MCS, "The MCS value cannot be larger than 31!"
     assert n_prbs <= MAX_N_PRB, "Number of allocated PRBs cannot be larger than 110!"
