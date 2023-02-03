@@ -3,7 +3,8 @@ COLOSSEUM_CONFIG = '../radio_code/srsLTE/config_files/colosseum_config/'
 GENERIC_CONFIG = '../radio_code/srsLTE/config_files/general_config/'
 RUNNING_CONFIG = '../radio_code/srslte_config/'
 SLICE_NUM = 3
-MAX_RBG = 17
+N_SAFETY_RBG = 1
+MAX_RBG = 17 - N_SAFETY_RBG # Don't use the final RBG for safety
 DEFAULT_IPERF_PORT = 5201
 DEFAULT_CELL_ORDER_PORT = 9701
 assert DEFAULT_IPERF_PORT % SLICE_NUM == DEFAULT_CELL_ORDER_PORT % SLICE_NUM
