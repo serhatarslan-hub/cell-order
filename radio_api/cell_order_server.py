@@ -598,14 +598,14 @@ class CellOrderServerProtocol(asyncio.Protocol):
         """
 
         next_rbg_idx_l = 0
-        next_rbg_idx_r = constants.MAX_RBG - 1 # Don't use the final RBG for safety
+        next_rbg_idx_r = constants.MAX_RBG 
         mask_towards_right = True
         for s_key, s_val in slice_metrics.items():
             if (mask_towards_right):
                 new_mask = '0' * next_rbg_idx_l
                 new_mask += '1' * s_val['new_num_rbgs']
                 next_rbg_idx_l += s_val['new_num_rbgs']
-                new_mask += '0' * (constants.MAX_RBG - next_rbg_idx_l)
+                new_mask += '0' * (constants.MAX_RBG - next_rbg_idx_l + constants.N_SAFETY_RBG)
             else:
                 next_rbg_idx_r -= s_val['new_num_rbgs']
                 new_mask = '0' * next_rbg_idx_r
