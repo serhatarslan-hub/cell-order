@@ -1002,16 +1002,16 @@ def copy_rr_sib_drb_conf(generic_testbed: bool) -> None:
 
     dst_dir = constants.RUNNING_CONFIG
 
-    # if generic_testbed:
-    #     logging.info('Copying default rr.conf, sib.conf, and drb.conf configuration files')
-    #     src_dir = constants.GENERIC_CONFIG
-    # else:
-    #     logging.info('Copying Colosseum-specific rr.conf, sib.conf, and drb.conf configuration files')
-    #     src_dir = constants.COLOSSEUM_CONFIG
+    if generic_testbed:
+         logging.info('Copying default rr.conf, sib.conf, and drb.conf configuration files')
+         src_dir = constants.GENERIC_CONFIG
+    else:
+         logging.info('Copying Colosseum-specific rr.conf, sib.conf, and drb.conf configuration files')
+         src_dir = constants.COLOSSEUM_CONFIG
 
     # always copy Colosseum configuration. It seems to work better
-    logging.info('Copying rr.conf, sib.conf, and drb.conf configuration files')
-    src_dir = constants.COLOSSEUM_CONFIG
+    #logging.info('Copying rr.conf, sib.conf, and drb.conf configuration files')
+    #src_dir = constants.COLOSSEUM_CONFIG
 
     cpy_cmd = 'cp %s/rr.conf %s/; cp %s/sib.conf %s/; cp %s/drb.conf %s/' % (src_dir, dst_dir, src_dir, dst_dir, src_dir, dst_dir)
     os.system(cpy_cmd)
