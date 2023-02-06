@@ -30,7 +30,7 @@ class CellOrderServerProtocol(asyncio.Protocol):
         self.negotiations = {}
         self.reallocation_handle = None
 
-        self.lat_budget_offset_ms = 28 # TODO: Dynamically determine this
+        self.lat_budget_offset_ms = 40 # TODO: Dynamically determine this
 
     def connection_made(self, transport):
 
@@ -485,6 +485,7 @@ class CellOrderServerProtocol(asyncio.Protocol):
                     self.send_cancel(s_key, nid, price=0)
                     slice_metrics[s_key]['new_num_rbgs'] = 1
 
+            slice_metrics[s_key]['new_num_rbgs'] = min(slice_metrics[s_key]['new_num_rbgs'], constants.MAX_RBG / 2)
             tot_num_rbg_rqstd += slice_metrics[s_key]['new_num_rbgs']
 
         # Readjust number of RBGs if the total number exceeds the availability
