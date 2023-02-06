@@ -82,6 +82,11 @@ def read_cell_order_log(filename, ts_start=None):
         for metric_type, metric_vals in s_data.items():
             retval[s_idx][metric_type] = np.array(metric_vals)
 
+    if ('supply_times' in budgets.keys()):
+        for user_id in budgets['supply_times'].keys():
+            budgets['supply_times'][user_id] = np.array(budgets['supply_times'][user_id])
+            budgets['supply_times'][user_id] -= ts_start
+
     print("Data for {} seconds has been extracted".format(max(retval[s_idx]['raw_ts_sec'])))
     return retval, budgets, ts_start
 
@@ -129,6 +134,8 @@ def read_cell_order_ue_log(filename, ts_start=None):
 
     for key, val in retval.items():
         retval[key] = np.array(val)
+
+    retval['supply_times'] -= ts_start
 
     print("UE Data for {} seconds has been extracted".format(max(retval['raw_ts_sec'])))
     return retval, slice_id, ts_start
