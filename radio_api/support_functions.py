@@ -33,7 +33,7 @@ def start_iperf_client(server_ip: str, port: int, tmux_session_name: str='',
     
     # In order to be able to measure RTTs precisely, iperf needs to be 
     # configured to measure 1 packet worth data delivery
-    iperf_block_length = 1448
+    iperf_block_length = 1378
 
     iperf_cmd = 'iperf3 -c {} -p {} -t {} --length {}'.format(server_ip, port, duration, iperf_block_length)
 
