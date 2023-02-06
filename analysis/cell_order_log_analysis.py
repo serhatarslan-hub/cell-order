@@ -130,6 +130,8 @@ def read_cell_order_ue_log(filename, ts_start=None):
     for key, val in retval.items():
         retval[key] = np.array(val)
 
+    retval['supply_times'] -= ts_start
+
     print("UE Data for {} seconds has been extracted".format(max(retval['raw_ts_sec'])))
     return retval, slice_id, ts_start
 
