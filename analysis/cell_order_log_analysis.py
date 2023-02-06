@@ -11,7 +11,7 @@ CELL_ORDER_UE_SLICE_PATTERN = ".*slice_id:(?P<slice_id>.*)"
 CELL_ORDER_MSG_PATTERN = "(?P<timestamp>.*) INFO.*Sent Message:(?P<msg_dict>{.*})"
 CELL_ORDER_UE_MSG_PATTERN = "(?P<timestamp>.*) INFO.*Received Message:(?P<msg_dict>{.*})"
 
-def read_cell_order_log(filename, ts_start=None):
+def read_cell_order_log(filename, ts_start=None, consider_dst=False):
     retval = {}
     budgets = {}
     with open(filename,'r') as f:
@@ -27,7 +27,10 @@ def read_cell_order_log(filename, ts_start=None):
                     msg_dict = ast.literal_eval(msg_log.group('msg_dict'))
                     if (msg_dict['msg_type'] == 'supply'):
                         utc_time = datetime.strptime(msg_log.group('timestamp'), "%Y-%m-%d %H:%M:%S,%f")
-                        epoch_time = (utc_time - datetime(1970, 1, 1)).total_seconds()
+                        if (consider_dst):
+                            epoch_time = (utc_time).timestamp()
+                        else:
+                            epoch_time = (utc_time - datetime(1970, 1, 1)).total_seconds()
                         if ('supply_times' not in list(budgets)):
                             budgets['supply_times'] = {}
                         user_id = (msg_dict['client_ip'], msg_dict['client_port'])
@@ -90,7 +93,7 @@ def read_cell_order_log(filename, ts_start=None):
     print("Data for {} seconds has been extracted".format(max(retval[s_idx]['raw_ts_sec'])))
     return retval, budgets, ts_start
 
-def read_cell_order_ue_log(filename, ts_start=None):
+def read_cell_order_ue_log(filename, ts_start=None, consider_dst=False):
     retval = {'raw_ts_sec':[],
               'raw_mbps':[],
               'raw_cwnd_bytes':[],
@@ -111,7 +114,10 @@ def read_cell_order_ue_log(filename, ts_start=None):
                     msg_dict = ast.literal_eval(msg_log.group('msg_dict'))
                     if (msg_dict['msg_type'] == 'supply'):
                         utc_time = datetime.strptime(msg_log.group('timestamp'), "%Y-%m-%d %H:%M:%S,%f")
-                        epoch_time = (utc_time - datetime(1970, 1, 1)).total_seconds()
+                        if (consider_dst):
+                            epoch_time = (utc_time).timestamp()
+                        else:
+                            epoch_time = (utc_time - datetime(1970, 1, 1)).total_seconds()
                         retval['supply_times'].append(epoch_time)
                 continue
 
@@ -126,11 +132,13 @@ def read_cell_order_ue_log(filename, ts_start=None):
 
             retval['raw_ts_sec'].append( ts - ts_start )
             retval['raw_mbps'].append( float(stream_dict['bits_per_second']) / 1e6)
-            retval['raw_cwnd_bytes'].append( float(stream_dict['snd_cwnd']) )
             retval['raw_bytes'].append( float(stream_dict['bytes']) )
-            retval['raw_rtt_msec'].append( float(stream_dict['rtt']) / 1e3)
-            retval['raw_rttvar_msec'].append( float(stream_dict['rttvar']) / 1e3)
-            retval['raw_n_rtx'].append( int(stream_dict['retransmits']) )
+            if ('rtt' in stream_dict.keys()):
+                # TCP based traffic logs
+                retval['raw_cwnd_bytes'].append( float(stream_dict['snd_cwnd']) )
+                retval['raw_rtt_msec'].append( float(stream_dict['rtt']) / 1e3)
+                retval['raw_rttvar_msec'].append( float(stream_dict['rttvar']) / 1e3)
+                retval['raw_n_rtx'].append( int(stream_dict['retransmits']) )
 
     for key, val in retval.items():
         retval[key] = np.array(val)
