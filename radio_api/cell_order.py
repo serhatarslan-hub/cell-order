@@ -652,12 +652,12 @@ class CellOrderServerProtocol(asyncio.Protocol):
                 new_mask = '0' * next_rbg_idx_l
                 new_mask += '1' * s_val['new_num_rbgs']
                 next_rbg_idx_l += s_val['new_num_rbgs']
-                new_mask += '0' * (constants.MAX_RBG - next_rbg_idx_l)
+                new_mask += '0' * (constants.MAX_RBG + constants.N_SAFETY_RBG - next_rbg_idx_l)
             else:
                 next_rbg_idx_r -= s_val['new_num_rbgs']
                 new_mask = '0' * next_rbg_idx_r
                 new_mask += '1' * s_val['new_num_rbgs']
-                new_mask += '0' * (constants.MAX_RBG - len(new_mask))
+                new_mask += '0' * (constants.MAX_RBG + constants.N_SAFETY_RBG - len(new_mask))
             mask_towards_right = not mask_towards_right
 
             if (new_mask != s_val['cur_slice_mask']):

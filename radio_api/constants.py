@@ -1,6 +1,7 @@
 SCOPE_CONFIG = '/root/radio_code/scope_config/'
 SLICE_NUM = 3
-MAX_RBG = 17 - 1 # Don't use the final RBG for safety
+N_SAFETY_RBG = 1 # Don't use the final RBG for safety
+MAX_RBG = 17 - N_SAFETY_RBG 
 DEFAULT_IPERF_PORT = 5201
 DEFAULT_CELL_ORDER_PORT = 9701
 assert DEFAULT_IPERF_PORT % SLICE_NUM == DEFAULT_CELL_ORDER_PORT % SLICE_NUM
