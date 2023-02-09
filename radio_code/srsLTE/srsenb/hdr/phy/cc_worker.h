@@ -23,7 +23,7 @@
 #define SRSENB_CC_WORKER_H
 
 #include <string.h>
-#include <complex.h>
+
 #include "phy_common.h"
 
 #define LOG_EXECTIME
@@ -118,7 +118,8 @@ private:
     void metrics_read(phy_metrics_t* metrics);
     void metrics_dl(uint32_t mcs);
     void metrics_ul(uint32_t mcs, float rssi, float sinr, float turbo_iters);
-    bool is_pcell() { return pcell; };
+    bool is_pcell() { return pcell; }
+    uint32_t get_rnti() const { return rnti; }
 
     // SCOPE: set user downlink power multiplier
     // saving power multiplier in dB in p_a variable

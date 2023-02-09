@@ -32,7 +32,7 @@ if (RPATH)
   SET(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
 endif (RPATH)
 
-add_library(enb_cfg_parser parser.cc enb_cfg_parser.cc)
+add_library(enb_cfg_parser STATIC parser.cc enb_cfg_parser.cc)
 
 add_library(srsenb_scope
         ue_rnti_functions.cc ../hdr/ue_rnti_functions.h

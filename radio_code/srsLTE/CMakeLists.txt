@@ -87,6 +87,7 @@ option(ENABLE_MSAN     "Enable clang memory sanitizer"            OFF)
 option(ENABLE_TIDY     "Enable clang tidy"                        OFF)
 
 option(USE_LTE_RATES   "Use standard LTE sampling rates"          OFF)
+### added by ali to see if srsenb crash is solved
 option(USE_GLIBC_IPV6  "Use glibc's own ipv6.h"                   ON)
 option(USE_MKL         "Use MKL instead of fftw"                  OFF)
 
@@ -325,7 +326,7 @@ macro(ADD_C_COMPILER_FLAG_IF_AVAILABLE flag have)
 endmacro(ADD_C_COMPILER_FLAG_IF_AVAILABLE)
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU" OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall  -Wno-error -Wno-comment -Wno-reorder -Wno-unused-variable -Wtype-limits -std=c++11")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-error -Wno-comment -Wno-reorder -Wno-unused-variable -Wtype-limits -std=c++11")
 
   ADD_C_COMPILER_FLAG_IF_AVAILABLE("-Wno-unused-but-set-variable" HAVE_WNO_UNUSED_BUT_SET_VARIABLE)
   ADD_CXX_COMPILER_FLAG_IF_AVAILABLE("-Wno-unused-but-set-variable" HAVE_WNO_UNUSED_BUT_SET_VARIABLE)
@@ -359,7 +360,7 @@ endif(CMAKE_CXX_COMPILER_ID MATCHES "GNU" OR CMAKE_CXX_COMPILER_ID MATCHES "Clan
 ADD_C_COMPILER_FLAG_IF_AVAILABLE("-Werror=incompatible-pointer-types" HAVE_ERROR_INCOMPATIBLE)
 
 if(CMAKE_C_COMPILER_ID MATCHES "GNU" OR CMAKE_C_COMPILER_ID MATCHES "Clang")
-	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wno-error -Wno-comment -Wno-write-strings -Winline -Wno-unused-result -Wformat -Wmissing-field-initializers -Wtype-limits -std=c99 -D_GNU_SOURCE")
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wno-error -Wno-comment -Wno-write-strings -Winline -Wno-unused-result -Wformat -Wmissing-field-initializers -Wtype-limits -std=c99 -D_GNU_SOURCE")
 
   if(${CMAKE_BUILD_TYPE} STREQUAL "Debug")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -ggdb -O0 -DDEBUG_MODE -DBUILD_TYPE_DEBUG")
@@ -378,11 +379,6 @@ if(CMAKE_C_COMPILER_ID MATCHES "GNU" OR CMAKE_C_COMPILER_ID MATCHES "Clang")
     message(STATUS "Using standard LTE sampling rates")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DFORCE_STANDARD_RATE")
   endif (USE_LTE_RATES)
-
-  if (USE_GLIBC_IPV6)
-    message(STATUS "Using default glibc header for IPv6 support.")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DUSE_GLIBC_IPV6")
-  endif (USE_GLIBC_IPV6)
 
   if (AUTO_DETECT_ISA)
     find_package(SSE)
@@ -472,10 +468,10 @@ if("Ninja" STREQUAL ${CMAKE_GENERATOR})
 endif()
 
 # Add -Werror to C/C++ flags for newer compilers
-if(NOT CMAKE_CXX_COMPILER_VERSION VERSION_LESS 4.9 AND NOT CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-#set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Werror")
+if(NOT CMAKE_CXX_COMPILER_VERSION VERSION_LESS 4.9)
+  #set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Werror")
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
-#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror")
+  #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 endif()
 

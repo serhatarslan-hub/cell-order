@@ -1,0 +1,10 @@
+11778648        8 -rw-r--r--    1 ali              staff                1429 Feb  6 21:17 ./.clang-tidy
+11778650        8 -rw-r--r--    1 ali              staff                 461 Feb  6 21:17 ./.lgtm.yml
+11778649        8 -rw-r--r--    1 ali              staff                  40 Feb  6 21:17 ./.gitignore
+11778647        8 -rw-r--r--    1 ali              staff                3367 Feb  6 21:17 ./.clang-format
+11778709        0 -rw-r--r--    1 ali              staff                   0 Feb  6 21:17 ./config_files/scope_config/metrics/.gitkeep
+11778711        0 -rw-r--r--    1 ali              staff                   0 Feb  6 21:17 ./config_files/scope_config/metrics/csv/.gitkeep
+11778707        0 -rw-r--r--    1 ali              staff                   0 Feb  6 21:17 ./config_files/scope_config/config/.gitkeep
+11778705        8 -rwxr-xr-x    1 ali              staff                 545 Feb  6 21:17 ./config_files/scope_config/.gitignore
+11778715        0 -rw-r--r--    1 ali              staff                   0 Feb  6 21:17 ./config_files/scope_config/slicing/.gitkeep
+11778651        8 -rw-r--r--    1 ali              staff                1048 Feb  6 21:17 ./.travis.yml
