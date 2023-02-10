@@ -1,5 +1,5 @@
 2023-02-09 18:30:07,213 INFO     Parsing cell_order.conf configuration file
-2023-02-09 18:30:07,213 INFO     Cell-Order configuration: {'slice-service-type': {0: 'latency', 1: 'throughput', 2: 'best-effort'}, 'slice-delay-budget-msec': {0: [40, 60], 1: [0, 9999], 2: [0, 9999]}, 'slice-tx-rate-budget-Mbps': {0: [1, 2], 1: [1, 2], 2: [0, 0]}, 'duration-sec': 600.0, 'max-rtx': 3.0, 'max-sla-price': 50.0, 'outlier-percentile': 5.0, 'sla-period-sec': 30.0, 'sla-grace-period-sec': 5.0, 'reallocation-period-sec': 0.5, 'min-acceptable-cqi': 0.5, 'reallocation-step-coeff': 0.2}
+2023-02-09 18:30:07,213 INFO     Cell-Order configuration: {'slice-service-type': {0: 'latency', 1: 'throughput', 2: 'best-effort'}, 'slice-delay-budget-msec': {0: [50, 70], 1: [0, 9999], 2: [0, 9999]}, 'slice-tx-rate-budget-Mbps': {0: [1, 2], 1: [1, 2], 2: [0, 0]}, 'duration-sec': 600.0, 'max-rtx': 3.0, 'max-sla-price': 50.0, 'outlier-percentile': 5.0, 'sla-period-sec': 30.0, 'sla-grace-period-sec': 5.0, 'reallocation-period-sec': 0.5, 'min-acceptable-cqi': 0.5, 'reallocation-step-coeff': 0.2}
 2023-02-09 18:30:07,213 DEBUG    Using selector: EpollSelector
 2023-02-09 18:30:07,214 INFO     Serving on ('172.16.0.1', 9701)
 2023-02-09 18:32:07,254 INFO     Connection from ('172.16.0.3', 9704)
