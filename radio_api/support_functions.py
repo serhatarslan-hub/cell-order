@@ -51,6 +51,8 @@ def start_iperf_client(server_ip: str, port: int, tmux_session_name: str='',
     elif (json):
         iperf_cmd += ' --json'
 
+    iperf_cmd += ' --get-server-output'
+
     if (loop):
         # wrap command in while loop to repeat it if it fails to start
         # (e.g., if ue is not yet connected to the bs)

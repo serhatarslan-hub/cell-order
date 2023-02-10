@@ -397,9 +397,33 @@ class CellOrderClientProtocol(asyncio.Protocol):
         restart_delay = self.config['sla-grace-period-sec'] if refund == 0 else 0
         self.flush_state_and_restart(restart_delay)
 
+    def get_iperf_mbps_from_server_output(self, server_output: str) -> list:
+        # TODO: Write a better version of this. Too hacky at the moment!
+
+        destination_outputs = []
+
+        lines_with_bps = server_output.split('bits/sec')
+        for line in lines_with_bps[:-2]:
+            words = line.split()
+            if (words[-1] == 'G'):
+                destination_outputs.append(float(words[-2]) * 1e3)
+            elif (words[-1] == 'M'):
+                destination_outputs.append(float(words[-2]))
+            elif (words[-1] == 'K'):
+                destination_outputs.append(float(words[-2]) / 1e3)
+            else:
+                destination_outputs.append(float(words[-1]) / 1e6)
+
+        return destination_outputs
+
     def get_avg_stats(self, iperf_output: dict, sla_keywords: list) -> list:
 
         iperf_start_time_ms = iperf_output['start']['timestamp']['timesecs'] * 1000
+
+        destination_outputs_mbps = \
+            self.get_iperf_mbps_from_server_output(iperf_output['server_output_text'])
+        assert len(destination_outputs_mbps) == len(iperf_output['intervals']), \
+            "The iperf destination didn't report as many data points as the sender!"
 
         sla_stats = [[] for _ in range(len(sla_keywords))]
         for interval_data in iperf_output['intervals']:
@@ -408,10 +432,12 @@ class CellOrderClientProtocol(asyncio.Protocol):
             stream_data = interval_data['streams'][0]
             assert stream_data['sender'], "Iperf's RTT can only be displayed if sender!"
 
-            if ('rtt' in stream_data.keys()):
+            if (not self.iperf_udp):
                 # UDP-based traffic doesn't collect RTT data
                 stream_data[constants.LAT_KEYWORD] = float(stream_data['rtt']) / 1e3
-            stream_data[constants.DL_THP_KEYWORD] = float(stream_data['bits_per_second']) / 1e6
+                stream_data[constants.DL_THP_KEYWORD] = float(stream_data['bits_per_second']) / 1e6
+            else:
+                stream_data[constants.DL_THP_KEYWORD] = destination_outputs_mbps.pop(0)
 
             ts_ms = int(stream_data['end'] * 1000) + iperf_start_time_ms
             logging.info('ts_ms:' + str(ts_ms) + ' stream:' + str(stream_data))
