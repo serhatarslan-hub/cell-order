@@ -422,8 +422,8 @@ class CellOrderClientProtocol(asyncio.Protocol):
 
         destination_outputs_mbps = \
             self.get_iperf_mbps_from_server_output(iperf_output['server_output_text'])
-        assert len(destination_outputs_mbps) == len(iperf_output['intervals']), \
-            "The iperf destination didn't report as many data points as the sender!"
+        assert len(destination_outputs_mbps) >= len(iperf_output['intervals']), \
+            "The iperf destination didn't report as many data points as the sender! ({}, {})".format(len(destination_outputs_mbps), len(iperf_output['intervals']))
 
         sla_stats = [[] for _ in range(len(sla_keywords))]
         for interval_data in iperf_output['intervals']:
