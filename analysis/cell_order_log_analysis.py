@@ -131,7 +131,7 @@ def read_cell_order_ue_log(filename, ts_start=None, consider_dst=False):
                 continue
 
             retval['raw_ts_sec'].append( ts - ts_start )
-            retval['raw_mbps'].append( float(stream_dict['bits_per_second']) / 1e6)
+            retval['raw_mbps'].append( float(stream_dict['tx_brate downlink [Mbps]']))
             retval['raw_bytes'].append( float(stream_dict['bytes']) )
             if ('rtt' in stream_dict.keys()):
                 # TCP based traffic logs
